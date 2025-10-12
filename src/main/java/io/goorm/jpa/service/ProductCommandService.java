@@ -11,12 +11,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 상품 Service
+ * 상품 Command Service (CUD)
  */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ProductService {
+public class ProductCommandService {
 
     private final ProductRepository productRepository;
 
