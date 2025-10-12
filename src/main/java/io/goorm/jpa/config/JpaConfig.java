@@ -20,14 +20,14 @@ public class JpaConfig {
      * 현재 작업자 정보를 제공하는 Bean
      *
      * 실무에서는:
-     * - Spring Security의 SecurityContext에서 인증 정보 가져오기
-     * - JWT 토큰에서 사용자 정보 추출
+     * - Spring Security의 SecurityContext에서 인증된 사용자 ID 가져오기
+     * - JWT 토큰에서 사용자 ID 추출
      *
      * 학습 목적으로는:
-     * - 고정값("admin") 반환
+     * - 고정값(1L) 하드코딩
      */
     @Bean
-    public AuditorAware<String> auditorProvider() {
-        return () -> Optional.of("admin");
+    public AuditorAware<Long> auditorProvider() {
+        return () -> Optional.of(1L);
     }
 }

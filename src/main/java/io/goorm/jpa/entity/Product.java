@@ -7,8 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * JPA 엔티티 - 객체 지향적 설계
- * 패러다임: 객체 중심 (FK가 아닌 객체 참조, Audit 자동화)
+ * 상품 엔티티 - 단일 테이블 (연관관계 없음)
  */
 @Entity
 @Table(name = "tb_product")
@@ -29,42 +28,38 @@ public class Product extends BaseEntity {
 
     private Integer stockQuantity = 0;
 
-    /**
-     * ⭐ 핵심 차이점: FK가 아닌 객체 참조!
-     *
-     * ProductModel (MyBatis):
-     *   - Long categoryId (FK)
-     *   - String categoryName (JOIN 결과)
-     *   → 개발자가 직접 JOIN 쿼리 작성
-     *
-     * Product Entity (JPA):
-     *   - Category category (객체 참조)
-     *   → product.getCategory().getCategoryName() 형태로 접근 가능
-     *   → 객체 그래프 탐색!
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private Category category;
-
     @Enumerated(EnumType.STRING)
     private ProductStatus status = ProductStatus.ACTIVE;
 
     // === 생성 메서드 ===
-    public static Product of(String productName, String description, Integer price,
-                            Integer stockQuantity, Category category) {
+    public static Product of(String productName, String description, Integer price, Integer stockQuantity) {
         Product product = new Product();
         product.productName = productName;
         product.description = description;
         product.price = price;
         product.stockQuantity = stockQuantity;
-        product.category = category;
         product.status = ProductStatus.ACTIVE;
         return product;
     }
 
     // === 비즈니스 메서드 ===
+    public void update(String productName, String description, Integer price, Integer stockQuantity) {
+        if (productName != null && !productName.isBlank()) {
+            this.productName = productName;
+        }
+        if (description != null) {
+            this.description = description;
+        }
+        if (price != null) {
+            changePrice(price);
+        }
+        if (stockQuantity != null) {
+            this.stockQuantity = stockQuantity;
+        }
+    }
+
     public void changePrice(Integer newPrice) {
-        if (newPrice < 0) {
+        if (newPrice == null || newPrice < 0) {
             throw new IllegalArgumentException("가격은 0 이상이어야 합니다.");
         }
         this.price = newPrice;
@@ -85,18 +80,4 @@ public class Product extends BaseEntity {
     public void changeStatus(ProductStatus status) {
         this.status = status;
     }
-
-    /**
-     * 객체 그래프 탐색 예시:
-     * product.getCategory().getCategoryName()
-     *
-     * MyBatis였다면?
-     * 1. SELECT category_id FROM tb_product WHERE product_id = ?
-     * 2. SELECT category_name FROM tb_category WHERE category_id = ?
-     * → 개발자가 직접 여러 쿼리를 작성하거나 JOIN 쿼리 작성
-     *
-     * JPA는?
-     * → product.getCategory().getCategoryName() (끝!)
-     * → JPA가 알아서 필요 시 JOIN 또는 추가 쿼리 실행
-     */
 }
