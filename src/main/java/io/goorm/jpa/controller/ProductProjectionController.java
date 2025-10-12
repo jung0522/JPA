@@ -3,7 +3,6 @@ package io.goorm.jpa.controller;
 import io.goorm.jpa.dto.ProductResponse;
 import io.goorm.jpa.dto.projection.ProductDto;
 import io.goorm.jpa.dto.projection.ProductSummary;
-import io.goorm.jpa.entity.Product;
 import io.goorm.jpa.service.ProductProjectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,11 +14,10 @@ import java.util.List;
  * 상품 Projection Controller
  * URL prefix: /api/products/projection
  *
- * 4가지 조회 방식 비교:
- * 1. Entity Projection (전체 컬럼)
- * 2. Interface Projection (필요한 컬럼만)
- * 3. Record/DTO Projection (필요한 컬럼만)
- * 4. Dynamic Projection (런타임 타입 결정)
+ * 3가지 조회 방식 비교 (발전 과정):
+ * 1. Entity Projection (초기, ~2010년대)
+ * 2. Interface Projection (Spring Data JPA, ~2018년)
+ * 3. Record Projection (현재 추세!, Java 16+, 2021년~)
  */
 @RestController
 @RequestMapping("/api/products/projection")
@@ -29,13 +27,19 @@ public class ProductProjectionController {
     private final ProductProjectionService productProjectionService;
 
     /**
-     * 1. Entity Projection
+     * 1. Entity Projection (초기, ~2010년대)
      * GET /api/products/projection/entity?status=ACTIVE
      *
      * 특징:
      * - 전체 컬럼 조회 (SELECT *)
      * - Service에서 DTO 변환
      * - 영속성 컨텍스트 관리
+     *
+     * 문제점:
+     * - 불필요한 데이터 조회 (메모리/네트워크 낭비)
+     * - 수동 변환 번거로움
+     *
+     * 사용 시기: CUD 작업이 필요한 경우만
      */
     @GetMapping("/entity")
     public ResponseEntity<List<ProductResponse>> getByEntityProjection(@RequestParam String status) {
@@ -44,13 +48,24 @@ public class ProductProjectionController {
     }
 
     /**
-     * 2. Interface Projection
+     * 2. Interface Projection (Spring Data JPA, ~2018년)
      * GET /api/products/projection/interface?status=ACTIVE
      *
      * 특징:
      * - 필요한 컬럼만 조회 (SELECT product_id, product_name, price, status)
      * - 프록시 객체 생성
      * - Getter 메서드로 접근
+     *
+     * 장점:
+     * - 필요한 컬럼만 조회 (성능 향상)
+     * - 코드 간결
+     *
+     * 문제점:
+     * - 프록시 오버헤드 (성능)
+     * - 불변성 불명확
+     * - equals/hashCode 애매함
+     *
+     * 현재 상황: Record가 나온 후 거의 사용 안 함 (레거시)
      */
     @GetMapping("/interface")
     public ResponseEntity<List<ProductSummary>> getByInterfaceProjection(@RequestParam String status) {
@@ -59,53 +74,28 @@ public class ProductProjectionController {
     }
 
     /**
-     * 3. Record/DTO Projection
-     * GET /api/products/projection/dto?status=ACTIVE
+     * 3. Record Projection (현재 추세!, Java 16+, 2021년~)
+     * GET /api/products/projection/record?status=ACTIVE
      *
      * 특징:
      * - 필요한 컬럼만 조회 (SELECT product_id, product_name, price, status)
      * - 생성자 기반 매핑
      * - 불변 객체 (Record)
-     */
-    @GetMapping("/dto")
-    public ResponseEntity<List<ProductDto>> getByDtoProjection(@RequestParam String status) {
-        List<ProductDto> dtos = productProjectionService.findByDtoProjection(status);
-        return ResponseEntity.ok(dtos);
-    }
-
-    /**
-     * 4. Dynamic Projection (Entity)
-     * GET /api/products/projection/dynamic/entity?status=ACTIVE
+     * - 프록시 없음
      *
-     * 런타임에 Product.class 타입 지정
-     */
-    @GetMapping("/dynamic/entity")
-    public ResponseEntity<List<Product>> getByDynamicProjectionEntity(@RequestParam String status) {
-        List<Product> products = productProjectionService.findByDynamicProjection(status, Product.class);
-        return ResponseEntity.ok(products);
-    }
-
-    /**
-     * 4. Dynamic Projection (Interface)
-     * GET /api/products/projection/dynamic/interface?status=ACTIVE
+     * 장점 (모든 문제 해결!):
+     * - ✅ 필요한 컬럼만 조회 (성능 향상)
+     * - ✅ 코드 간결 (한 줄)
+     * - ✅ 불변성 보장 (final 자동)
+     * - ✅ equals/hashCode 자동
+     * - ✅ 프록시 없음 (성능 우수)
+     * - ✅ 타입 안전
      *
-     * 런타임에 ProductSummary.class 타입 지정
+     * 현재 실무 표준!
      */
-    @GetMapping("/dynamic/interface")
-    public ResponseEntity<List<ProductSummary>> getByDynamicProjectionInterface(@RequestParam String status) {
-        List<ProductSummary> summaries = productProjectionService.findByDynamicProjection(status, ProductSummary.class);
-        return ResponseEntity.ok(summaries);
-    }
-
-    /**
-     * 4. Dynamic Projection (DTO)
-     * GET /api/products/projection/dynamic/dto?status=ACTIVE
-     *
-     * 런타임에 ProductDto.class 타입 지정
-     */
-    @GetMapping("/dynamic/dto")
-    public ResponseEntity<List<ProductDto>> getByDynamicProjectionDto(@RequestParam String status) {
-        List<ProductDto> dtos = productProjectionService.findByDynamicProjection(status, ProductDto.class);
+    @GetMapping("/record")
+    public ResponseEntity<List<ProductDto>> getByRecordProjection(@RequestParam String status) {
+        List<ProductDto> dtos = productProjectionService.findByRecordProjection(status);
         return ResponseEntity.ok(dtos);
     }
 }
