@@ -8,8 +8,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * - JpaRepository: 기본 CRUD 메서드 제공
  * - ProductQueryRepository: Query Methods 제공
  * - ProductPagingRepository: Paging Query Methods 제공
+ * - ProductProjectionRepository: Projection Query Methods 제공
  */
 public interface ProductRepository extends JpaRepository<Product, Long>,
         ProductQueryRepository,
-        ProductPagingRepository {
+        ProductPagingRepository,
+        ProductProjectionRepository {
 }
