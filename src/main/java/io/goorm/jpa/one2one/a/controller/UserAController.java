@@ -4,6 +4,7 @@ import io.goorm.jpa.one2one.a.service.UserService;
 import io.goorm.jpa.one2one.dto.UserCreateRequest;
 import io.goorm.jpa.one2one.dto.UserResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserAController {
     
+    @Qualifier("userAService")
     private final UserService userService;
     
     // C-1: 사용자 생성 (2번 저장)
@@ -30,7 +32,7 @@ public class UserAController {
         return ResponseEntity.ok(response);
     }
     
-    // R-2: 사용자 목록 조회 (N+1 확인)
+    // R-2: 사용자 목록 조회 (N+1 vs Fetch Join 토글)
     @GetMapping("/users")
     public ResponseEntity<List<UserResponse>> getUsers() {
         List<UserResponse> responses = userService.getUsers();

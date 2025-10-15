@@ -1,4 +1,4 @@
-package io.goorm.jpa.one2one.b.entity;
+package io.goorm.jpa.one2one.a.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -6,10 +6,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "tb_one2one_b_user")
+@Table(name = "tb_one2one_a_user")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User {
+public class UserA {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,17 +19,9 @@ public class User {
     
     private String email;
     
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "profile_id", unique = true, nullable = false)
-    private UserProfile profile;
-    
-    public User(String username, String email) {
+    public UserA(String username, String email) {
         this.username = username;
         this.email = email;
-    }
-    
-    public void setProfile(UserProfile profile) {
-        this.profile = profile;
     }
     
     public void updateInfo(String username, String email) {
