@@ -35,6 +35,19 @@ public class CommentService {
                 .collect(Collectors.toList());
     }
 
+    // 일반 Join 버전 (N+1 발생 - 비교용)
+    public List<CommentResponse> getCommentsWithJoin() {
+        List<Comment> comments = commentRepository.findAllWithJoin();
+        return comments.stream()
+                .map(c -> new CommentResponse(
+                        c.getId(),
+                        c.getContent(),
+                        c.getPost().getId(),
+                        c.getPost().getTitle()  // 여기서 N+1 발생!
+                ))
+                .collect(Collectors.toList());
+    }
+
     // Fetch Join 해결 버전
     public List<CommentResponse> getCommentsWithFetchJoin() {
         List<Comment> comments = commentRepository.findAllWithPost();

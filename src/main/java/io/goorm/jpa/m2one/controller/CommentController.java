@@ -22,9 +22,22 @@ public class CommentController {
     public ResponseEntity<List<CommentResponse>> getComments() {
         // 기본: N+1 발생
         return ResponseEntity.ok(commentService.getCommentsNPlusOne());
-        
+
         // Alt) Fetch Join 버전 (주석 해제하여 사용)
         // return ResponseEntity.ok(commentService.getCommentsWithFetchJoin());
+    }
+
+    // JOIN vs FETCH JOIN 비교용 엔드포인트
+    @GetMapping("/with-join")
+    public ResponseEntity<List<CommentResponse>> getCommentsWithJoin() {
+        // 일반 JOIN: N+1 발생 (WHERE 조건용)
+        return ResponseEntity.ok(commentService.getCommentsWithJoin());
+    }
+
+    @GetMapping("/with-fetch-join")
+    public ResponseEntity<List<CommentResponse>> getCommentsWithFetchJoin() {
+        // FETCH JOIN: N+1 해결 (즉시 로딩)
+        return ResponseEntity.ok(commentService.getCommentsWithFetchJoin());
     }
 
     // DTO 프로젝션 (페이징)

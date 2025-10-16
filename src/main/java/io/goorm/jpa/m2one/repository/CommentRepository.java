@@ -12,7 +12,13 @@ import java.util.List;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-    // Fetch Join (N+1 해결)
+    // 일반 Join (N+1 발생 - WHERE 조건용으로만 사용)
+    // JOIN: SELECT 절에 post가 포함되지 않음 → post 사용 시 지연 로딩으로 추가 쿼리 발생
+    @Query("select c from Comment c join c.post p")
+    List<Comment> findAllWithJoin();
+
+    // Fetch Join (N+1 해결 - 즉시 로딩)
+    // FETCH JOIN: SELECT 절에 post도 함께 조회 → 한 번의 쿼리로 모두 가져옴
     @Query("select c from Comment c join fetch c.post")
     List<Comment> findAllWithPost();
 
