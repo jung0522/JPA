@@ -7,55 +7,68 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * ⭐ 중간 엔티티 (Join Table Entity)
+ *
+ * Post와 Tag의 다대다 관계를 "일대다 + 다대일"로 분리
+ *
+ * 장점:
+ * 1. 추가 필드 자유롭게 추가 가능 (taggedAt, order, taggedBy 등)
+ * 2. 비즈니스 로직 추가 가능 (updateOrder 등)
+ * 3. 쿼리 제어 완벽
+ */
 @Entity
-@Table(name = "post_tags", 
-       uniqueConstraints = @UniqueConstraint(columnNames = {"post_id", "tag_id"}))
+@Table(name = "post_tags")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PostTag {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
+    // ✅ 다대일: PostTag → Post
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
-    
+
+    // ✅ 다대일: PostTag → Tag
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tag_id", nullable = false)
     private Tag tag;
-    
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-    
-    @Column(name = "status")
-    private String status;
-    
-    @Column(name = "order_value")
-    private Integer order;
-    
+
+    // ✅ 추가 필드 1: 태그 추가 날짜
+    @Column(nullable = false)
+    private LocalDateTime taggedAt;
+
+    // ✅ 추가 필드 2: 태그 순서 (과제용)
+    private Integer displayOrder;
+
+    // ✅ 추가 필드 3: 누가 추가했는지 (과제용)
+    private String taggedBy;
+
+    // 기본 생성자
     public PostTag(Post post, Tag tag) {
         this.post = post;
         this.tag = tag;
-        this.createdAt = LocalDateTime.now();
-        this.status = "ACTIVE";
-        this.order = 0;
+        this.taggedAt = LocalDateTime.now();
     }
-    
-    public PostTag(Post post, Tag tag, LocalDateTime createdAt, String status, Integer order) {
+
+    // 모든 필드를 받는 생성자 (과제용)
+    public PostTag(Post post, Tag tag, String taggedBy) {
         this.post = post;
         this.tag = tag;
-        this.createdAt = createdAt;
-        this.status = status;
-        this.order = order;
+        this.taggedAt = LocalDateTime.now();
+        this.taggedBy = taggedBy;
     }
-    
-    public void updateOrder(Integer order) {
-        this.order = order;
+
+    // ✅ 비즈니스 로직: 순서 변경
+    public void updateOrder(Integer newOrder) {
+        this.displayOrder = newOrder;
     }
-    
-    public void updateStatus(String status) {
-        this.status = status;
+
+    // ✅ 비즈니스 로직: 추가자 설정
+    public void setTaggedBy(String taggedBy) {
+        this.taggedBy = taggedBy;
     }
 }
