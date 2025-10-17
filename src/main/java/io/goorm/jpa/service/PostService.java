@@ -178,7 +178,15 @@ public class PostService {
      */
     @Transactional
     public void deleteComment(Long commentId) {
-        // 직접 삭제해도 orphanRemoval에 의해 관계가 끊어지면 삭제됨
-        commentRepository.deleteById(commentId);
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+
+        Post post = comment.getPost();
+
+        // orphanRemoval 시연: Post에서 Comment 제거 → 자동 삭제!
+        post.getComments().remove(comment);
+
+        // save() 불필요 - orphanRemoval=true가 자동으로 DELETE 실행
+        log.info("Post에서 댓글 제거 완료 - orphanRemoval이 자동으로 DELETE 처리");
     }
 }
