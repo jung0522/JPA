@@ -63,11 +63,8 @@ public class PostController {
     /**
      * 6. Entity 직접 반환 (문제 발생)
      */
-    @GetMapping("/{id}/entity")
-    public Post getPostEntity(@PathVariable Long id) {
-        return postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
-    }
+    @GetMapping("/entitys")
+    public List<Post>  getPostEntity(@PathVariable Long id)  { return postService.getEntity(); }
 
     /**
      * 7. DTO 반환 (정상)

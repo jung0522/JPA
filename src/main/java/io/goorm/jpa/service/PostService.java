@@ -120,6 +120,13 @@ public class PostService {
     /**
      * 게시글 상세 조회 (DTO 반환)
      */
+    public List<Post> getEntity() {
+        return postRepository.findAll();
+    }
+
+    /**
+     * 게시글 상세 조회 (DTO 반환)
+     */
     public PostResponse getPost(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
