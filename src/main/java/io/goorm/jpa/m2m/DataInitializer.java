@@ -26,6 +26,12 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
+        // 데이터 있으면 초기화 건너뛰기
+        if (tagRepository.count() > 0) {
+            log.info("데이터가 이미 존재하여 초기화를 건너뜁니다.");
+            return;
+        }
+
         log.info("=== M2M 테스트 데이터 초기화 시작 ===");
 
         // 1. 태그 생성
