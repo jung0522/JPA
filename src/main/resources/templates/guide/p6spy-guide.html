@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/guide-layout}">
+<head>
+    <title th:text="${pageTitle}">P6Spy SQL 로깅</title>
+</head>
+<body>
+    <div layout:fragment="content">
+
+        <!-- Page Title -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2" th:text="${pageTitle}">P6Spy SQL 로깅</h1>
+            <p class="text-gray-600">실제 파라미터가 바인딩된 SQL 쿼리 확인하기</p>
+        </div>
+
+        <!-- Overview -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🔍 P6Spy란?</h2>
+
+            <p class="text-gray-700 mb-6">
+                P6Spy는 <strong>실제 바인딩된 파라미터 값</strong>을 포함한 SQL 쿼리를 로그에 출력하는 라이브러리입니다.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-red-50 border-l-4 border-red-500 p-5 rounded">
+                    <h3 class="font-semibold text-gray-900 mb-3">❌ 일반 Hibernate 로그</h3>
+                    <div class="bg-gray-900 text-red-400 p-4 rounded text-xs font-mono overflow-x-auto">
+<pre>SELECT * FROM users WHERE username = ?
+-- 파라미터 값을 알 수 없음!</pre>
+                    </div>
+                </div>
+
+                <div class="bg-green-50 border-l-4 border-green-500 p-5 rounded">
+                    <h3 class="font-semibold text-gray-900 mb-3">✅ P6Spy 로그</h3>
+                    <div class="bg-gray-900 text-green-400 p-4 rounded text-xs font-mono overflow-x-auto">
+<pre>SELECT * FROM users WHERE username = 'admin'
+-- 실제 값이 보임!</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded">
+                <h3 class="font-semibold text-gray-900 mb-3">💡 왜 필요한가?</h3>
+                <ul class="text-sm text-gray-700 space-y-2">
+                    <li>• <strong>디버깅 편의성</strong>: 쿼리를 그대로 복사해서 H2 Console에 붙여넣기 가능</li>
+                    <li>• <strong>성능 분석</strong>: 실제 실행되는 쿼리 확인으로 N+1 문제 발견</li>
+                    <li>• <strong>학습 도구</strong>: JPA가 생성하는 SQL을 정확히 파악</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Current Setup -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">⚙️ 현재 프로젝트 설정</h2>
+
+            <!-- Dependency -->
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">1. build.gradle 의존성</h3>
+                <div class="bg-gray-900 text-green-400 p-5 rounded text-sm overflow-x-auto">
+<pre><code>dependencies {
+    // P6Spy - SQL 로깅 (실제 파라미터 포함)
+    implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.0'
+}</code></pre>
+                </div>
+                <p class="text-xs text-gray-600 mt-3">
+                    <strong>gavlyukovskiy/p6spy-spring-boot-starter</strong>는 Spring Boot 자동 설정을 제공하는 간편한 라이브러리입니다.
+                </p>
+            </div>
+
+            <!-- Configuration -->
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">2. application-jpa.properties 설정</h3>
+                <div class="bg-gray-900 text-green-400 p-5 rounded text-sm overflow-x-auto">
+<pre><code># JPA/Hibernate
+spring.jpa.show-sql=false  # ← Hibernate의 기본 로그 비활성화
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.use_sql_comments=true
+
+# P6Spy - SQL 로깅 (실제 파라미터 포함)
+decorator.datasource.p6spy.enable-logging=true  # ← P6Spy 활성화
+decorator.datasource.p6spy.multiline=true       # ← 멀티라인 포맷
+decorator.datasource.p6spy.logging=slf4j        # ← SLF4J 로거 사용</code></pre>
+                </div>
+                <div class="mt-4 bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                    <p class="text-xs text-gray-800">
+                        <strong>주의:</strong> <code>show-sql=false</code>로 설정하여 Hibernate의 기본 로그와 중복을 방지합니다.
+                        P6Spy가 더 보기 좋은 형태로 출력합니다.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Why These Settings -->
+            <div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">3. 사용 이유</h3>
+                <div class="space-y-3">
+                    <div class="border-l-4 border-blue-500 pl-4">
+                        <p class="font-semibold text-gray-900 text-sm mb-1">enable-logging=true</p>
+                        <p class="text-xs text-gray-600">P6Spy 로깅 활성화 (필수)</p>
+                    </div>
+                    <div class="border-l-4 border-purple-500 pl-4">
+                        <p class="font-semibold text-gray-900 text-sm mb-1">multiline=true</p>
+                        <p class="text-xs text-gray-600">SQL을 여러 줄로 보기 좋게 포맷 (가독성 향상)</p>
+                    </div>
+                    <div class="border-l-4 border-green-500 pl-4">
+                        <p class="font-semibold text-gray-900 text-sm mb-1">logging=slf4j</p>
+                        <p class="text-xs text-gray-600">Spring Boot의 표준 로깅 시스템(SLF4J) 사용</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Example Output -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">📋 로그 출력 예시</h2>
+
+            <div class="space-y-6">
+                <!-- Example 1: Login -->
+                <div class="border border-gray-300 rounded-lg p-5">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">로그인 시 사용자 조회</h3>
+                    <div class="bg-gray-900 text-green-400 p-4 rounded text-xs font-mono overflow-x-auto">
+<pre>2025-10-19 15:30:00.123 [http-nio-8080-exec-1] INFO  p6spy -
+#1725881400123 | took 5ms | statement | connection 1 | url jdbc:h2:mem:testdb
+
+SELECT
+    user0_.user_no AS user_no1_0_,
+    user0_.username AS username2_0_,
+    user0_.password AS password3_0_,
+    user0_.email AS email4_0_,
+    user0_.role AS role5_0_
+FROM users user0_
+WHERE user0_.username = 'admin';
+-- 👆 실제 파라미터 'admin'이 그대로 보임!</pre>
+                    </div>
+                </div>
+
+                <!-- Example 2: Save -->
+                <div class="border border-gray-300 rounded-lg p-5">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">새 사용자 생성 (Auditing 포함)</h3>
+                    <div class="bg-gray-900 text-green-400 p-4 rounded text-xs font-mono overflow-x-auto">
+<pre>INSERT INTO users
+    (username, password, email, full_name, role,
+     created_at, created_by, updated_at, last_modified_by, deleted)
+VALUES
+    ('student03', '$2a$10$...encrypted...', 'student03@goorm.io',
+     '학생03', 'USER',
+     '2025-10-19 15:31:00', 'admin',
+     '2025-10-19 15:31:00', 'admin', false);
+-- 👆 Auditing으로 자동 입력된 created_by='admin' 확인 가능!</pre>
+                    </div>
+                </div>
+
+                <!-- Example 3: N+1 Detection -->
+                <div class="border border-gray-300 rounded-lg p-5">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">N+1 문제 발견</h3>
+                    <div class="bg-gray-900 text-red-400 p-4 rounded text-xs font-mono overflow-x-auto">
+<pre>SELECT * FROM posts;  -- 1번 쿼리
+SELECT * FROM comments WHERE post_id = 1;  -- N번 쿼리 (반복!)
+SELECT * FROM comments WHERE post_id = 2;
+SELECT * FROM comments WHERE post_id = 3;
+...
+-- ❌ N+1 문제 발견! Fetch Join으로 해결 필요</pre>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-3">
+                        P6Spy 로그를 보면 예상보다 많은 쿼리가 실행되는 것을 쉽게 발견할 수 있습니다.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Advanced Options -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🔧 추가로 알아두면 좋은 설정</h2>
+
+            <div class="space-y-6">
+                <!-- Query Execution Time -->
+                <div class="border-l-4 border-orange-500 pl-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">쿼리 실행 시간 표시</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        P6Spy는 기본적으로 각 쿼리의 실행 시간을 표시합니다.
+                    </p>
+                    <div class="bg-gray-900 text-green-400 p-4 rounded text-xs font-mono overflow-x-auto">
+<pre>took 5ms | SELECT * FROM users WHERE username = 'admin';
+took 150ms | SELECT * FROM posts;  -- ⚠️ 느린 쿼리 발견!</pre>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-2">
+                        성능 문제가 있는 쿼리를 쉽게 찾을 수 있습니다.
+                    </p>
+                </div>
+
+                <!-- Slow Query Logging -->
+                <div class="border-l-4 border-red-500 pl-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">느린 쿼리만 로그에 출력</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        특정 시간 이상 걸리는 쿼리만 로깅하려면:
+                    </p>
+                    <div class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto">
+<pre><code># application-jpa.properties에 추가
+decorator.datasource.p6spy.log-slow-queries=true
+decorator.datasource.p6spy.slow-query-threshold=100  # 100ms 이상</code></pre>
+                    </div>
+                </div>
+
+                <!-- Production Environment -->
+                <div class="border-l-4 border-purple-500 pl-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">운영 환경에서는 비활성화</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        P6Spy는 <strong>성능 오버헤드</strong>가 있으므로 운영 환경에서는 비활성화하는 것을 권장합니다.
+                    </p>
+                    <div class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto">
+<pre><code># application-prod.properties (운영 환경)
+decorator.datasource.p6spy.enable-logging=false  # ← 비활성화
+
+# 또는 의존성을 runtimeOnly로 변경
+runtimeOnly 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.0'</code></pre>
+                    </div>
+                </div>
+
+                <!-- Custom Format -->
+                <div class="border-l-4 border-blue-500 pl-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">커스텀 포맷 (선택)</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        더 세밀한 제어가 필요하면 <code class="bg-gray-100 px-2 py-1 rounded text-xs">spy.properties</code> 파일을 사용할 수 있습니다.
+                    </p>
+                    <div class="bg-gray-50 border border-gray-300 rounded p-4 text-xs text-gray-700">
+                        <p class="mb-2"><strong>src/main/resources/spy.properties</strong> 파일 생성:</p>
+                        <div class="bg-gray-900 text-green-400 p-3 rounded font-mono overflow-x-auto">
+<pre>dateformat=yyyy-MM-dd HH:mm:ss
+logMessageFormat=com.p6spy.engine.spy.appender.CustomLineFormat
+customLogMessageFormat=%(currentTime) | took %(executionTime)ms | %(sql)</pre>
+                        </div>
+                        <p class="text-gray-600 mt-2">현재 프로젝트는 기본 설정으로 충분하므로 별도 파일 불필요</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How to Use -->
+        <section class="bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🚀 사용 방법</h2>
+
+            <div class="space-y-6">
+                <div class="border-l-4 border-green-500 pl-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">1. 애플리케이션 실행</h3>
+                    <div class="bg-gray-900 text-green-400 p-4 rounded text-sm font-mono">
+<pre>./gradlew bootRun</pre>
+                    </div>
+                </div>
+
+                <div class="border-l-4 border-blue-500 pl-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">2. API 호출</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        Swagger UI 또는 Postman으로 API를 호출하면 콘솔에 P6Spy 로그가 출력됩니다.
+                    </p>
+                </div>
+
+                <div class="border-l-4 border-purple-500 pl-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">3. 로그 확인</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        IntelliJ 또는 터미널에서 <code class="bg-gray-100 px-2 py-1 rounded text-xs">p6spy</code> 키워드로 검색하면 SQL 로그만 필터링할 수 있습니다.
+                    </p>
+                </div>
+
+                <div class="border-l-4 border-orange-500 pl-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">4. 쿼리 복사 & 테스트</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        P6Spy 로그에서 SQL을 복사해서 H2 Console에 직접 붙여넣어 테스트할 수 있습니다.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded">
+                <h3 class="font-semibold text-gray-900 mb-2">💡 실무 팁</h3>
+                <ul class="text-sm text-gray-700 space-y-2">
+                    <li>• 개발 단계에서는 항상 P6Spy를 활성화하여 JPA가 생성하는 쿼리를 확인하세요</li>
+                    <li>• N+1 문제는 P6Spy 로그로 가장 쉽게 발견할 수 있습니다</li>
+                    <li>• Auditing이 제대로 작동하는지 확인할 때도 유용합니다 (created_by, updated_at 등)</li>
+                    <li>• 운영 환경 배포 전에는 반드시 비활성화하세요 (성능 오버헤드)</li>
+                </ul>
+            </div>
+        </section>
+
+    </div>
+</body>
+</html>

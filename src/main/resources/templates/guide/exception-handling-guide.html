@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/guide-layout}">
+<head>
+    <title th:text="${pageTitle}">예외 처리 가이드</title>
+</head>
+<body>
+    <div layout:fragment="content">
+
+        <!-- Page Title -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2" th:text="${pageTitle}">예외 처리 가이드</h1>
+            <p class="text-gray-600">Spring Boot 전역 예외 처리 및 에러 응답 표준화</p>
+        </div>
+
+        <!-- Exception Flow Diagram -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🔄 예외 처리 흐름도</h2>
+
+            <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg mb-6">
+                <div class="space-y-4">
+                    <!-- Step 1 -->
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">1</div>
+                        <div class="ml-4 flex-1">
+                            <p class="font-semibold text-gray-900">Controller에서 예외 발생</p>
+                            <code class="text-sm text-gray-600">throw new BusinessException(ErrorCode.USER_NOT_FOUND)</code>
+                        </div>
+                    </div>
+                    <div class="ml-6 border-l-4 border-blue-300 h-8"></div>
+
+                    <!-- Step 2 -->
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">2</div>
+                        <div class="ml-4 flex-1">
+                            <p class="font-semibold text-gray-900">Exception Handler가 예외를 캐치</p>
+                            <p class="text-sm text-gray-600">
+                                <strong>REST API:</strong> RestApiExceptionHandler (@RestControllerAdvice)<br>
+                                <strong>MVC 웹:</strong> MvcExceptionHandler (@ControllerAdvice)
+                            </p>
+                        </div>
+                    </div>
+                    <div class="ml-6 border-l-4 border-green-300 h-8"></div>
+
+                    <!-- Step 3 -->
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-purple-500 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">3</div>
+                        <div class="ml-4 flex-1">
+                            <p class="font-semibold text-gray-900">ErrorCode에서 메시지 키 추출</p>
+                            <code class="text-sm text-gray-600">errorCode.getMessageKey() → "error.user.not.found"</code>
+                        </div>
+                    </div>
+                    <div class="ml-6 border-l-4 border-purple-300 h-8"></div>
+
+                    <!-- Step 4 -->
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">4</div>
+                        <div class="ml-4 flex-1">
+                            <p class="font-semibold text-gray-900">MessageSource에서 다국어 메시지 조회</p>
+                            <p class="text-sm text-gray-600">
+                                <strong>messages.properties:</strong> "사용자를 찾을 수 없습니다."<br>
+                                <strong>messages_en.properties:</strong> "User not found."
+                            </p>
+                        </div>
+                    </div>
+                    <div class="ml-6 border-l-4 border-orange-300 h-8"></div>
+
+                    <!-- Step 5 -->
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-red-500 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">5</div>
+                        <div class="ml-4 flex-1">
+                            <p class="font-semibold text-gray-900">로깅 (개발자용 상세 정보)</p>
+                            <code class="text-sm text-gray-600">log.warn("[BusinessException] code=USER001, detailMessage=..., args=...")</code>
+                        </div>
+                    </div>
+                    <div class="ml-6 border-l-4 border-red-300 h-8"></div>
+
+                    <!-- Step 6 -->
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gray-700 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">6</div>
+                        <div class="ml-4 flex-1">
+                            <p class="font-semibold text-gray-900">클라이언트에 응답</p>
+                            <p class="text-sm text-gray-600">
+                                <strong>JSON (API):</strong> <code>{"code": "USER001", "message": "사용자를 찾을 수 없습니다."}</code><br>
+                                <strong>HTML (WEB):</strong> error.html 페이지 렌더링
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                <p class="text-gray-800 text-sm">
+                    <strong>💡 핵심:</strong> 개발자는 상세 로그를 보고, 클라이언트는 사용자 친화적인 메시지를 받습니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- RestControllerAdvice vs ControllerAdvice -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🎯 @RestControllerAdvice vs @ControllerAdvice</h2>
+
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <!-- RestControllerAdvice -->
+                <div class="border-2 border-blue-300 rounded-lg p-6 bg-blue-50">
+                    <h3 class="text-xl font-semibold text-blue-900 mb-4">@RestControllerAdvice</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <p class="font-semibold text-gray-800">대상</p>
+                            <p class="text-gray-700"><code class="bg-white px-2 py-1 rounded">@RestController</code> 전용</p>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">응답 형식</p>
+                            <p class="text-gray-700">JSON (자동으로 @ResponseBody 적용)</p>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">적용 패키지</p>
+                            <p class="text-gray-700"><code class="bg-white px-2 py-1 rounded">io.goorm.jpa.controller.api</code></p>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">반환 값</p>
+                            <pre class="bg-gray-900 text-green-400 p-3 rounded mt-2 overflow-x-auto"><code>ResponseEntity&lt;ErrorResponse&gt;</code></pre>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">사용 예시</p>
+                            <pre class="bg-gray-900 text-green-400 p-3 rounded mt-2 overflow-x-auto text-xs"><code>@RestControllerAdvice(
+  basePackages = "io.goorm.jpa.controller.api"
+)
+public class RestApiExceptionHandler {
+
+  @ExceptionHandler(BusinessException.class)
+  public ResponseEntity&lt;ErrorResponse&gt; handle(...) {
+    return ResponseEntity
+      .status(e.getErrorCode().getHttpStatus())
+      .body(ErrorResponse.of(...));
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ControllerAdvice -->
+                <div class="border-2 border-green-300 rounded-lg p-6 bg-green-50">
+                    <h3 class="text-xl font-semibold text-green-900 mb-4">@ControllerAdvice</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <p class="font-semibold text-gray-800">대상</p>
+                            <p class="text-gray-700"><code class="bg-white px-2 py-1 rounded">@Controller</code> 전용</p>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">응답 형식</p>
+                            <p class="text-gray-700">HTML (View 이름 반환)</p>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">적용 패키지</p>
+                            <p class="text-gray-700"><code class="bg-white px-2 py-1 rounded">io.goorm.jpa.controller.web</code></p>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">반환 값</p>
+                            <pre class="bg-gray-900 text-green-400 p-3 rounded mt-2 overflow-x-auto"><code>String (View 이름)</code></pre>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">사용 예시</p>
+                            <pre class="bg-gray-900 text-green-400 p-3 rounded mt-2 overflow-x-auto text-xs"><code>@ControllerAdvice(
+  basePackages = "io.goorm.jpa.controller.web"
+)
+public class MvcExceptionHandler {
+
+  @ExceptionHandler(BusinessException.class)
+  public String handle(..., Model model) {
+    model.addAttribute("errorMessage", ...);
+    return "error/error";  // HTML 템플릿
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-5 rounded">
+                <h4 class="font-semibold text-gray-900 mb-2">⚠️ 주의사항</h4>
+                <p class="text-sm text-gray-800 mb-2">
+                    <strong>basePackages를 반드시 지정하세요!</strong>
+                </p>
+                <p class="text-sm text-gray-700">
+                    만약 둘 중 하나만 있고 basePackages를 지정하지 않으면, <code class="bg-white px-2 py-1 rounded">@RestController</code>와 <code class="bg-white px-2 py-1 rounded">@Controller</code> 모두 처리하게 됩니다. 이는 의도치 않은 동작을 유발할 수 있습니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- Logging Configuration -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">📝 로깅 설정 가이드</h2>
+
+            <p class="text-gray-700 mb-6">
+                Exception Handler는 개발자용 상세 로그를 남기고, 클라이언트에게는 사용자 친화적인 메시지를 전달합니다.
+            </p>
+
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">로깅 레벨별 차이</h3>
+
+            <div class="space-y-4 mb-6">
+                <!-- WARN Level -->
+                <div class="border border-yellow-300 bg-yellow-50 rounded-lg p-5">
+                    <div class="flex items-center mb-2">
+                        <span class="px-3 py-1 bg-yellow-500 text-white font-semibold rounded text-sm mr-3">WARN</span>
+                        <h4 class="font-semibold text-gray-900">비즈니스 예외 (복구 가능)</h4>
+                    </div>
+                    <p class="text-sm text-gray-700 mb-3">사용자 입력 오류, 권한 없음 등</p>
+                    <pre class="bg-gray-900 text-yellow-400 p-3 rounded text-xs overflow-x-auto"><code>log.warn("[BusinessException] code={}, detailMessage={}, args={}",
+    e.getErrorCode().getCode(),
+    e.getDetailMessage(),
+    e.getArgs() != null ? Arrays.toString(e.getArgs()) : "none");</code></pre>
+                    <p class="text-xs text-gray-600 mt-2">
+                        <strong>Stack Trace:</strong> 출력하지 않음 (경고성 메시지만)
+                    </p>
+                </div>
+
+                <!-- ERROR Level -->
+                <div class="border border-red-300 bg-red-50 rounded-lg p-5">
+                    <div class="flex items-center mb-2">
+                        <span class="px-3 py-1 bg-red-500 text-white font-semibold rounded text-sm mr-3">ERROR</span>
+                        <h4 class="font-semibold text-gray-900">시스템 예외 (복구 불가)</h4>
+                    </div>
+                    <p class="text-sm text-gray-700 mb-3">DB 연결 실패, 예상치 못한 에러 등</p>
+                    <pre class="bg-gray-900 text-red-400 p-3 rounded text-xs overflow-x-auto"><code>log.error("[DataAccessException] type={}, message={}",
+    e.getClass().getSimpleName(),
+    e.getMessage(),
+    e);  // 마지막에 예외 객체 전달 → Stack Trace 출력</code></pre>
+                    <p class="text-xs text-gray-600 mt-2">
+                        <strong>Stack Trace:</strong> 자동 출력 (문제 분석에 필수)
+                    </p>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">application-jpa.properties 로깅 설정</h3>
+
+            <div class="bg-gray-900 text-green-400 p-5 rounded mb-4 overflow-x-auto">
+                <pre class="text-sm"><code># 로깅 레벨 설정
+logging.level.root=INFO
+logging.level.io.goorm.jpa=DEBUG                           # 우리 애플리케이션 로그
+logging.level.org.hibernate.SQL=DEBUG                      # SQL 쿼리
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE  # SQL 파라미터
+logging.level.org.springframework.security=DEBUG           # Security 로그
+logging.level.org.springframework.web=DEBUG                # Web 요청/응답 로그
+
+# 로그 출력 패턴 (시간, 스레드, 레벨, 로거명, 메시지)
+logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</code></pre>
+            </div>
+
+            <h4 class="font-semibold text-gray-900 mb-3">로그 레벨별 의미</h4>
+            <div class="grid md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <ul class="space-y-2 text-sm">
+                        <li class="flex items-start">
+                            <span class="px-2 py-1 bg-red-100 text-red-800 rounded font-mono text-xs mr-2">ERROR</span>
+                            <span class="text-gray-700">즉시 조치 필요 (Stack Trace 포함)</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-mono text-xs mr-2">WARN</span>
+                            <span class="text-gray-700">경고 (Stack Trace 없음)</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded font-mono text-xs mr-2">INFO</span>
+                            <span class="text-gray-700">주요 이벤트 (서버 시작, 종료 등)</span>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <ul class="space-y-2 text-sm">
+                        <li class="flex items-start">
+                            <span class="px-2 py-1 bg-green-100 text-green-800 rounded font-mono text-xs mr-2">DEBUG</span>
+                            <span class="text-gray-700">개발 중 디버깅 정보</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded font-mono text-xs mr-2">TRACE</span>
+                            <span class="text-gray-700">매우 상세한 정보 (SQL 파라미터 등)</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-5 rounded">
+                <h4 class="font-semibold text-gray-900 mb-2">💡 실무 팁</h4>
+                <ul class="text-sm text-gray-700 space-y-1">
+                    <li>• <strong>개발 환경:</strong> DEBUG 레벨 사용 (상세 로그)</li>
+                    <li>• <strong>운영 환경:</strong> INFO 레벨 사용 (필요한 것만)</li>
+                    <li>• <strong>문제 발생 시:</strong> 일시적으로 DEBUG로 변경 후 분석</li>
+                    <li>• <strong>TRACE 레벨:</strong> SQL 파라미터 확인 시에만 사용 (성능 영향)</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Test Exception Handling -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🧪 예외 처리 테스트하기</h2>
+
+            <p class="text-gray-700 mb-4">
+                현재 프로젝트에서 제공하는 테스트 방법:
+            </p>
+
+            <div class="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-lg p-6 mb-6">
+                <h3 class="font-semibold text-gray-900 mb-3">1. Swagger UI로 잘못된 로그인 시도</h3>
+                <div class="space-y-2 text-sm">
+                    <p class="text-gray-700">① <a href="/swagger-ui/index.html" class="text-blue-600 hover:underline" target="_blank">Swagger UI 열기</a></p>
+                    <p class="text-gray-700">② <code class="bg-white px-2 py-1 rounded">POST /api/auth/login</code> 선택</p>
+                    <p class="text-gray-700">③ 존재하지 않는 사용자로 로그인 시도:</p>
+                    <pre class="bg-gray-900 text-green-400 p-3 rounded mt-2"><code>{
+  "username": "notexist",
+  "password": "1234"
+}</code></pre>
+                    <p class="text-gray-700 mt-2">④ 응답 확인:</p>
+                    <pre class="bg-gray-900 text-red-400 p-3 rounded mt-2"><code>{
+  "code": "USER001",
+  "message": "사용자를 찾을 수 없습니다."
+}</code></pre>
+                    <p class="text-gray-700 mt-2">⑤ 서버 로그 확인:</p>
+                    <pre class="bg-gray-900 text-yellow-400 p-3 rounded mt-2 text-xs"><code>2025-01-15 14:23:45.123 [http-nio-8080-exec-1] WARN  i.g.j.e.RestApiExceptionHandler - [BusinessException] code=USER001, detailMessage=null, args=none</code></pre>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
+                <h3 class="font-semibold text-gray-900 mb-3">2. 잘못된 비밀번호로 로그인 시도</h3>
+                <div class="space-y-2 text-sm">
+                    <p class="text-gray-700">① <code class="bg-white px-2 py-1 rounded">POST /api/auth/login</code></p>
+                    <p class="text-gray-700">② 올바른 username, 잘못된 password:</p>
+                    <pre class="bg-gray-900 text-green-400 p-3 rounded mt-2"><code>{
+  "username": "admin",
+  "password": "wrongpassword"
+}</code></pre>
+                    <p class="text-gray-700 mt-2">③ 응답 확인:</p>
+                    <pre class="bg-gray-900 text-red-400 p-3 rounded mt-2"><code>{
+  "code": "USER004",
+  "message": "비밀번호가 올바르지 않습니다."
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Error Code List -->
+        <section class="bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">📋 정의된 ErrorCode 목록</h2>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Currently Used -->
+                <div>
+                    <h3 class="text-lg font-semibold text-green-800 mb-3">✅ 현재 사용 중</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="bg-green-50 border border-green-200 rounded p-3">
+                            <p class="font-mono font-semibold text-green-900">USER001</p>
+                            <p class="text-gray-700">사용자를 찾을 수 없습니다</p>
+                        </div>
+                        <div class="bg-green-50 border border-green-200 rounded p-3">
+                            <p class="font-mono font-semibold text-green-900">USER004</p>
+                            <p class="text-gray-700">비밀번호가 올바르지 않습니다</p>
+                        </div>
+                        <div class="bg-green-50 border border-green-200 rounded p-3">
+                            <p class="font-mono font-semibold text-green-900">COMMON001</p>
+                            <p class="text-gray-700">서버 오류가 발생했습니다</p>
+                        </div>
+                        <div class="bg-green-50 border border-green-200 rounded p-3">
+                            <p class="font-mono font-semibold text-green-900">AUTH001~003</p>
+                            <p class="text-gray-700">인증 관련 오류</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Future Extension -->
+                <div>
+                    <h3 class="text-lg font-semibold text-blue-800 mb-3">📌 향후 확장 예정</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="bg-blue-50 border border-blue-200 rounded p-3">
+                            <p class="font-mono font-semibold text-blue-900">BOARD001~002</p>
+                            <p class="text-gray-700">게시판 관련 오류</p>
+                        </div>
+                        <div class="bg-blue-50 border border-blue-200 rounded p-3">
+                            <p class="font-mono font-semibold text-blue-900">COURSE001~003</p>
+                            <p class="text-gray-700">강의 관련 오류</p>
+                        </div>
+                        <div class="bg-blue-50 border border-blue-200 rounded p-3">
+                            <p class="font-mono font-semibold text-blue-900">ENROLLMENT001~004</p>
+                            <p class="text-gray-700">수강신청 관련 오류</p>
+                        </div>
+                        <div class="bg-blue-50 border border-blue-200 rounded p-3">
+                            <p class="font-mono font-semibold text-blue-900">CONCURRENCY001~002</p>
+                            <p class="text-gray-700">동시성 제어 오류</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-gray-50 p-5 rounded">
+                <p class="text-sm text-gray-700">
+                    <strong>💡 설계 의도:</strong> 실무에서는 에러코드를 미리 정의해두고 필요할 때 사용합니다.
+                    Backbone 단계에서 모두 정의해두면, 이후 기능 확장 시 일관된 에러 처리가 가능합니다.
+                </p>
+            </div>
+        </section>
+
+    </div>
+</body>
+</html>

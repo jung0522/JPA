@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/guide-layout}">
+<head>
+    <title th:text="${pageTitle}">Actuator 모니터링 가이드</title>
+</head>
+<body>
+    <div layout:fragment="content">
+
+        <!-- Page Title -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2" th:text="${pageTitle}">Actuator 모니터링 가이드</h1>
+            <p class="text-gray-600">Spring Boot Actuator를 활용한 애플리케이션 모니터링 및 관리</p>
+        </div>
+
+        <!-- Introduction -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">📊 Actuator란?</h2>
+            <p class="text-lg text-gray-700 mb-4">
+                Spring Boot Actuator는 애플리케이션의 **모니터링 및 관리 기능**을 제공하는 프로덕션 레벨 도구입니다.
+            </p>
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                <p class="text-gray-800">
+                    <strong>💡 핵심 개념:</strong> Actuator는 JSON 형식으로 메트릭과 상태 정보를 제공합니다.
+                    브라우저에서 직접 보기보다는 <strong>모니터링 도구(Prometheus, Grafana)</strong>나
+                    <strong>관리 대시보드(Spring Boot Admin)</strong>에서 활용합니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- Main Endpoints -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🎯 주요 엔드포인트</h2>
+
+            <!-- Health -->
+            <div class="mb-8">
+                <div class="flex items-start mb-3">
+                    <span class="px-3 py-1 bg-green-100 text-green-800 font-mono text-sm rounded mr-3">GET</span>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">/actuator/health</h3>
+                        <p class="text-gray-600 mb-3">애플리케이션의 전반적인 상태를 확인합니다.</p>
+                        <a href="/actuator/health" target="_blank"
+                           class="inline-block bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm font-medium transition">
+                            직접 확인하기 →
+                        </a>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="text-sm font-semibold text-gray-700 mb-2">응답 예시:</p>
+                    <pre class="text-xs bg-gray-900 text-green-400 p-4 rounded overflow-x-auto"><code>{
+  "status": "UP",
+  "components": {
+    "db": {
+      "status": "UP",
+      "details": { "database": "H2" }
+    },
+    "diskSpace": {
+      "status": "UP"
+    }
+  }
+}</code></pre>
+                    <div class="mt-3 text-sm text-gray-700">
+                        <p><strong>✅ status: UP</strong> → 정상 동작 중</p>
+                        <p><strong>❌ status: DOWN</strong> → 문제 발생 (DB 연결 끊김, 디스크 부족 등)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics List -->
+            <div class="mb-8">
+                <div class="flex items-start mb-3">
+                    <span class="px-3 py-1 bg-blue-100 text-blue-800 font-mono text-sm rounded mr-3">GET</span>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">/actuator/metrics</h3>
+                        <p class="text-gray-600 mb-3">측정 가능한 모든 메트릭의 목록을 반환합니다.</p>
+                        <a href="/actuator/metrics" target="_blank"
+                           class="inline-block bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium transition">
+                            직접 확인하기 →
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Specific Metric -->
+            <div class="mb-8">
+                <div class="flex items-start mb-3">
+                    <span class="px-3 py-1 bg-purple-100 text-purple-800 font-mono text-sm rounded mr-3">GET</span>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">/actuator/metrics/{메트릭명}</h3>
+                        <p class="text-gray-600 mb-3">특정 메트릭의 상세 정보를 확인합니다.</p>
+                        <div class="space-x-2">
+                            <a href="/actuator/metrics/jvm.memory.used" target="_blank"
+                               class="inline-block bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded text-sm font-medium transition">
+                                메모리 사용량 →
+                            </a>
+                            <a href="/actuator/metrics/http.server.requests" target="_blank"
+                               class="inline-block bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded text-sm font-medium transition">
+                                HTTP 요청 통계 →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Frequently Used Metrics -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🔥 자주 사용하는 메트릭</h2>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- JVM Memory -->
+                <div class="border border-gray-200 rounded-lg p-5 hover:shadow-md transition">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">💾 JVM 메모리</h3>
+                    <p class="text-sm text-gray-600 mb-3">메모리 사용량 및 메모리 누수 확인</p>
+                    <code class="block bg-gray-100 px-2 py-1 rounded text-xs mb-1">jvm.memory.used</code>
+                    <code class="block bg-gray-100 px-2 py-1 rounded text-xs">jvm.memory.max</code>
+                </div>
+
+                <!-- GC -->
+                <div class="border border-gray-200 rounded-lg p-5 hover:shadow-md transition">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">🗑️ Garbage Collection</h3>
+                    <p class="text-sm text-gray-600 mb-3">GC 발생 빈도 및 소요 시간</p>
+                    <code class="block bg-gray-100 px-2 py-1 rounded text-xs mb-1">jvm.gc.pause</code>
+                    <code class="block bg-gray-100 px-2 py-1 rounded text-xs">jvm.gc.memory.allocated</code>
+                </div>
+
+                <!-- HTTP Requests -->
+                <div class="border border-gray-200 rounded-lg p-5 hover:shadow-md transition">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">🌐 HTTP 요청</h3>
+                    <p class="text-sm text-gray-600 mb-3">API 호출 횟수 및 응답 시간</p>
+                    <code class="block bg-gray-100 px-2 py-1 rounded text-xs">http.server.requests</code>
+                </div>
+
+                <!-- DB Connection Pool -->
+                <div class="border border-gray-200 rounded-lg p-5 hover:shadow-md transition">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">🔌 DB 커넥션 풀</h3>
+                    <p class="text-sm text-gray-600 mb-3">HikariCP 커넥션 풀 상태</p>
+                    <code class="block bg-gray-100 px-2 py-1 rounded text-xs mb-1">hikaricp.connections.active</code>
+                    <code class="block bg-gray-100 px-2 py-1 rounded text-xs">hikaricp.connections.idle</code>
+                </div>
+
+                <!-- CPU -->
+                <div class="border border-gray-200 rounded-lg p-5 hover:shadow-md transition">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">⚡ CPU 사용량</h3>
+                    <p class="text-sm text-gray-600 mb-3">시스템 및 프로세스 CPU</p>
+                    <code class="block bg-gray-100 px-2 py-1 rounded text-xs mb-1">system.cpu.usage</code>
+                    <code class="block bg-gray-100 px-2 py-1 rounded text-xs">process.cpu.usage</code>
+                </div>
+
+                <!-- Thread -->
+                <div class="border border-gray-200 rounded-lg p-5 hover:shadow-md transition">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">🧵 스레드</h3>
+                    <p class="text-sm text-gray-600 mb-3">JVM 스레드 상태</p>
+                    <code class="block bg-gray-100 px-2 py-1 rounded text-xs mb-1">jvm.threads.live</code>
+                    <code class="block bg-gray-100 px-2 py-1 rounded text-xs">jvm.threads.peak</code>
+                </div>
+            </div>
+        </section>
+
+        <!-- Use Cases -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🎓 실무 활용 시나리오</h2>
+
+            <div class="space-y-6">
+                <!-- Scenario 1 -->
+                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-5 rounded">
+                    <h3 class="font-semibold text-gray-900 mb-2">1️⃣ "API가 갑자기 느려졌어요!"</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        <strong>확인 방법:</strong> <code class="bg-white px-2 py-1 rounded">/actuator/metrics/http.server.requests</code>
+                    </p>
+                    <ul class="text-sm text-gray-700 space-y-1 ml-4">
+                        <li>• COUNT: 요청이 몇 번 왔는지</li>
+                        <li>• TOTAL_TIME: 총 소요 시간</li>
+                        <li>• MAX: 가장 느린 요청 시간</li>
+                        <li>• 평균 응답시간 = TOTAL_TIME / COUNT</li>
+                    </ul>
+                </div>
+
+                <!-- Scenario 2 -->
+                <div class="bg-red-50 border-l-4 border-red-500 p-5 rounded">
+                    <h3 class="font-semibold text-gray-900 mb-2">2️⃣ "메모리가 계속 증가해요!"</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        <strong>확인 방법:</strong> <code class="bg-white px-2 py-1 rounded">/actuator/metrics/jvm.memory.used</code>
+                    </p>
+                    <ul class="text-sm text-gray-700 space-y-1 ml-4">
+                        <li>• 주기적으로 확인해서 계속 증가하면 → 메모리 누수 의심</li>
+                        <li>• GC 후에도 줄어들지 않으면 → 큰 객체가 계속 생성되고 있음</li>
+                    </ul>
+                </div>
+
+                <!-- Scenario 3 -->
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-5 rounded">
+                    <h3 class="font-semibold text-gray-900 mb-2">3️⃣ "DB 연결이 안 돼요!"</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        <strong>확인 방법:</strong> <code class="bg-white px-2 py-1 rounded">/actuator/health</code>
+                    </p>
+                    <ul class="text-sm text-gray-700 space-y-1 ml-4">
+                        <li>• db.status: DOWN → DB 연결 문제</li>
+                        <li>• hikaricp.connections.active가 최대치 → 커넥션 풀 부족</li>
+                    </ul>
+                </div>
+
+                <!-- Scenario 4 -->
+                <div class="bg-green-50 border-l-4 border-green-500 p-5 rounded">
+                    <h3 class="font-semibold text-gray-900 mb-2">4️⃣ "JPA N+1 문제 있나요?"</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        <strong>확인 방법:</strong> 로그 + HTTP 요청 시간 비교
+                    </p>
+                    <ul class="text-sm text-gray-700 space-y-1 ml-4">
+                        <li>• P6Spy 로그로 쿼리 개수 확인</li>
+                        <li>• <code class="bg-white px-2 py-1 rounded">http.server.requests</code>로 응답 시간 확인</li>
+                        <li>• 쿼리가 많으면서 응답 시간이 길면 → N+1 문제</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Security Section -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🔒 운영 환경 보안 설정</h2>
+
+            <div class="bg-red-50 border-l-4 border-red-600 p-5 rounded mb-6">
+                <p class="text-red-900 font-semibold mb-2">⚠️ 주의: 현재 설정은 개발 환경용입니다!</p>
+                <p class="text-red-800 text-sm">
+                    운영 환경에서는 Actuator 엔드포인트를 모두에게 공개하면 안 됩니다.
+                    시스템 정보 유출 및 보안 위협이 발생할 수 있습니다.
+                </p>
+            </div>
+
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">운영 환경 권장 설정</h3>
+
+            <div class="space-y-6">
+                <!-- 1. Expose Only Necessary Endpoints -->
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-2">1. 필요한 엔드포인트만 노출</h4>
+                    <p class="text-sm text-gray-600 mb-3"><code>application.properties</code> 수정:</p>
+                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code># 개발 환경 (현재)
+management.endpoints.web.exposure.include=health,info,metrics
+
+# 운영 환경 (권장)
+management.endpoints.web.exposure.include=health,info
+management.endpoint.health.show-details=when-authorized</code></pre>
+                </div>
+
+                <!-- 2. Add Authentication -->
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-2">2. 인증 추가</h4>
+                    <p class="text-sm text-gray-600 mb-3"><code>SecurityConfig.java</code> 수정:</p>
+                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code>// 개발 환경 (현재)
+.requestMatchers("/actuator/**").permitAll()
+
+// 운영 환경 (권장)
+.requestMatchers("/actuator/health").permitAll()  // health만 공개
+.requestMatchers("/actuator/**").hasRole("ADMIN")  // 나머지는 ADMIN만</code></pre>
+                </div>
+
+                <!-- 3. Change Base Path -->
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-2">3. 기본 경로 변경</h4>
+                    <p class="text-sm text-gray-600 mb-3">예측 가능한 <code>/actuator</code> 경로를 변경:</p>
+                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code># application.properties
+management.endpoints.web.base-path=/internal-monitoring</code></pre>
+                    <p class="text-sm text-gray-600 mt-2">
+                        → 접근 경로: <code class="bg-gray-100 px-2 py-1 rounded">/internal-monitoring/health</code>
+                    </p>
+                </div>
+
+                <!-- 4. Network Restriction -->
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-2">4. 네트워크 제한</h4>
+                    <p class="text-sm text-gray-600 mb-3">방화벽 또는 인프라 레벨에서 접근 제한:</p>
+                    <ul class="text-sm text-gray-700 space-y-1 ml-4">
+                        <li>• VPN을 통해서만 접근 허용</li>
+                        <li>• 특정 IP 대역만 허용 (관리자 네트워크)</li>
+                        <li>• Kubernetes: NetworkPolicy로 제한</li>
+                    </ul>
+                </div>
+
+                <!-- 5. Use Management Port -->
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-2">5. 별도 포트 사용</h4>
+                    <p class="text-sm text-gray-600 mb-3">Actuator를 별도 포트로 분리:</p>
+                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code># application.properties
+server.port=8080
+management.server.port=9090  # Actuator 전용 포트</code></pre>
+                    <p class="text-sm text-gray-600 mt-2">
+                        → 일반 사용자는 8080만, 관리자는 9090도 접근 가능하도록 설정
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-blue-50 p-5 rounded">
+                <h4 class="font-semibold text-gray-900 mb-2">💡 운영 환경 체크리스트</h4>
+                <ul class="text-sm text-gray-700 space-y-1">
+                    <li>☐ 필요한 엔드포인트만 노출했는가?</li>
+                    <li>☐ 민감한 엔드포인트에 인증을 추가했는가?</li>
+                    <li>☐ 기본 경로를 변경했는가?</li>
+                    <li>☐ 네트워크 레벨에서 접근 제한을 설정했는가?</li>
+                    <li>☐ 모니터링 도구(Prometheus, Grafana)와 연동했는가?</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Advanced Usage -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🚀 더 나아가기</h2>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="text-center p-6 border border-gray-200 rounded-lg">
+                    <div class="text-4xl mb-3">📈</div>
+                    <h3 class="font-semibold text-gray-900 mb-2">Prometheus + Grafana</h3>
+                    <p class="text-sm text-gray-600">메트릭을 시각화하고 실시간 모니터링 대시보드 구축</p>
+                </div>
+
+                <div class="text-center p-6 border border-gray-200 rounded-lg">
+                    <div class="text-4xl mb-3">🎛️</div>
+                    <h3 class="font-semibold text-gray-900 mb-2">Spring Boot Admin</h3>
+                    <p class="text-sm text-gray-600">Actuator 정보를 웹 UI로 확인할 수 있는 관리 도구</p>
+                </div>
+
+                <div class="text-center p-6 border border-gray-200 rounded-lg">
+                    <div class="text-4xl mb-3">🔔</div>
+                    <h3 class="font-semibold text-gray-900 mb-2">알람 설정</h3>
+                    <p class="text-sm text-gray-600">메모리 80% 초과, 응답 시간 3초 이상 시 알람 전송</p>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</body>
+</html>

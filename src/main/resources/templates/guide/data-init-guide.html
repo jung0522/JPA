@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/guide-layout}">
+<head>
+    <title th:text="${pageTitle}">데이터 초기화</title>
+</head>
+<body>
+    <div layout:fragment="content">
+
+        <!-- Page Title -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2" th:text="${pageTitle}">데이터 초기화</h1>
+            <p class="text-gray-600">CommandLineRunner를 이용한 테스트 데이터 자동 생성</p>
+        </div>
+
+        <!-- Overview -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🌱 JpaDataInitializer 역할</h2>
+
+            <p class="text-gray-700 mb-6">
+                <code class="bg-gray-100 px-2 py-1 rounded">JpaDataInitializer</code>는
+                애플리케이션 시작 시 자동으로 테스트 데이터를 생성하는 컴포넌트입니다.
+            </p>
+
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded mb-6">
+                <h3 class="font-semibold text-gray-900 mb-3">✅ 현재 동작</h3>
+                <ul class="text-sm text-gray-700 space-y-2">
+                    <li>• <strong>CommandLineRunner</strong> 인터페이스 구현으로 애플리케이션 시작 후 자동 실행</li>
+                    <li>• <strong>@Profile("jpa")</strong>로 특정 프로파일에서만 실행 (운영 환경 제외 가능)</li>
+                    <li>• Admin 1명, 일반 사용자 2명 자동 생성</li>
+                    <li>• SecurityContext 설정으로 Auditing도 함께 작동</li>
+                </ul>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-gray-900 mb-2">📍 파일 위치</h4>
+                    <code class="text-xs bg-gray-100 px-2 py-1 rounded block">config/JpaDataInitializer.java</code>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-gray-900 mb-2">🔧 활성화 조건</h4>
+                    <code class="text-xs bg-gray-100 px-2 py-1 rounded block">spring.profiles.active=jpa</code>
+                </div>
+            </div>
+        </section>
+
+        <!-- CommandLineRunner -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">⚙️ CommandLineRunner란?</h2>
+
+            <p class="text-gray-700 mb-4">
+                Spring Boot에서 애플리케이션이 시작된 직후에 특정 코드를 실행하고 싶을 때 사용하는 인터페이스입니다.
+            </p>
+
+            <div class="bg-gray-900 text-green-400 p-5 rounded text-sm overflow-x-auto mb-4">
+<pre><code>@Component
+@Profile("jpa")  // ← jpa 프로파일에서만 실행
+public class JpaDataInitializer implements CommandLineRunner {
+
+    @Override
+    @Transactional
+    public void run(String... args) {
+        // ✅ 애플리케이션 시작 후 자동 실행되는 코드
+        // 테스트 데이터 생성 로직
+    }
+}</code></pre>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                    <h4 class="font-semibold text-gray-900 mb-2 text-sm">✅ 장점</h4>
+                    <ul class="text-xs text-gray-700 space-y-1">
+                        <li>• 개발 환경에서 테스트 데이터 자동 생성</li>
+                        <li>• 수동 데이터 입력 불필요</li>
+                        <li>• 팀원 간 동일한 초기 데이터 공유</li>
+                    </ul>
+                </div>
+                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                    <h4 class="font-semibold text-gray-900 mb-2 text-sm">⚠️ 주의점</h4>
+                    <ul class="text-xs text-gray-700 space-y-1">
+                        <li>• 매번 실행되므로 중복 데이터 방지 필요</li>
+                        <li>• 운영 환경에서는 비활성화 권장</li>
+                        <li>• 영구 DB 사용 시 추가 로직 필요</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- In-Memory DB Usage -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">💾 인메모리 DB에서의 사용 (현재 H2)</h2>
+
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded mb-6">
+                <h3 class="font-semibold text-gray-900 mb-3">현재 설정 (H2 In-Memory)</h3>
+                <p class="text-sm text-gray-700 mb-3">
+                    현재 프로젝트는 <strong>H2 인메모리 데이터베이스</strong>를 사용합니다.
+                </p>
+                <ul class="text-sm text-gray-700 space-y-2">
+                    <li>• ✅ 애플리케이션 재시작 시 데이터베이스가 완전히 초기화</li>
+                    <li>• ✅ 중복 데이터 걱정 없음 (매번 빈 DB에서 시작)</li>
+                    <li>• ✅ 현재 코드 그대로 사용 가능</li>
+                </ul>
+            </div>
+
+            <div class="bg-gray-50 border border-gray-300 rounded-lg p-5">
+                <h4 class="font-semibold text-gray-900 mb-3">현재 application-jpa.properties 설정</h4>
+                <div class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto">
+<pre><code>spring.datasource.url=jdbc:h2:mem:testdb
+spring.jpa.hibernate.ddl-auto=create
+
+# ✅ create: 매번 테이블 drop 후 재생성
+#    → JpaDataInitializer가 매번 새로운 데이터 생성</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Permanent DB Considerations -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">⚠️ 영구 DB 사용 시 추가 고려사항</h2>
+
+            <p class="text-gray-700 mb-6">
+                MySQL, PostgreSQL 같은 <strong>영구 데이터베이스</strong>를 사용할 때는
+                중복 데이터 생성을 방지하는 로직이 필요합니다.
+            </p>
+
+            <!-- Problem -->
+            <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded mb-6">
+                <h3 class="font-semibold text-gray-900 mb-3">🚨 문제 상황</h3>
+                <p class="text-sm text-gray-700 mb-3">
+                    영구 DB에서 <code class="bg-white px-2 py-1 rounded">ddl-auto=update</code> 또는
+                    <code class="bg-white px-2 py-1 rounded">validate</code> 사용 시:
+                </p>
+                <ul class="text-sm text-gray-700 space-y-2">
+                    <li>• ❌ 애플리케이션 재시작할 때마다 동일한 데이터 생성 시도</li>
+                    <li>• ❌ <code class="bg-white px-2 py-1 rounded">Duplicate entry 'admin' for key 'username'</code> 에러 발생</li>
+                    <li>• ❌ 애플리케이션 시작 실패</li>
+                </ul>
+            </div>
+
+            <!-- Solution -->
+            <div class="bg-green-50 border-l-4 border-green-500 p-6 rounded mb-6">
+                <h3 class="font-semibold text-gray-900 mb-3">✅ 해결 방법: 간단한 중복 실행 방지</h3>
+                <p class="text-sm text-gray-700 mb-4">
+                    메서드 시작 시 데이터가 이미 존재하면 바로 종료합니다.
+                </p>
+
+                <div class="bg-gray-900 text-green-400 p-5 rounded text-sm overflow-x-auto">
+<pre><code>@Override
+@Transactional
+public void run(String... args) {
+    log.info("=== JPA Data Initialization Started ===");
+
+    // ✅ 중복 실행 방지: 데이터가 이미 있으면 종료
+    if (userRepository.count() > 0) {
+        log.info("=== 데이터가 이미 존재하여 초기화를 건너뜁니다. ===");
+        return;
+    }
+
+    // Admin 사용자 생성
+    User admin = User.builder()
+            .username("admin")
+            .password(passwordEncoder.encode("1234"))
+            .email("admin@goorm.io")
+            .fullName("관리자")
+            .role(UserRole.ADMIN)
+            .build();
+    userRepository.save(admin);
+    log.info("Admin user created: {}", admin.getUsername());
+
+    // SecurityContext 설정 (Auditing을 위해)
+    Authentication authentication = new UsernamePasswordAuthenticationToken(
+            admin.getUserNo().toString(),
+            null,
+            List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+    );
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    // 일반 사용자 생성
+    User student01 = User.builder()
+            .username("student01")
+            .password(passwordEncoder.encode("1234"))
+            .email("student01@goorm.io")
+            .fullName("학생01")
+            .role(UserRole.USER)
+            .build();
+    userRepository.save(student01);
+    log.info("User created: {}", student01.getUsername());
+
+    User student02 = User.builder()
+            .username("student02")
+            .password(passwordEncoder.encode("1234"))
+            .email("student02@goorm.io")
+            .fullName("학생02")
+            .role(UserRole.USER)
+            .build();
+    userRepository.save(student02);
+    log.info("User created: {}", student02.getUsername());
+
+    log.info("=== JPA Data Initialization Completed ===");
+}</code></pre>
+                </div>
+
+                <div class="mt-4 bg-blue-50 p-4 rounded">
+                    <p class="text-xs text-gray-700">
+                        <strong>💡 간단하고 실용적!</strong>
+                    </p>
+                    <ul class="text-xs text-gray-700 mt-2 space-y-1">
+                        <li>• <code class="bg-white px-2 py-1 rounded">count() > 0</code> 한 번만 체크</li>
+                        <li>• 개별 필드 체크 불필요</li>
+                        <li>• 코드 간결, 유지보수 쉬움</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- MySQL Example -->
+            <div class="border border-gray-300 rounded-lg p-5">
+                <h4 class="font-semibold text-gray-900 mb-3">📋 영구 DB 설정 예시 (MySQL)</h4>
+                <div class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto">
+<pre><code># application-prod.properties (운영 환경)
+spring.datasource.url=jdbc:mysql://localhost:3306/mydb
+spring.datasource.username=root
+spring.datasource.password=password
+spring.jpa.hibernate.ddl-auto=validate  # ← 기존 테이블 유지
+
+# ✅ validate: 테이블 구조만 검증, 데이터 유지
+#    → existsByUsername() 체크 필수!</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Production Environment -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🚀 운영 환경에서 비활성화하기</h2>
+
+            <p class="text-gray-700 mb-6">
+                운영 환경에서는 테스트 데이터 생성이 불필요하므로 <code class="bg-gray-100 px-2 py-1 rounded">@Profile</code>로 제어합니다.
+            </p>
+
+            <div class="bg-green-50 border-l-4 border-green-500 p-6 rounded mb-6">
+                <h3 class="font-semibold text-gray-900 mb-3">✅ 현재 설정 (이미 적용됨)</h3>
+                <div class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto mb-3">
+<pre><code>@Component
+@Profile("jpa")  // ← "jpa" 프로파일에서만 실행
+public class JpaDataInitializer implements CommandLineRunner {
+    // ...
+}</code></pre>
+                </div>
+                <p class="text-sm text-gray-700">
+                    <code class="bg-white px-2 py-1 rounded">spring.profiles.active=jpa</code>일 때만 실행됩니다.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="border border-gray-200 rounded-lg p-5">
+                    <h4 class="font-semibold text-gray-900 mb-3">개발 환경 (application-jpa.properties)</h4>
+                    <div class="bg-gray-900 text-green-400 p-4 rounded text-xs">
+<pre><code># 실행됨 ✅
+spring.profiles.active=jpa</code></pre>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-2">
+                        → JpaDataInitializer 실행, 테스트 데이터 생성
+                    </p>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-5">
+                    <h4 class="font-semibold text-gray-900 mb-3">운영 환경 (application-prod.properties)</h4>
+                    <div class="bg-gray-900 text-green-400 p-4 rounded text-xs">
+<pre><code># 실행 안 됨 ❌
+spring.profiles.active=prod</code></pre>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-2">
+                        → JpaDataInitializer 실행 안 됨, 기존 데이터 유지
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- How to Add Test Data -->
+        <section class="bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">➕ 테스트 데이터 추가하는 방법</h2>
+
+            <p class="text-gray-700 mb-6">
+                새로운 엔티티(예: Board, Course)를 추가할 때 초기 데이터도 함께 생성하고 싶다면:
+            </p>
+
+            <div class="space-y-6">
+                <div class="border-l-4 border-blue-500 pl-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">1. Repository 주입</h3>
+                    <div class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto">
+<pre><code>@RequiredArgsConstructor
+public class JpaDataInitializer implements CommandLineRunner {
+
+    private final UserRepository userRepository;
+    private final BoardRepository boardRepository;  // ← 추가
+    private final PasswordEncoder passwordEncoder;
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="border-l-4 border-purple-500 pl-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">2. run() 메서드에 생성 로직 추가</h3>
+                    <div class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto">
+<pre><code>@Override
+@Transactional
+public void run(String... args) {
+    // ... 기존 User 생성 로직 ...
+
+    // ✅ Board 데이터 추가
+    if (!boardRepository.existsByTitle("공지사항")) {
+        Board board = Board.builder()
+                .title("공지사항")
+                .content("환영합니다!")
+                .author(admin)
+                .build();
+        boardRepository.save(board);
+        log.info("Board created: {}", board.getTitle());
+    }
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="border-l-4 border-green-500 pl-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">3. 애플리케이션 재시작</h3>
+                    <p class="text-sm text-gray-700">
+                        H2 인메모리 DB 사용 중이므로 재시작하면 자동으로 새 데이터가 생성됩니다.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-yellow-50 border-l-4 border-yellow-500 p-5 rounded">
+                <h3 class="font-semibold text-gray-900 mb-2">💡 실무 팁</h3>
+                <ul class="text-sm text-gray-700 space-y-2">
+                    <li>• 대량의 테스트 데이터가 필요하면 반복문 사용 (예: 100개의 게시글 생성)</li>
+                    <li>• 외래 키 관계가 있다면 먼저 부모 엔티티를 생성 후 자식 생성</li>
+                    <li>• 영구 DB 사용 시 반드시 <code class="bg-white px-2 py-1 rounded">existsBy...()</code> 체크</li>
+                </ul>
+            </div>
+        </section>
+
+    </div>
+</body>
+</html>

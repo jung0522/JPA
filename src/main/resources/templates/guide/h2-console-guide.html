@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/guide-layout}">
+<head>
+    <title th:text="${pageTitle}">H2 Database Console 가이드</title>
+</head>
+<body>
+    <div layout:fragment="content">
+
+        <!-- Page Title -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2" th:text="${pageTitle}">H2 Database Console 가이드</h1>
+            <p class="text-gray-600">H2 인메모리 데이터베이스 콘솔 사용 및 설정</p>
+        </div>
+
+        <!-- Quick Access -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🚀 H2 Console 접속</h2>
+
+            <div class="bg-green-50 border-l-4 border-green-500 p-6 rounded mb-6">
+                <p class="text-lg font-semibold text-gray-900 mb-4">접속 정보</p>
+                <a href="/h2-console" target="_blank"
+                   class="inline-flex items-center bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-lg transition text-lg mb-4">
+                    H2 Console 열기 →
+                </a>
+                <div class="grid md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <p class="text-sm font-semibold text-gray-700 mb-1">JDBC URL</p>
+                        <code class="bg-white px-3 py-2 rounded block text-sm">jdbc:h2:mem:testdb</code>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-700 mb-1">Username</p>
+                        <code class="bg-white px-3 py-2 rounded block text-sm">sa</code>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-700 mb-1">Password</p>
+                        <code class="bg-white px-3 py-2 rounded block text-sm">(공백)</code>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-700 mb-1">Driver Class</p>
+                        <code class="bg-white px-3 py-2 rounded block text-sm">org.h2.Driver</code>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Static Configuration -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">⚙️ 정적 설정 파일 사용하기</h2>
+
+            <p class="text-gray-700 mb-6">
+                매번 JDBC URL을 입력하는 대신, H2의 <code class="bg-gray-100 px-2 py-1 rounded">.h2.server.properties</code> 파일로 저장할 수 있습니다.
+            </p>
+
+            <div class="space-y-6">
+                <!-- Method 1 -->
+                <div class="border-l-4 border-blue-500 pl-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">방법 1: H2 Console에서 저장</h3>
+                    <ol class="text-sm text-gray-700 space-y-2 list-decimal list-inside">
+                        <li>H2 Console 접속</li>
+                        <li>로그인 화면에서 접속 정보 입력
+                            <pre class="bg-gray-900 text-green-400 p-3 rounded mt-2 text-xs"><code>JDBC URL: jdbc:h2:mem:testdb
+User Name: sa
+Password: (공백)</code></pre>
+                        </li>
+                        <li>하단 <strong>"Save"</strong> 체크박스 클릭</li>
+                        <li><strong>"Test Connection"</strong>으로 연결 테스트</li>
+                        <li><strong>"Connect"</strong> 클릭</li>
+                    </ol>
+                    <p class="text-sm text-gray-600 mt-3">
+                        → 다음부터는 저장된 설정이 자동으로 표시됩니다.
+                    </p>
+                </div>
+
+                <!-- Method 2 -->
+                <div class="border-l-4 border-purple-500 pl-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">방법 2: 수동으로 파일 생성</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        사용자 홈 디렉토리에 <code class="bg-gray-100 px-2 py-1 rounded">.h2.server.properties</code> 파일 생성:
+                    </p>
+                    <div class="bg-gray-50 p-4 rounded mb-3">
+                        <p class="text-xs text-gray-600 mb-2">Windows:</p>
+                        <code class="text-sm text-gray-800">C:\Users\{사용자명}\.h2.server.properties</code>
+                        <p class="text-xs text-gray-600 mt-3 mb-2">Mac/Linux:</p>
+                        <code class="text-sm text-gray-800">~/.h2.server.properties</code>
+                    </div>
+                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code>0=Generic H2 (Embedded)|org.h2.Driver|jdbc\\:h2\\:mem\\:testdb|sa
+webAllowOthers=false
+webPort=8082</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Multi-Connection Issue -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🔧 동시 접속 문제 해결</h2>
+
+            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded mb-6">
+                <h3 class="font-semibold text-gray-900 mb-2">⚠️ 문제 상황</h3>
+                <p class="text-sm text-gray-800">
+                    H2 인메모리 데이터베이스는 기본적으로 하나의 연결만 허용합니다.<br>
+                    애플리케이션이 실행 중일 때 H2 Console로 접속하면 오류가 발생할 수 있습니다.
+                </p>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Solution 1 -->
+                <div class="border-l-4 border-green-500 pl-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">✅ 해결방법: AUTO_SERVER=TRUE 추가</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        JDBC URL에 <code class="bg-gray-100 px-2 py-1 rounded">AUTO_SERVER=TRUE</code>를 추가하면 여러 연결을 허용합니다.
+                    </p>
+
+                    <div class="bg-gray-50 p-4 rounded mb-4">
+                        <p class="text-sm font-semibold text-gray-800 mb-2">기본 URL (단일 연결)</p>
+                        <code class="text-sm text-red-600">jdbc:h2:mem:testdb</code>
+                    </div>
+
+                    <div class="bg-green-50 p-4 rounded">
+                        <p class="text-sm font-semibold text-gray-800 mb-2">수정된 URL (다중 연결 허용)</p>
+                        <code class="text-sm text-green-700 font-semibold">jdbc:h2:mem:testdb;AUTO_SERVER=TRUE</code>
+                    </div>
+                </div>
+
+                <!-- Configuration -->
+                <div class="border-l-4 border-blue-500 pl-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">application-jpa.properties 수정 (선택)</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        프로젝트 전체에 적용하려면 설정 파일을 수정하세요:
+                    </p>
+                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code># 기존
+spring.datasource.url=jdbc:h2:mem:testdb
+
+# 수정 (다중 연결 허용)
+spring.datasource.url=jdbc:h2:mem:testdb;AUTO_SERVER=TRUE</code></pre>
+                </div>
+
+                <!-- Alternative -->
+                <div class="border-l-4 border-purple-500 pl-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">또는: H2 Console에서만 사용</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        H2 Console 로그인 화면에서 JDBC URL에 직접 입력:
+                    </p>
+                    <div class="bg-gray-50 border border-gray-300 rounded p-4">
+                        <div class="mb-3">
+                            <label class="text-xs text-gray-600 block mb-1">JDBC URL:</label>
+                            <code class="bg-white px-3 py-2 rounded block text-sm border">jdbc:h2:mem:testdb;AUTO_SERVER=TRUE</code>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-xs text-gray-600 block mb-1">User Name:</label>
+                            <code class="bg-white px-3 py-2 rounded block text-sm border">sa</code>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-600 block mb-1">Password:</label>
+                            <code class="bg-white px-3 py-2 rounded block text-sm border">(공백)</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-blue-50 p-5 rounded">
+                <h3 class="font-semibold text-gray-900 mb-2">💡 추가 옵션</h3>
+                <div class="text-sm text-gray-700 space-y-2">
+                    <div>
+                        <code class="bg-white px-2 py-1 rounded">MODE=MySQL</code>
+                        <span class="ml-2">MySQL 호환 모드로 실행</span>
+                    </div>
+                    <div>
+                        <code class="bg-white px-2 py-1 rounded">DB_CLOSE_DELAY=-1</code>
+                        <span class="ml-2">마지막 연결이 끊겨도 DB 유지</span>
+                    </div>
+                    <div>
+                        <code class="bg-white px-2 py-1 rounded">TRACE_LEVEL_SYSTEM_OUT=2</code>
+                        <span class="ml-2">디버그 로그 출력</span>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-600 mt-3">
+                    여러 옵션은 세미콜론(;)으로 연결: <code class="bg-white px-2 py-1 rounded">jdbc:h2:mem:testdb;AUTO_SERVER=TRUE;MODE=MySQL</code>
+                </p>
+            </div>
+        </section>
+
+        <!-- Common Queries -->
+        <section class="bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">📝 자주 사용하는 SQL</h2>
+
+            <div class="space-y-4">
+                <!-- Show Tables -->
+                <div class="border border-gray-200 rounded-lg p-5">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">테이블 목록 조회</h3>
+                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm"><code>SHOW TABLES;</code></pre>
+                </div>
+
+                <!-- Show Schema -->
+                <div class="border border-gray-200 rounded-lg p-5">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">테이블 구조 확인</h3>
+                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm"><code>SHOW COLUMNS FROM users;</code></pre>
+                </div>
+
+                <!-- Select All -->
+                <div class="border border-gray-200 rounded-lg p-5">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">전체 데이터 조회</h3>
+                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm"><code>SELECT * FROM users;</code></pre>
+                </div>
+
+                <!-- Count -->
+                <div class="border border-gray-200 rounded-lg p-5">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">데이터 개수 확인</h3>
+                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm"><code>SELECT COUNT(*) FROM users;</code></pre>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-yellow-50 border-l-4 border-yellow-500 p-5 rounded">
+                <h3 class="font-semibold text-gray-900 mb-2">⚠️ 주의: 인메모리 데이터베이스</h3>
+                <ul class="text-sm text-gray-700 space-y-1">
+                    <li>• 애플리케이션 재시작 시 모든 데이터가 초기화됩니다.</li>
+                    <li>• JpaDataInitializer가 자동으로 테스트 데이터를 생성합니다.</li>
+                    <li>• 영구 저장이 필요하면 파일 기반 H2 또는 MySQL/PostgreSQL 사용</li>
+                </ul>
+            </div>
+        </section>
+
+    </div>
+</body>
+</html>

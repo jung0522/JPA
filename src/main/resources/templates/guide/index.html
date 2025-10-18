@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/guide-layout}">
+<head>
+    <title th:text="${title}">JPA 학습 프로젝트</title>
+</head>
+<body>
+    <div layout:fragment="content">
+
+        <!-- Page Title -->
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold text-gray-900 mb-4" th:text="${title}">JPA 학습 프로젝트</h1>
+            <p class="text-xl text-gray-600" th:text="${description}">Spring Boot + JPA 기반 REST API 학습 프로젝트</p>
+            <p class="text-sm text-gray-500 mt-4">Milestone 0: Backbone</p>
+        </div>
+
+        <!-- Tech Stack -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🔧 적용된 기술 스택</h2>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Backend -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">⚙️</span> Backend
+                    </h3>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                            Java 21
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                            Spring Boot 3.5.6
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                            Spring Data JPA
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                            Spring Security
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                            Hibernate 6
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Database -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">🗄️</span> Database
+                    </h3>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            H2 Database (in-memory)
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            P6Spy (SQL 로깅)
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            JPA Auditing
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Security -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">🔐</span> Security
+                    </h3>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                            JWT (jjwt 0.12.3)
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                            BCrypt Password Encoder
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                            Stateless Session
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Frontend -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">🎨</span> Frontend
+                    </h3>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
+                            Thymeleaf (템플릿 엔진)
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
+                            Tailwind CSS (via CDN)
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
+                            Thymeleaf Layout Dialect
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Tools -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">🛠️</span> Tools
+                    </h3>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                            Lombok
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                            Validation
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                            Swagger/OpenAPI 3 (springdoc 2.8.4)
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                            Spring Boot Actuator
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Exception Handling -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">⚠️</span> Exception Handling
+                    </h3>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                            ErrorCode Enum
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                            RestApiExceptionHandler
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                            MvcExceptionHandler
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                            MessageSource (i18n)
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Project Structure -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">📁 프로젝트 구조</h2>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Source Directory -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">📂</span> 소스 디렉토리
+                    </h3>
+                    <div class="bg-gray-900 text-green-400 p-4 rounded text-xs font-mono overflow-x-auto">
+<pre>src/main/java/io/goorm/jpa/
+├── JpaApplication.java
+│
+├── controller/
+│   ├── api/
+│   │   └── AuthController.java
+│   └── web/
+│       ├── HomeController.java
+│       └── GuideController.java
+│
+├── service/
+│   └── AuthService.java
+│
+├── repository/
+│   └── UserRepository.java
+│
+├── entity/
+│   ├── common/
+│   │   └── BaseEntity.java
+│   └── User.java
+│
+├── dto/
+│   ├── common/
+│   │   ├── ApiResponse.java
+│   │   ├── ErrorResponse.java
+│   │   └── PageResponse.java
+│   └── auth/
+│       ├── LoginRequest.java
+│       └── LoginResponse.java
+│
+├── enums/
+│   └── UserRole.java
+│
+├── exception/
+│   ├── ErrorCode.java
+│   ├── BusinessException.java
+│   ├── RestApiExceptionHandler.java
+│   └── MvcExceptionHandler.java
+│
+└── config/
+    ├── JpaConfig.java
+    ├── SecurityConfig.java
+    ├── SwaggerConfig.java
+    ├── CustomUserDetailsService.java
+    ├── JpaDataInitializer.java
+    └── jwt/
+        ├── JwtTokenProvider.java
+        └── JwtAuthenticationFilter.java</pre>
+                    </div>
+                </div>
+
+                <!-- Resources Directory -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">⚙️</span> 설정 파일 및 템플릿
+                    </h3>
+                    <div class="bg-gray-900 text-green-400 p-4 rounded text-xs font-mono overflow-x-auto">
+<pre>src/main/resources/
+├── application.properties
+├── application-jpa.properties
+├── messages.properties
+├── messages_en.properties
+└── templates/
+    ├── layout/
+    │   └── guide-layout.html
+    ├── guide/
+    │   ├── index.html
+    │   ├── actuator-guide.html
+    │   ├── exception-handling-guide.html
+    │   ├── swagger-guide.html
+    │   ├── h2-console-guide.html
+    │   ├── jwt-guide.html
+    │   └── data-init-guide.html
+    └── error/
+        └── error.html</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Design Points -->
+            <div class="mt-6 bg-blue-50 border-l-4 border-blue-500 p-6 rounded">
+                <h3 class="font-semibold text-gray-900 mb-3">💡 주요 설계 포인트</h3>
+                <div class="grid md:grid-cols-2 gap-4 text-sm text-gray-700">
+                    <div>
+                        <p class="font-semibold mb-1">✅ 계층별 패키지 구조 (Layer-First)</p>
+                        <p class="text-xs">controller, service, repository 계층 우선 분리</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold mb-1">✅ API vs MVC 분리</p>
+                        <p class="text-xs">controller.api (@RestController) / controller.web (@Controller)</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold mb-1">✅ PK 네이밍 규칙</p>
+                        <p class="text-xs">userNo, boardNo 등 명확한 이름 사용 (id 사용 지양)</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold mb-1">✅ BaseEntity 상속</p>
+                        <p class="text-xs">Auditing 및 Soft Delete 자동 지원</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Error Pages -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🚨 에러 페이지</h2>
+            <p class="text-gray-700 mb-4">
+                웹 페이지에서 발생하는 에러는 커스텀 에러 페이지로 처리됩니다.
+            </p>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">📄 404 Not Found</h3>
+                    <p class="text-sm text-gray-600 mb-2">존재하지 않는 페이지 접근 시</p>
+                    <code class="text-xs bg-gray-100 px-2 py-1 rounded">templates/error/404.html</code>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">⚠️ 기타 에러</h3>
+                    <p class="text-sm text-gray-600 mb-2">500, 403 등 기타 에러</p>
+                    <code class="text-xs bg-gray-100 px-2 py-1 rounded">templates/error/error.html</code>
+                </div>
+            </div>
+            <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                <p class="text-sm text-gray-700">
+                    <strong>API 에러:</strong> <code class="bg-white px-2 py-1 rounded text-xs">/api/**</code> 경로는 RestApiExceptionHandler가 JSON으로 처리합니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- Test Accounts -->
+        <section class="bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🔐 테스트 계정</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Username</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Password</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Role</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">설명</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">admin</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">1234</td>
+                            <td class="px-6 py-4"><span class="px-3 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded-full">ADMIN</span></td>
+                            <td class="px-6 py-4 text-sm text-gray-600">관리자</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">student01</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">1234</td>
+                            <td class="px-6 py-4"><span class="px-3 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full">USER</span></td>
+                            <td class="px-6 py-4 text-sm text-gray-600">일반 사용자 1</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">student02</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">1234</td>
+                            <td class="px-6 py-4"><span class="px-3 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full">USER</span></td>
+                            <td class="px-6 py-4 text-sm text-gray-600">일반 사용자 2</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+
+</body>
+</html>
