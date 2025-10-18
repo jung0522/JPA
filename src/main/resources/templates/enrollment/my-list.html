@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app-layout}">
+<head>
+    <title>내 수강신청</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="text-3xl font-bold mb-6">내 수강신청</h1>
+
+    <!-- 수강신청 목록 -->
+    <div id="enrollment-list"></div>
+
+    <!-- 페이징 -->
+    <div id="pagination" class="flex justify-center mt-6"></div>
+
+    <script>
+    let currentPage = 0;
+
+    // 내 수강신청 로드
+    async function loadMyEnrollments(page = 0) {
+        if (!requireLogin()) return;
+
+        currentPage = page;
+
+        try {
+            const token = getToken();
+            const response = await fetch(`/api/enrollments/my?page=${page}&size=10`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!response.ok) throw new Error('Failed to load enrollments');
+
+            const result = await response.json();
+            renderEnrollments(result.data.content);
+            renderPagination(result.data.pageInfo);
+        } catch (error) {
+            console.error('Error loading enrollments:', error);
+            alert('수강신청 내역을 불러오는데 실패했습니다.');
+        }
+    }
+
+    // 수강신청 렌더링
+    function renderEnrollments(enrollments) {
+        const listDiv = document.getElementById('enrollment-list');
+
+        if (enrollments.length === 0) {
+            listDiv.innerHTML = '<div class="alert">수강신청 내역이 없습니다.</div>';
+            return;
+        }
+
+        listDiv.innerHTML = enrollments.map(enroll => {
+            const statusBadge = {
+                'PENDING': '<span class="badge badge-warning">대기</span>',
+                'APPROVED': '<span class="badge badge-success">승인</span>',
+                'REJECTED': '<span class="badge badge-error">거절</span>'
+            }[enroll.status];
+
+            const cancelButton = enroll.status === 'PENDING'
+                ? `<button onclick="cancelEnrollment(${enroll.enrollmentNo})" class="btn btn-sm btn-error">취소</button>`
+                : '';
+
+            return `
+                <div class="card bg-base-100 shadow-md mb-4">
+                    <div class="card-body">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <h2 class="card-title">
+                                    <a href="/course/${enroll.courseNo}" class="link link-hover">
+                                        ${enroll.courseName}
+                                    </a>
+                                    ${statusBadge}
+                                </h2>
+                                <p class="text-sm text-gray-600 mt-2">
+                                    강사: ${enroll.instructorName} |
+                                    신청일: ${new Date(enroll.createdAt).toLocaleDateString()}
+                                </p>
+                            </div>
+                            <div class="flex gap-2">
+                                ${cancelButton}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // 수강신청 취소
+    async function cancelEnrollment(enrollmentNo) {
+        if (!confirm('수강신청을 취소하시겠습니까?')) return;
+
+        try {
+            const token = getToken();
+            const response = await fetch(`/api/enrollments/${enrollmentNo}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!response.ok) {
+                const result = await response.json();
+                alert(result.message || '취소 실패');
+                return;
+            }
+
+            alert('취소되었습니다.');
+            loadMyEnrollments(currentPage);
+        } catch (error) {
+            console.error('Error cancelling enrollment:', error);
+            alert('취소 중 오류가 발생했습니다.');
+        }
+    }
+
+    // 페이징 렌더링
+    function renderPagination(pageInfo) {
+        const paginationDiv = document.getElementById('pagination');
+
+        if (pageInfo.totalPages <= 1) {
+            paginationDiv.innerHTML = '';
+            return;
+        }
+
+        let html = '<div class="join">';
+
+        if (pageInfo.currentPage > 0) {
+            html += `<button class="join-item btn" onclick="loadMyEnrollments(${pageInfo.currentPage - 1})">«</button>`;
+        }
+
+        for (let i = 0; i < pageInfo.totalPages; i++) {
+            const active = i === pageInfo.currentPage ? 'btn-active' : '';
+            html += `<button class="join-item btn ${active}" onclick="loadMyEnrollments(${i})">${i + 1}</button>`;
+        }
+
+        if (pageInfo.currentPage < pageInfo.totalPages - 1) {
+            html += `<button class="join-item btn" onclick="loadMyEnrollments(${pageInfo.currentPage + 1})">»</button>`;
+        }
+
+        html += '</div>';
+        paginationDiv.innerHTML = html;
+    }
+
+    // 페이지 로드시 실행
+    document.addEventListener('DOMContentLoaded', function() {
+        loadMyEnrollments();
+    });
+    </script>
+</div>
+</body>
+</html>

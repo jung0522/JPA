@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app-layout}">
+<head>
+    <title>수강신청 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="text-3xl font-bold mb-6">수강신청 관리 (관리자)</h1>
+
+    <!-- 동적 검색 -->
+    <div class="card bg-base-100 shadow-md mb-6">
+        <div class="card-body">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text">학생 번호</span></label>
+                    <input type="number" id="studentNo" placeholder="학생 번호" class="input input-bordered" />
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">강의 번호</span></label>
+                    <input type="number" id="courseNo" placeholder="강의 번호" class="input input-bordered" />
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">상태</span></label>
+                    <select id="status" class="select select-bordered">
+                        <option value="">전체</option>
+                        <option value="PENDING">대기</option>
+                        <option value="APPROVED">승인</option>
+                        <option value="REJECTED">거절</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-actions justify-end mt-4">
+                <button onclick="searchEnrollments()" class="btn btn-primary">검색</button>
+                <button onclick="loadEnrollments()" class="btn btn-ghost">전체보기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 수강신청 목록 -->
+    <div id="enrollment-list"></div>
+
+    <!-- 페이징 -->
+    <div id="pagination" class="flex justify-center mt-6"></div>
+
+    <script>
+    let currentPage = 0;
+    let currentFilters = {};
+
+    // 전체 수강신청 로드
+    async function loadEnrollments(page = 0) {
+        currentPage = page;
+        currentFilters = {};
+        document.getElementById('studentNo').value = '';
+        document.getElementById('courseNo').value = '';
+        document.getElementById('status').value = '';
+
+        await fetchEnrollments(page, {});
+    }
+
+    // 검색
+    async function searchEnrollments(page = 0) {
+        const studentNo = document.getElementById('studentNo').value;
+        const courseNo = document.getElementById('courseNo').value;
+        const status = document.getElementById('status').value;
+
+        currentPage = page;
+        currentFilters = { studentNo, courseNo, status };
+
+        await fetchEnrollments(page, currentFilters);
+    }
+
+    // 수강신청 조회
+    async function fetchEnrollments(page, filters) {
+        if (!requireLogin()) return;
+
+        try {
+            const token = getToken();
+            const params = new URLSearchParams({ page, size: 10 });
+
+            if (filters.studentNo) params.append('studentNo', filters.studentNo);
+            if (filters.courseNo) params.append('courseNo', filters.courseNo);
+            if (filters.status) params.append('status', filters.status);
+
+            const response = await fetch(`/api/enrollments?${params}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!response.ok) throw new Error('Failed to load enrollments');
+
+            const result = await response.json();
+            renderEnrollments(result.data.content);
+            renderPagination(result.data.pageInfo);
+        } catch (error) {
+            console.error('Error loading enrollments:', error);
+            alert('수강신청 목록을 불러오는데 실패했습니다.');
+        }
+    }
+
+    // 렌더링
+    function renderEnrollments(enrollments) {
+        const listDiv = document.getElementById('enrollment-list');
+
+        if (enrollments.length === 0) {
+            listDiv.innerHTML = '<div class="alert">수강신청 내역이 없습니다.</div>';
+            return;
+        }
+
+        listDiv.innerHTML = `
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>번호</th>
+                            <th>학생</th>
+                            <th>강의</th>
+                            <th>강사</th>
+                            <th>상태</th>
+                            <th>신청일</th>
+                            <th>액션</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${enrollments.map(enroll => {
+                            const statusBadge = {
+                                'PENDING': '<span class="badge badge-warning">대기</span>',
+                                'APPROVED': '<span class="badge badge-success">승인</span>',
+                                'REJECTED': '<span class="badge badge-error">거절</span>'
+                            }[enroll.status];
+
+                            const actions = enroll.status === 'PENDING'
+                                ? `
+                                    <button onclick="approve(${enroll.enrollmentNo})" class="btn btn-xs btn-success">승인</button>
+                                    <button onclick="reject(${enroll.enrollmentNo})" class="btn btn-xs btn-error">거절</button>
+                                `
+                                : '-';
+
+                            return `
+                                <tr>
+                                    <td>${enroll.enrollmentNo}</td>
+                                    <td>${enroll.studentName}</td>
+                                    <td>${enroll.courseName}</td>
+                                    <td>${enroll.instructorName}</td>
+                                    <td>${statusBadge}</td>
+                                    <td>${new Date(enroll.createdAt).toLocaleDateString()}</td>
+                                    <td>${actions}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    // 승인
+    async function approve(enrollmentNo) {
+        if (!confirm('승인하시겠습니까?')) return;
+
+        try {
+            const token = getToken();
+            const response = await fetch(`/api/enrollments/${enrollmentNo}/approve`, {
+                method: 'PUT',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!response.ok) throw new Error('Failed to approve');
+
+            alert('승인되었습니다.');
+            fetchEnrollments(currentPage, currentFilters);
+        } catch (error) {
+            console.error('Error approving:', error);
+            alert('승인 중 오류가 발생했습니다.');
+        }
+    }
+
+    // 거절
+    async function reject(enrollmentNo) {
+        if (!confirm('거절하시겠습니까?')) return;
+
+        try {
+            const token = getToken();
+            const response = await fetch(`/api/enrollments/${enrollmentNo}/reject`, {
+                method: 'PUT',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!response.ok) throw new Error('Failed to reject');
+
+            alert('거절되었습니다.');
+            fetchEnrollments(currentPage, currentFilters);
+        } catch (error) {
+            console.error('Error rejecting:', error);
+            alert('거절 중 오류가 발생했습니다.');
+        }
+    }
+
+    // 페이징
+    function renderPagination(pageInfo) {
+        const paginationDiv = document.getElementById('pagination');
+
+        if (pageInfo.totalPages <= 1) {
+            paginationDiv.innerHTML = '';
+            return;
+        }
+
+        let html = '<div class="join">';
+
+        if (pageInfo.currentPage > 0) {
+            html += `<button class="join-item btn" onclick="goToPage(${pageInfo.currentPage - 1})">«</button>`;
+        }
+
+        for (let i = 0; i < pageInfo.totalPages; i++) {
+            const active = i === pageInfo.currentPage ? 'btn-active' : '';
+            html += `<button class="join-item btn ${active}" onclick="goToPage(${i})">${i + 1}</button>`;
+        }
+
+        if (pageInfo.currentPage < pageInfo.totalPages - 1) {
+            html += `<button class="join-item btn" onclick="goToPage(${pageInfo.currentPage + 1})">»</button>`;
+        }
+
+        html += '</div>';
+        paginationDiv.innerHTML = html;
+    }
+
+    function goToPage(page) {
+        if (Object.keys(currentFilters).length > 0) {
+            searchEnrollments(page);
+        } else {
+            loadEnrollments(page);
+        }
+    }
+
+    // 페이지 로드시 실행
+    document.addEventListener('DOMContentLoaded', function() {
+        loadEnrollments();
+    });
+    </script>
+</div>
+</body>
+</html>
