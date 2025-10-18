@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app-layout}">
+<head>
+    <title>강의 상세</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div id="course-detail"></div>
+
+    <!-- Step 2 예정: 커리큘럼 탭 -->
+    <div class="tabs tabs-boxed mt-8">
+        <a class="tab tab-active">강의 정보</a>
+        <a class="tab" onclick="alert('Step 2에서 구현 예정')">커리큘럼 (Step 2)</a>
+        <a class="tab" onclick="alert('Step 2에서 구현 예정')">수강생 목록 (Step 2)</a>
+    </div>
+
+    <div class="flex justify-between mt-6">
+        <a href="/course" class="btn btn-ghost">목록</a>
+        <div id="action-buttons"></div>
+    </div>
+
+    <script th:inline="javascript">
+    const courseNo = [[${courseNo}]];
+
+    // 강의 상세 로드
+    async function loadCourseDetail() {
+        if (!requireLogin()) return;
+
+        try {
+            const token = getToken();
+            const response = await fetch(`/api/courses/${courseNo}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    alert('강의를 찾을 수 없습니다.');
+                    location.href = '/course';
+                    return;
+                }
+                throw new Error('Failed to load course');
+            }
+
+            const result = await response.json();
+            const course = result.data;
+
+            renderCourseDetail(course);
+            renderActionButtons(course);
+        } catch (error) {
+            console.error('Error loading course:', error);
+            alert('강의를 불러오는데 실패했습니다.');
+        }
+    }
+
+    // 강의 상세 렌더링
+    function renderCourseDetail(course) {
+        const detailDiv = document.getElementById('course-detail');
+        const isFull = course.currentStudents >= course.maxStudents;
+
+        detailDiv.innerHTML = `
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h1 class="card-title text-3xl">${course.name}</h1>
+                    <div class="flex items-center gap-4 mt-2">
+                        <span class="badge ${isFull ? 'badge-error' : 'badge-success'}">
+                            ${isFull ? '마감' : '수강가능'}
+                        </span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-600">강사</p>
+                            <p class="font-bold">${course.instructorName}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">수강 인원</p>
+                            <p class="font-bold">${course.currentStudents} / ${course.maxStudents}명</p>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div>
+                        <p class="text-sm text-gray-600">강의 설명</p>
+                        <p class="mt-2 whitespace-pre-wrap">${course.description || '설명 없음'}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 액션 버튼 렌더링
+    function renderActionButtons(course) {
+        const user = getCurrentUser();
+        const buttonsDiv = document.getElementById('action-buttons');
+
+        if (user.role === 'INSTRUCTOR' || user.role === 'ADMIN') {
+            buttonsDiv.innerHTML = `
+                <div class="flex gap-2">
+                    <a href="/course/edit/${course.courseNo}" class="btn btn-primary">수정</a>
+                    <button onclick="deleteCourse()" class="btn btn-error">삭제</button>
+                </div>
+            `;
+        }
+    }
+
+    // 강의 삭제 (Step 2에서 구현)
+    function deleteCourse() {
+        alert('이 기능은 Step 2(양방향 + Cascade)에서 구현 예정입니다.');
+    }
+
+    // 페이지 로드시 실행
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCourseDetail();
+    });
+    </script>
+</div>
+</body>
+</html>

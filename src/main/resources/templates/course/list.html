@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app-layout}">
+<head>
+    <title>강의</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">강의</h1>
+        <div id="create-button-area"></div>
+    </div>
+
+    <!-- 검색 -->
+    <div class="flex gap-2 mb-6">
+        <input type="text" id="keyword" placeholder="강의명 검색" class="input input-bordered flex-1" />
+        <button onclick="searchCourses()" class="btn btn-secondary">수강 가능 검색</button>
+        <button onclick="loadCourses()" class="btn btn-ghost">전체보기</button>
+    </div>
+
+    <!-- 강의 목록 -->
+    <div id="course-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+    <!-- 페이징 -->
+    <div id="pagination" class="flex justify-center mt-6"></div>
+
+    <script>
+    let currentPage = 0;
+    let currentKeyword = '';
+    let isAvailableOnly = false;
+
+    // 페이지 로드 시 권한 확인
+    document.addEventListener('DOMContentLoaded', function() {
+        const user = getCurrentUser();
+        if (user.role === 'INSTRUCTOR' || user.role === 'ADMIN') {
+            document.getElementById('create-button-area').innerHTML =
+                '<a href="/course/new" class="btn btn-primary">강의 생성</a>';
+        }
+        loadCourses();
+    });
+
+    // 강의 목록 로드
+    async function loadCourses(page = 0) {
+        if (!requireLogin()) return;
+
+        currentPage = page;
+        currentKeyword = '';
+        isAvailableOnly = false;
+        document.getElementById('keyword').value = '';
+
+        try {
+            const token = getToken();
+            const response = await fetch(`/api/courses?page=${page}&size=12`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!response.ok) throw new Error('Failed to load courses');
+
+            const result = await response.json();
+            renderCourses(result.data.content);
+            renderPagination(result.data.pageInfo);
+        } catch (error) {
+            console.error('Error loading courses:', error);
+            alert('강의를 불러오는데 실패했습니다.');
+        }
+    }
+
+    // 수강 가능한 강의 검색
+    async function searchCourses(page = 0) {
+        if (!requireLogin()) return;
+
+        const keyword = document.getElementById('keyword').value;
+        currentPage = page;
+        currentKeyword = keyword;
+        isAvailableOnly = true;
+
+        try {
+            const token = getToken();
+            const url = keyword
+                ? `/api/courses/available?keyword=${encodeURIComponent(keyword)}&page=${page}&size=12`
+                : `/api/courses/available?page=${page}&size=12`;
+
+            const response = await fetch(url, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!response.ok) throw new Error('Failed to search courses');
+
+            const result = await response.json();
+            renderCourses(result.data.content);
+            renderPagination(result.data.pageInfo);
+        } catch (error) {
+            console.error('Error searching courses:', error);
+            alert('강의 검색에 실패했습니다.');
+        }
+    }
+
+    // 강의 렌더링
+    function renderCourses(courses) {
+        const listDiv = document.getElementById('course-list');
+
+        if (courses.length === 0) {
+            listDiv.innerHTML = '<div class="col-span-full alert">강의가 없습니다.</div>';
+            return;
+        }
+
+        listDiv.innerHTML = courses.map(course => {
+            const isFull = course.currentStudents >= course.maxStudents;
+            const statusBadge = isFull
+                ? '<span class="badge badge-error">마감</span>'
+                : '<span class="badge badge-success">수강가능</span>';
+
+            return `
+                <div class="card bg-base-100 shadow-md hover:shadow-lg transition">
+                    <div class="card-body">
+                        <h2 class="card-title">
+                            <a href="/course/${course.courseNo}" class="link link-hover">
+                                ${course.name}
+                            </a>
+                            ${statusBadge}
+                        </h2>
+                        <p class="text-sm text-gray-600 line-clamp-2">
+                            ${course.description || '설명 없음'}
+                        </p>
+                        <div class="divider my-2"></div>
+                        <div class="flex justify-between items-center text-sm">
+                            <span>강사: ${course.instructorName}</span>
+                            <span>인원: ${course.currentStudents}/${course.maxStudents}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // 페이징 렌더링
+    function renderPagination(pageInfo) {
+        const paginationDiv = document.getElementById('pagination');
+
+        if (pageInfo.totalPages <= 1) {
+            paginationDiv.innerHTML = '';
+            return;
+        }
+
+        let html = '<div class="join">';
+
+        if (pageInfo.currentPage > 0) {
+            html += `<button class="join-item btn" onclick="goToPage(${pageInfo.currentPage - 1})">«</button>`;
+        }
+
+        for (let i = 0; i < pageInfo.totalPages; i++) {
+            const active = i === pageInfo.currentPage ? 'btn-active' : '';
+            html += `<button class="join-item btn ${active}" onclick="goToPage(${i})">${i + 1}</button>`;
+        }
+
+        if (pageInfo.currentPage < pageInfo.totalPages - 1) {
+            html += `<button class="join-item btn" onclick="goToPage(${pageInfo.currentPage + 1})">»</button>`;
+        }
+
+        html += '</div>';
+        paginationDiv.innerHTML = html;
+    }
+
+    // 페이지 이동
+    function goToPage(page) {
+        if (isAvailableOnly) {
+            searchCourses(page);
+        } else {
+            loadCourses(page);
+        }
+    }
+
+    // 엔터키로 검색
+    document.getElementById('keyword').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchCourses();
+        }
+    });
+    </script>
+</div>
+</body>
+</html>

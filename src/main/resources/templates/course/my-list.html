@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app-layout}">
+<head>
+    <title>내 강의</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">내 강의</h1>
+        <div class="flex gap-2">
+            <a href="/course/new" class="btn btn-primary">강의 생성</a>
+            <a href="/course" class="btn btn-ghost">전체 강의</a>
+        </div>
+    </div>
+
+    <!-- 내 강의 목록 -->
+    <div id="my-course-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+    <!-- 페이징 -->
+    <div id="pagination" class="flex justify-center mt-6"></div>
+
+    <script>
+    let currentPage = 0;
+
+    // 내 강의 로드
+    async function loadMyCourses(page = 0) {
+        if (!requireLogin()) return;
+
+        currentPage = page;
+
+        try {
+            const token = getToken();
+            const response = await fetch(`/api/courses/my?page=${page}&size=12`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!response.ok) throw new Error('Failed to load my courses');
+
+            const result = await response.json();
+            renderCourses(result.data.content);
+            renderPagination(result.data.pageInfo);
+        } catch (error) {
+            console.error('Error loading my courses:', error);
+            alert('내 강의를 불러오는데 실패했습니다.');
+        }
+    }
+
+    // 강의 렌더링
+    function renderCourses(courses) {
+        const listDiv = document.getElementById('my-course-list');
+
+        if (courses.length === 0) {
+            listDiv.innerHTML = '<div class="col-span-full alert">생성한 강의가 없습니다.</div>';
+            return;
+        }
+
+        listDiv.innerHTML = courses.map(course => {
+            const isFull = course.currentStudents >= course.maxStudents;
+            const statusBadge = isFull
+                ? '<span class="badge badge-error">마감</span>'
+                : '<span class="badge badge-success">수강가능</span>';
+
+            return `
+                <div class="card bg-base-100 shadow-md hover:shadow-lg transition">
+                    <div class="card-body">
+                        <h2 class="card-title">
+                            <a href="/course/${course.courseNo}" class="link link-hover">
+                                ${course.name}
+                            </a>
+                            ${statusBadge}
+                        </h2>
+                        <p class="text-sm text-gray-600 line-clamp-2">
+                            ${course.description || '설명 없음'}
+                        </p>
+                        <div class="divider my-2"></div>
+                        <div class="flex justify-between items-center text-sm">
+                            <span>수강 인원: ${course.currentStudents}/${course.maxStudents}</span>
+                        </div>
+                        <div class="card-actions justify-end mt-2">
+                            <a href="/course/edit/${course.courseNo}" class="btn btn-sm btn-primary">수정</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // 페이징 렌더링
+    function renderPagination(pageInfo) {
+        const paginationDiv = document.getElementById('pagination');
+
+        if (pageInfo.totalPages <= 1) {
+            paginationDiv.innerHTML = '';
+            return;
+        }
+
+        let html = '<div class="join">';
+
+        if (pageInfo.currentPage > 0) {
+            html += `<button class="join-item btn" onclick="loadMyCourses(${pageInfo.currentPage - 1})">«</button>`;
+        }
+
+        for (let i = 0; i < pageInfo.totalPages; i++) {
+            const active = i === pageInfo.currentPage ? 'btn-active' : '';
+            html += `<button class="join-item btn ${active}" onclick="loadMyCourses(${i})">${i + 1}</button>`;
+        }
+
+        if (pageInfo.currentPage < pageInfo.totalPages - 1) {
+            html += `<button class="join-item btn" onclick="loadMyCourses(${pageInfo.currentPage + 1})">»</button>`;
+        }
+
+        html += '</div>';
+        paginationDiv.innerHTML = html;
+    }
+
+    // 페이지 로드시 실행
+    document.addEventListener('DOMContentLoaded', function() {
+        loadMyCourses();
+    });
+    </script>
+</div>
+</body>
+</html>
