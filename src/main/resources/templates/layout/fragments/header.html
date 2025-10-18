@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<!-- Header Fragment -->
+<header th:fragment="header" class="navbar bg-base-100 shadow-lg">
+    <div class="navbar-start">
+        <div class="dropdown">
+            <label tabindex="0" class="btn btn-ghost lg:hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
+                </svg>
+            </label>
+            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+                <li><a href="/board">게시판</a></li>
+                <li><a href="/course">강의</a></li>
+                <li><a href="/enrollment">수강신청</a></li>
+                <li><a href="/guide">가이드</a></li>
+            </ul>
+        </div>
+        <a href="/" class="btn btn-ghost normal-case text-xl">🎓 학사관리</a>
+    </div>
+    <div class="navbar-center hidden lg:flex">
+        <ul class="menu menu-horizontal px-1">
+            <li><a href="/board">게시판</a></li>
+            <li><a href="/course">강의</a></li>
+            <li><a href="/enrollment">수강신청</a></li>
+            <li><a href="/guide">가이드</a></li>
+        </ul>
+    </div>
+    <div class="navbar-end">
+        <!-- 로그인 전 -->
+        <div id="before-login" class="hidden">
+            <a href="/auth/login" class="btn btn-primary">로그인</a>
+        </div>
+        <!-- 로그인 후 -->
+        <div id="after-login" class="hidden">
+            <div class="flex items-center gap-4">
+                <span id="user-info" class="text-sm"></span>
+                <button onclick="logout()" class="btn btn-ghost btn-sm">로그아웃</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<script>
+// 페이지 로드 시 로그인 상태 확인
+document.addEventListener('DOMContentLoaded', function() {
+    checkLoginStatus();
+});
+
+function checkLoginStatus() {
+    const token = localStorage.getItem('token');
+    const username = localStorage.getItem('username');
+    const role = localStorage.getItem('role');
+
+    if (token && username) {
+        // 로그인 상태
+        document.getElementById('before-login').classList.add('hidden');
+        document.getElementById('after-login').classList.remove('hidden');
+
+        const roleText = role === 'ADMIN' ? '관리자' :
+                        role === 'INSTRUCTOR' ? '강사' : '학생';
+        document.getElementById('user-info').textContent = `${username}님 (${roleText})`;
+    } else {
+        // 로그아웃 상태
+        document.getElementById('before-login').classList.remove('hidden');
+        document.getElementById('after-login').classList.add('hidden');
+    }
+}
+</script>
+</body>
+</html>

@@ -57,7 +57,11 @@ public class User extends BaseEntity {
         return this.role == UserRole.ADMIN;
     }
 
-    public boolean isUser() {
-        return this.role == UserRole.USER;
+    public boolean isInstructor() {
+        return this.role == UserRole.INSTRUCTOR;
+    }
+
+    public boolean isStudent() {
+        return this.role == UserRole.STUDENT;
     }
 }

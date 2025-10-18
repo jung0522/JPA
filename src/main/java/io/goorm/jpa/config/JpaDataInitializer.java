@@ -56,30 +56,42 @@ public class JpaDataInitializer implements CommandLineRunner {
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // 일반 사용자 생성
+        // 강사 사용자 생성
+        User instructor01 = User.builder()
+                .username("instructor01")
+                .password(passwordEncoder.encode("1234"))
+                .email("instructor01@goorm.io")
+                .fullName("김강사")
+                .role(UserRole.INSTRUCTOR)
+                .build();
+        userRepository.save(instructor01);
+        log.info("Instructor created: {}", instructor01.getUsername());
+
+        // 학생 사용자 생성
         User student01 = User.builder()
                 .username("student01")
                 .password(passwordEncoder.encode("1234"))
                 .email("student01@goorm.io")
-                .fullName("학생01")
-                .role(UserRole.USER)
+                .fullName("홍길동")
+                .role(UserRole.STUDENT)
                 .build();
         userRepository.save(student01);
-        log.info("User created: {}", student01.getUsername());
+        log.info("Student created: {}", student01.getUsername());
 
         User student02 = User.builder()
                 .username("student02")
                 .password(passwordEncoder.encode("1234"))
                 .email("student02@goorm.io")
-                .fullName("학생02")
-                .role(UserRole.USER)
+                .fullName("김철수")
+                .role(UserRole.STUDENT)
                 .build();
         userRepository.save(student02);
-        log.info("User created: {}", student02.getUsername());
+        log.info("Student created: {}", student02.getUsername());
 
         log.info("=== JPA Data Initialization Completed ===");
         log.info("Login credentials:");
         log.info("  Admin: admin / 1234");
-        log.info("  Users: student01, student02 / 1234");
+        log.info("  Instructor: instructor01 / 1234");
+        log.info("  Students: student01, student02 / 1234");
     }
 }

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app-layout}">
+<head>
+    <title>로그인</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="flex items-center justify-center min-h-[60vh]">
+        <div class="card w-96 bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title justify-center text-2xl mb-4">🎓 학사관리 로그인</h2>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">아이디</span>
+                    </label>
+                    <input type="text" id="username" placeholder="아이디를 입력하세요"
+                           class="input input-bordered" />
+                </div>
+
+                <div class="form-control mt-4">
+                    <label class="label">
+                        <span class="label-text">비밀번호</span>
+                    </label>
+                    <input type="password" id="password" placeholder="비밀번호를 입력하세요"
+                           class="input input-bordered" onkeypress="if(event.keyCode===13) login()" />
+                </div>
+
+                <div class="form-control mt-6">
+                    <button onclick="login()" class="btn btn-primary">로그인</button>
+                </div>
+
+                <div class="divider">테스트 계정</div>
+
+                <div class="text-sm space-y-1">
+                    <p><strong>관리자:</strong> admin / 1234</p>
+                    <p><strong>강사:</strong> instructor01 / 1234</p>
+                    <p><strong>학생:</strong> student01 / 1234</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    async function login() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        if (!username || !password) {
+            alert('아이디와 비밀번호를 입력하세요.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // 토큰 저장
+                localStorage.setItem('token', result.data.token);
+                localStorage.setItem('username', result.data.username);
+                localStorage.setItem('role', result.data.role);
+
+                alert('로그인 성공!');
+                location.href = '/';
+            } else {
+                alert(result.message || '로그인 실패');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            alert('로그인 중 오류가 발생했습니다.');
+        }
+    }
+    </script>
+</div>
+</body>
+</html>

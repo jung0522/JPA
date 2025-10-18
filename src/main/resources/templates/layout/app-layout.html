@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      data-theme="corporate">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE">학사관리 시스템</title>
+
+    <!-- DaisyUI + Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <div th:replace="~{layout/fragments/header :: header}"></div>
+
+    <!-- Main Content -->
+    <main layout:fragment="content" class="flex-1 container mx-auto px-4 py-8">
+        <!-- Content will be inserted here -->
+    </main>
+
+    <!-- Footer -->
+    <div th:replace="~{layout/fragments/footer :: footer}"></div>
+
+    <!-- Auth.js -->
+    <script src="/js/auth.js"></script>
+
+    <!-- Common Functions -->
+    <script>
+    // Step 2 구현 예정 공통 함수
+    function notImplementedYet() {
+        alert('이 기능은 Step 2(양방향 + Cascade)에서 구현 예정입니다.');
+    }
+    </script>
+</body>
+</html>
