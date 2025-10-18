@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app-layout}">
+<head>
+    <title>게시판</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">게시판</h1>
+        <a href="/board/new" class="btn btn-primary">글쓰기</a>
+    </div>
+
+    <!-- 검색 -->
+    <div class="flex gap-2 mb-6">
+        <input type="text" id="keyword" placeholder="제목 검색" class="input input-bordered flex-1" />
+        <button onclick="searchBoards()" class="btn btn-secondary">검색</button>
+        <button onclick="loadBoards()" class="btn btn-ghost">전체보기</button>
+    </div>
+
+    <!-- 게시글 목록 -->
+    <div id="board-list"></div>
+
+    <!-- 페이징 -->
+    <div id="pagination" class="flex justify-center mt-6"></div>
+
+    <script>
+    let currentPage = 0;
+    let currentKeyword = '';
+
+    // 게시글 목록 로드
+    async function loadBoards(page = 0) {
+        if (!requireLogin()) return;
+
+        currentPage = page;
+        currentKeyword = '';
+        document.getElementById('keyword').value = '';
+
+        try {
+            const token = getToken();
+            const response = await fetch(`/api/boards?page=${page}&size=10`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!response.ok) throw new Error('Failed to load boards');
+
+            const result = await response.json();
+            renderBoards(result.data.content);
+            renderPagination(result.data.pageInfo);
+        } catch (error) {
+            console.error('Error loading boards:', error);
+            alert('게시글을 불러오는데 실패했습니다.');
+        }
+    }
+
+    // 게시글 검색
+    async function searchBoards(page = 0) {
+        if (!requireLogin()) return;
+
+        const keyword = document.getElementById('keyword').value;
+        if (!keyword) {
+            alert('검색어를 입력하세요.');
+            return;
+        }
+
+        currentPage = page;
+        currentKeyword = keyword;
+
+        try {
+            const token = getToken();
+            const response = await fetch(`/api/boards?keyword=${encodeURIComponent(keyword)}&page=${page}&size=10`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!response.ok) throw new Error('Failed to search boards');
+
+            const result = await response.json();
+            renderBoards(result.data.content);
+            renderPagination(result.data.pageInfo);
+        } catch (error) {
+            console.error('Error searching boards:', error);
+            alert('게시글 검색에 실패했습니다.');
+        }
+    }
+
+    // 게시글 렌더링
+    function renderBoards(boards) {
+        const listDiv = document.getElementById('board-list');
+
+        if (boards.length === 0) {
+            listDiv.innerHTML = '<div class="alert">게시글이 없습니다.</div>';
+            return;
+        }
+
+        listDiv.innerHTML = boards.map(board => `
+            <div class="card bg-base-100 shadow-md mb-4 hover:shadow-lg transition">
+                <div class="card-body">
+                    <h2 class="card-title">
+                        <a href="/board/${board.boardNo}" class="link link-hover">
+                            ${board.title}
+                        </a>
+                    </h2>
+                    <p class="text-sm text-gray-600">
+                        ${board.authorName} | 조회수: ${board.viewCount} |
+                        ${new Date(board.createdAt).toLocaleDateString()}
+                    </p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // 페이징 렌더링
+    function renderPagination(pageInfo) {
+        const paginationDiv = document.getElementById('pagination');
+
+        if (pageInfo.totalPages <= 1) {
+            paginationDiv.innerHTML = '';
+            return;
+        }
+
+        let html = '<div class="join">';
+
+        // 이전 버튼
+        if (pageInfo.currentPage > 0) {
+            html += `<button class="join-item btn" onclick="goToPage(${pageInfo.currentPage - 1})">«</button>`;
+        }
+
+        // 페이지 번호
+        for (let i = 0; i < pageInfo.totalPages; i++) {
+            const active = i === pageInfo.currentPage ? 'btn-active' : '';
+            html += `<button class="join-item btn ${active}" onclick="goToPage(${i})">${i + 1}</button>`;
+        }
+
+        // 다음 버튼
+        if (pageInfo.currentPage < pageInfo.totalPages - 1) {
+            html += `<button class="join-item btn" onclick="goToPage(${pageInfo.currentPage + 1})">»</button>`;
+        }
+
+        html += '</div>';
+        paginationDiv.innerHTML = html;
+    }
+
+    // 페이지 이동
+    function goToPage(page) {
+        if (currentKeyword) {
+            searchBoards(page);
+        } else {
+            loadBoards(page);
+        }
+    }
+
+    // 페이지 로드시 실행
+    document.addEventListener('DOMContentLoaded', function() {
+        loadBoards();
+    });
+
+    // 엔터키로 검색
+    document.getElementById('keyword').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchBoards();
+        }
+    });
+    </script>
+</div>
+</body>
+</html>

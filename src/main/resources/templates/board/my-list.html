@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app-layout}">
+<head>
+    <title>내 게시글</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">내 게시글</h1>
+        <a href="/board" class="btn btn-ghost">전체 게시판</a>
+    </div>
+
+    <!-- 내 게시글 목록 -->
+    <div id="my-board-list"></div>
+
+    <!-- 페이징 -->
+    <div id="pagination" class="flex justify-center mt-6"></div>
+
+    <script>
+    let currentPage = 0;
+
+    // 내 게시글 로드
+    async function loadMyBoards(page = 0) {
+        if (!requireLogin()) return;
+
+        currentPage = page;
+
+        try {
+            const token = getToken();
+            const response = await fetch(`/api/boards/my?page=${page}&size=10`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!response.ok) throw new Error('Failed to load my boards');
+
+            const result = await response.json();
+            renderBoards(result.data.content);
+            renderPagination(result.data.pageInfo);
+        } catch (error) {
+            console.error('Error loading my boards:', error);
+            alert('내 게시글을 불러오는데 실패했습니다.');
+        }
+    }
+
+    // 게시글 렌더링
+    function renderBoards(boards) {
+        const listDiv = document.getElementById('my-board-list');
+
+        if (boards.length === 0) {
+            listDiv.innerHTML = '<div class="alert">작성한 게시글이 없습니다.</div>';
+            return;
+        }
+
+        listDiv.innerHTML = boards.map(board => `
+            <div class="card bg-base-100 shadow-md mb-4 hover:shadow-lg transition">
+                <div class="card-body">
+                    <h2 class="card-title">
+                        <a href="/board/${board.boardNo}" class="link link-hover">
+                            ${board.title}
+                        </a>
+                    </h2>
+                    <p class="text-sm text-gray-600">
+                        조회수: ${board.viewCount} |
+                        ${new Date(board.createdAt).toLocaleDateString()}
+                    </p>
+                    <div class="card-actions justify-end">
+                        <a href="/board/edit/${board.boardNo}" class="btn btn-sm btn-primary">수정</a>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // 페이징 렌더링
+    function renderPagination(pageInfo) {
+        const paginationDiv = document.getElementById('pagination');
+
+        if (pageInfo.totalPages <= 1) {
+            paginationDiv.innerHTML = '';
+            return;
+        }
+
+        let html = '<div class="join">';
+
+        if (pageInfo.currentPage > 0) {
+            html += `<button class="join-item btn" onclick="loadMyBoards(${pageInfo.currentPage - 1})">«</button>`;
+        }
+
+        for (let i = 0; i < pageInfo.totalPages; i++) {
+            const active = i === pageInfo.currentPage ? 'btn-active' : '';
+            html += `<button class="join-item btn ${active}" onclick="loadMyBoards(${i})">${i + 1}</button>`;
+        }
+
+        if (pageInfo.currentPage < pageInfo.totalPages - 1) {
+            html += `<button class="join-item btn" onclick="loadMyBoards(${pageInfo.currentPage + 1})">»</button>`;
+        }
+
+        html += '</div>';
+        paginationDiv.innerHTML = html;
+    }
+
+    // 페이지 로드시 실행
+    document.addEventListener('DOMContentLoaded', function() {
+        loadMyBoards();
+    });
+    </script>
+</div>
+</body>
+</html>

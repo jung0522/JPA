@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app-layout}">
+<head>
+    <title>게시글 상세</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div id="board-detail"></div>
+
+    <div class="flex justify-between mt-6">
+        <a href="/board" class="btn btn-ghost">목록</a>
+        <div id="action-buttons"></div>
+    </div>
+
+    <script th:inline="javascript">
+    const boardNo = [[${boardNo}]];
+
+    // 게시글 상세 로드
+    async function loadBoardDetail() {
+        if (!requireLogin()) return;
+
+        try {
+            const token = getToken();
+            const response = await fetch(`/api/boards/${boardNo}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    alert('게시글을 찾을 수 없습니다.');
+                    location.href = '/board';
+                    return;
+                }
+                throw new Error('Failed to load board');
+            }
+
+            const result = await response.json();
+            const board = result.data;
+
+            renderBoardDetail(board);
+            renderActionButtons(board);
+        } catch (error) {
+            console.error('Error loading board:', error);
+            alert('게시글을 불러오는데 실패했습니다.');
+        }
+    }
+
+    // 게시글 렌더링
+    function renderBoardDetail(board) {
+        const detailDiv = document.getElementById('board-detail');
+
+        detailDiv.innerHTML = `
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h1 class="card-title text-3xl">${board.title}</h1>
+                    <div class="flex items-center gap-4 text-sm text-gray-600 mt-2">
+                        <span>작성자: ${board.authorName}</span>
+                        <span>조회수: ${board.viewCount}</span>
+                        <span>작성일: ${new Date(board.createdAt).toLocaleString()}</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="prose max-w-none">
+                        ${board.content.replace(/\n/g, '<br>')}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 액션 버튼 렌더링 (본인 글만)
+    function renderActionButtons(board) {
+        const currentUser = getCurrentUser();
+        const buttonsDiv = document.getElementById('action-buttons');
+
+        // authorNo와 현재 로그인한 사용자의 userNo 비교는 불가능 (userNo를 모름)
+        // 대신 수정/삭제 시도하면 서버에서 403 응답
+
+        buttonsDiv.innerHTML = `
+            <div class="flex gap-2">
+                <a href="/board/edit/${board.boardNo}" class="btn btn-primary">수정</a>
+                <button onclick="deleteBoard()" class="btn btn-error">삭제</button>
+            </div>
+        `;
+    }
+
+    // 게시글 삭제
+    async function deleteBoard() {
+        if (!confirm('정말 삭제하시겠습니까?')) return;
+
+        try {
+            const token = getToken();
+            const response = await fetch(`/api/boards/${boardNo}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!response.ok) {
+                const result = await response.json();
+                alert(result.message || '삭제 실패');
+                return;
+            }
+
+            alert('삭제되었습니다.');
+            location.href = '/board';
+        } catch (error) {
+            console.error('Error deleting board:', error);
+            alert('삭제 중 오류가 발생했습니다.');
+        }
+    }
+
+    // 페이지 로드시 실행
+    document.addEventListener('DOMContentLoaded', function() {
+        loadBoardDetail();
+    });
+    </script>
+</div>
+</body>
+</html>
