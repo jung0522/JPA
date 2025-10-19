@@ -12,7 +12,7 @@
         <div class="text-center mb-12">
             <h1 class="text-5xl font-bold text-gray-900 mb-4">Step 1 구현 내용</h1>
             <p class="text-xl text-gray-600">ManyToOne 단방향 관계 중심</p>
-            <p class="text-sm text-gray-500 mt-4">완료된 API: 22개</p>
+            <p class="text-sm text-gray-500 mt-4">완료된 API: 26개</p>
         </div>
 
         <!-- Step 1 Sub Menu -->
@@ -31,7 +31,7 @@
             <!-- Auth -->
             <div class="mb-8">
                 <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                    <span class="text-2xl mr-2">🔐</span> 인증 (Auth)
+                    <span class="text-2xl mr-2">🔐</span> 인증 (Auth) - 세션 기반
                 </h3>
                 <div class="overflow-x-auto">
                     <table class="min-w-full border border-gray-200">
@@ -46,7 +46,17 @@
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3 text-sm"><span class="px-2 py-1 bg-green-100 text-green-800 rounded font-mono text-xs">POST</span></td>
                                 <td class="px-4 py-3 text-sm font-mono text-gray-900">/api/auth/login</td>
-                                <td class="px-4 py-3 text-sm text-gray-600">로그인 (JWT 발급)</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">로그인 (세션 생성)</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm"><span class="px-2 py-1 bg-green-100 text-green-800 rounded font-mono text-xs">POST</span></td>
+                                <td class="px-4 py-3 text-sm font-mono text-gray-900">/api/auth/logout</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">로그아웃 (세션 무효화)</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm"><span class="px-2 py-1 bg-blue-100 text-blue-800 rounded font-mono text-xs">GET</span></td>
+                                <td class="px-4 py-3 text-sm font-mono text-gray-900">/api/auth/me</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">현재 로그인 사용자 정보 조회</td>
                             </tr>
                         </tbody>
                     </table>
@@ -98,6 +108,11 @@
                                 <td class="px-4 py-3 text-sm font-mono text-gray-900">/api/boards/my</td>
                                 <td class="px-4 py-3 text-sm text-gray-600">내가 쓴 글 목록</td>
                             </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm"><span class="px-2 py-1 bg-blue-100 text-blue-800 rounded font-mono text-xs">GET</span></td>
+                                <td class="px-4 py-3 text-sm font-mono text-gray-900">/api/boards/popular</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">인기 게시글 Top 10 (조회수 기준)</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -142,6 +157,11 @@
                                 <td class="px-4 py-3 text-sm"><span class="px-2 py-1 bg-blue-100 text-blue-800 rounded font-mono text-xs">GET</span></td>
                                 <td class="px-4 py-3 text-sm font-mono text-gray-900">/api/courses/my</td>
                                 <td class="px-4 py-3 text-sm text-gray-600">내 강의 목록 (강사용)</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm"><span class="px-2 py-1 bg-blue-100 text-blue-800 rounded font-mono text-xs">GET</span></td>
+                                <td class="px-4 py-3 text-sm font-mono text-gray-900">/api/courses/available</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">수강 가능한 강의 검색</td>
                             </tr>
                         </tbody>
                     </table>
@@ -318,7 +338,7 @@
             <h2 class="text-3xl font-bold text-gray-900 mb-6">📊 Step 1 완료 현황</h2>
             <div class="grid md:grid-cols-4 gap-6">
                 <div class="bg-white rounded-lg p-6 text-center border-2 border-blue-200">
-                    <div class="text-4xl font-bold text-blue-600 mb-2">22</div>
+                    <div class="text-4xl font-bold text-blue-600 mb-2">26</div>
                     <div class="text-sm text-gray-600">완료된 엔드포인트</div>
                 </div>
                 <div class="bg-white rounded-lg p-6 text-center border-2 border-green-200">

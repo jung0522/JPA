@@ -24,7 +24,7 @@ http://localhost:8080/guide
 
 ## 🔧 주요 기능
 
-- ✅ JWT 인증/인가
+- ✅ 세션 기반 인증/인가 (Spring Security)
 - ✅ JPA Auditing (생성자/수정자 자동 추적)
 - ✅ 전역 예외 처리 (API/웹 분리)
 - ✅ P6Spy SQL 로깅
@@ -40,8 +40,10 @@ http://localhost:8080/guide
 | Username | Password | Role |
 |----------|----------|------|
 | admin | 1234 | ADMIN |
-| student01 | 1234 | USER |
-| student02 | 1234 | USER |
+| instructor01 | 1234 | INSTRUCTOR |
+| instructor02 | 1234 | INSTRUCTOR |
+| student01 | 1234 | STUDENT |
+| student02 | 1234 | STUDENT |
 
 ---
 
@@ -58,9 +60,9 @@ http://localhost:8080/guide
 
 **Backend**: Java 21, Spring Boot 3.5.6, Spring Data JPA, Spring Security, Hibernate 6
 **Database**: H2 (in-memory), P6Spy
-**Security**: JWT (jjwt 0.12.3), BCrypt
-**Frontend**: Thymeleaf, Tailwind CSS
-**Tools**: Lombok, Validation, Swagger, Actuator, DevTools
+**Security**: Session-based Auth, BCrypt
+**Frontend**: Thymeleaf, DaisyUI + Tailwind CSS
+**Tools**: Lombok, Validation, Swagger, Actuator, DevTools, QueryDSL
 
 ---
 
@@ -101,28 +103,31 @@ src/main/resources/
 
 ## 📚 가이드 목록
 
-1. **JWT 인증** - JWT + JPA Auditing 통합
+1. **세션 인증** - Spring Security Session + JPA Auditing 통합
 2. **데이터 초기화** - CommandLineRunner + 중복 방지
 3. **P6Spy** - SQL 로깅 설정
 4. **Actuator** - 모니터링 + 보안 설정
 5. **예외 처리** - 전역 예외 핸들러
 6. **Swagger** - API 문서화
 7. **H2 Console** - 데이터베이스 관리
+8. **QueryDSL** - 동적 쿼리 작성
 
 **자세한 내용은 가이드 페이지를 참고하세요!**
 
 ---
 
-## 📝 다음 단계
+## 📝 프로젝트 현황
 
-이 Backbone을 기반으로 다음 기능들을 추가할 수 있습니다:
+**Step 1 완료**: ManyToOne 단방향 관계 중심
 
-- 게시판 (Board) CRUD
-- 강의 (Course) 관리
-- 수강신청 (Enrollment) 기능
-- 파일 업로드/다운로드
-- 페이징 및 검색
-- 등등...
+- ✅ 게시판 (Board) CRUD - Query Methods
+- ✅ 강의 (Course) 관리 - JPQL + Fetch Join
+- ✅ 수강신청 (Enrollment) - QueryDSL + Optimistic Lock
+- ✅ 사용자 프로필 (UserProfile) - OneToOne 단방향
+- ✅ 페이징 및 검색
+- ✅ 권한 기반 접근 제어
+
+**Step 2 예정**: 양방향 관계 및 고급 기능
 
 ---
 

@@ -102,8 +102,8 @@ public class BoardService {
 
         User currentUser = getCurrentUser();
 
-        // 작성자 본인 확인
-        if (!board.isAuthor(currentUser)) {
+        // 작성자 본인 또는 관리자만 수정 가능
+        if (!board.isAuthor(currentUser) && !currentUser.isAdmin()) {
             throw new BusinessException(ErrorCode.BOARD_FORBIDDEN);
         }
 
@@ -127,8 +127,8 @@ public class BoardService {
 
         User currentUser = getCurrentUser();
 
-        // 작성자 본인 확인
-        if (!board.isAuthor(currentUser)) {
+        // 작성자 본인 또는 관리자만 삭제 가능
+        if (!board.isAuthor(currentUser) && !currentUser.isAdmin()) {
             throw new BusinessException(ErrorCode.BOARD_FORBIDDEN);
         }
 

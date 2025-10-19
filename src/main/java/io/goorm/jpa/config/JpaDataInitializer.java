@@ -73,6 +73,16 @@ public class JpaDataInitializer implements CommandLineRunner {
         userRepository.save(instructor01);
         log.info("Instructor created: {}", instructor01.getUsername());
 
+        User instructor02 = User.builder()
+                .username("instructor02")
+                .password(passwordEncoder.encode("1234"))
+                .email("instructor02@goorm.io")
+                .fullName("이강사")
+                .role(UserRole.INSTRUCTOR)
+                .build();
+        userRepository.save(instructor02);
+        log.info("Instructor created: {}", instructor02.getUsername());
+
         // 학생 사용자 생성
         User student01 = User.builder()
                 .username("student01")
@@ -147,7 +157,7 @@ public class JpaDataInitializer implements CommandLineRunner {
         Board board8 = Board.builder()
                 .title("QueryDSL 동적 쿼리 작성법")
                 .content("QueryDSL을 활용한 복잡한 동적 쿼리 작성 예제입니다.")
-                .author(instructor01)
+                .author(instructor02)
                 .build();
         boardRepository.save(board8);
 
@@ -161,7 +171,7 @@ public class JpaDataInitializer implements CommandLineRunner {
         Board board10 = Board.builder()
                 .title("Optimistic Lock 활용 사례")
                 .content("낙관적 잠금을 활용한 동시성 제어 방법을 설명합니다.")
-                .author(instructor01)
+                .author(instructor02)
                 .build();
         boardRepository.save(board10);
 
@@ -175,7 +185,7 @@ public class JpaDataInitializer implements CommandLineRunner {
         Board board12 = Board.builder()
                 .title("Entity 설계 시 주의사항")
                 .content("Entity를 설계할 때 반드시 고려해야 할 사항들을 정리했습니다.\n\n- @Id 전략\n- 연관관계 주인\n- 즉시/지연 로딩")
-                .author(instructor01)
+                .author(instructor02)
                 .build();
         boardRepository.save(board12);
 
@@ -189,7 +199,7 @@ public class JpaDataInitializer implements CommandLineRunner {
         Board board14 = Board.builder()
                 .title("Pagination 구현 방법")
                 .content("Spring Data JPA에서 페이징을 구현하는 다양한 방법을 소개합니다.")
-                .author(instructor01)
+                .author(instructor02)
                 .build();
         boardRepository.save(board14);
 
@@ -229,7 +239,7 @@ public class JpaDataInitializer implements CommandLineRunner {
         Course course3 = Course.builder()
                 .name("QueryDSL 마스터하기")
                 .description("동적 쿼리 작성의 강자 QueryDSL을 마스터합니다.")
-                .instructor(instructor01)
+                .instructor(instructor02)
                 .maxStudents(20)
                 .build();
         courseRepository.save(course3);
@@ -237,7 +247,7 @@ public class JpaDataInitializer implements CommandLineRunner {
         Course course4 = Course.builder()
                 .name("데이터베이스 설계와 최적화")
                 .description("효율적인 데이터베이스 설계 기법과 성능 최적화 방법을 학습합니다.")
-                .instructor(instructor01)
+                .instructor(instructor02)
                 .maxStudents(35)
                 .build();
         courseRepository.save(course4);
@@ -255,7 +265,7 @@ public class JpaDataInitializer implements CommandLineRunner {
         log.info("=== JPA Data Initialization Completed ===");
         log.info("Login credentials:");
         log.info("  Admin: admin / 1234");
-        log.info("  Instructor: instructor01 / 1234");
+        log.info("  Instructors: instructor01, instructor02 / 1234");
         log.info("  Students: student01, student02 / 1234");
         log.info("Test data:");
         log.info("  Boards: 16 posts");

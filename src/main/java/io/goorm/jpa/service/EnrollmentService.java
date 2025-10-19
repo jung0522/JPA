@@ -123,8 +123,8 @@ public class EnrollmentService {
 
         User currentUser = getCurrentUser();
 
-        // 본인 확인
-        if (!enrollment.getStudent().equals(currentUser)) {
+        // 본인 또는 관리자만 취소 가능
+        if (!enrollment.getStudent().equals(currentUser) && !currentUser.isAdmin()) {
             throw new BusinessException(ErrorCode.USER_FORBIDDEN);
         }
 
