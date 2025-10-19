@@ -36,12 +36,6 @@
     const boardNo = [[${boardNo}]] || null;
     const isEditMode = boardNo !== null;
 
-    // 수정 모드면 기존 데이터 로드
-    if (isEditMode) {
-        document.getElementById('form-title').textContent = '게시글 수정';
-        loadBoardForEdit();
-    }
-
     // 수정할 게시글 로드
     async function loadBoardForEdit() {
         if (!requireLogin()) return;
@@ -109,6 +103,14 @@
             alert('저장 중 오류가 발생했습니다.');
         }
     }
+
+    // 페이지 로드 시 실행
+    document.addEventListener('DOMContentLoaded', function() {
+        if (isEditMode) {
+            document.getElementById('form-title').textContent = '게시글 수정';
+            loadBoardForEdit();
+        }
+    });
     </script>
 </div>
 </body>
