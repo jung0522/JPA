@@ -26,6 +26,34 @@
     <!-- Auth.js -->
     <script src="/js/auth.js"></script>
 
+    <!-- Header Login Status Check -->
+    <script>
+    // 페이지 로드 시 로그인 상태 확인
+    document.addEventListener('DOMContentLoaded', function() {
+        checkLoginStatus();
+    });
+
+    function checkLoginStatus() {
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username');
+        const role = localStorage.getItem('role');
+
+        if (token && username) {
+            // 로그인 상태
+            document.getElementById('before-login').classList.add('hidden');
+            document.getElementById('after-login').classList.remove('hidden');
+
+            const roleText = role === 'ADMIN' ? '관리자' :
+                            role === 'INSTRUCTOR' ? '강사' : '학생';
+            document.getElementById('user-info').textContent = `${username}님 (${roleText})`;
+        } else {
+            // 로그아웃 상태
+            document.getElementById('before-login').classList.remove('hidden');
+            document.getElementById('after-login').classList.add('hidden');
+        }
+    }
+    </script>
+
     <!-- Common Functions -->
     <script>
     // Step 2 구현 예정 공통 함수
