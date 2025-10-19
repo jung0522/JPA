@@ -138,7 +138,6 @@ public class JpaDataInitializer implements CommandLineRunner {
                 .description("JPA의 기본 개념부터 실무 활용까지 학습합니다.\n\n- Entity 설계\n- 연관관계 매핑\n- Query 작성\n- 성능 최적화")
                 .instructor(instructor01)
                 .maxStudents(30)
-                .currentStudents(0)
                 .build();
         courseRepository.save(course1);
 
@@ -147,7 +146,6 @@ public class JpaDataInitializer implements CommandLineRunner {
                 .description("Spring Boot를 활용한 백엔드 개발 전문 과정입니다.")
                 .instructor(instructor01)
                 .maxStudents(25)
-                .currentStudents(0)
                 .build();
         courseRepository.save(course2);
 
@@ -156,7 +154,6 @@ public class JpaDataInitializer implements CommandLineRunner {
                 .description("동적 쿼리 작성의 강자 QueryDSL을 마스터합니다.")
                 .instructor(instructor01)
                 .maxStudents(20)
-                .currentStudents(0)
                 .build();
         courseRepository.save(course3);
 
@@ -165,7 +162,6 @@ public class JpaDataInitializer implements CommandLineRunner {
                 .description("효율적인 데이터베이스 설계 기법과 성능 최적화 방법을 학습합니다.")
                 .instructor(instructor01)
                 .maxStudents(35)
-                .currentStudents(0)
                 .build();
         courseRepository.save(course4);
 
@@ -174,7 +170,6 @@ public class JpaDataInitializer implements CommandLineRunner {
                 .description("REST 원칙에 따른 API 설계와 구현 방법을 배웁니다.")
                 .instructor(instructor01)
                 .maxStudents(40)
-                .currentStudents(0)
                 .build();
         courseRepository.save(course5);
 

@@ -28,20 +28,20 @@ public class UserProfileApiController {
     @Operation(summary = "내 프로필 조회")
     public ApiResponse<UserProfileResponse> getMyProfile() {
         UserProfileResponse response = userProfileService.getMyProfile();
-        return ApiResponse.ok(response);
+        return ApiResponse.success(response);
     }
 
     @PostMapping
     @Operation(summary = "프로필 생성")
     public ApiResponse<UserProfileResponse> createProfile(@Valid @RequestBody UserProfileRequest request) {
         UserProfileResponse response = userProfileService.createProfile(request);
-        return ApiResponse.ok(response);
+        return ApiResponse.success(response);
     }
 
     @PutMapping
     @Operation(summary = "프로필 수정")
     public ApiResponse<UserProfileResponse> updateProfile(@Valid @RequestBody UserProfileRequest request) {
         UserProfileResponse response = userProfileService.updateProfile(request);
-        return ApiResponse.ok(response);
+        return ApiResponse.success(response);
     }
 }

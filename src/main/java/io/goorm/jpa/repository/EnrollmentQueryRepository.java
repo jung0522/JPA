@@ -3,6 +3,7 @@ package io.goorm.jpa.repository;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import io.goorm.jpa.entity.Enrollment;
+import io.goorm.jpa.entity.User;
 import io.goorm.jpa.enums.EnrollmentStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -45,7 +46,7 @@ public class EnrollmentQueryRepository {
                 .orderBy(enrollment.createdAt.desc())
                 .fetch();
 
-        long total = queryFactory
+        Long total = queryFactory
                 .select(enrollment.count())
                 .from(enrollment)
                 .where(
@@ -76,7 +77,7 @@ public class EnrollmentQueryRepository {
                 .orderBy(enrollment.createdAt.desc())
                 .fetch();
 
-        long total = queryFactory
+        Long total = queryFactory
                 .select(enrollment.count())
                 .from(enrollment)
                 .where(

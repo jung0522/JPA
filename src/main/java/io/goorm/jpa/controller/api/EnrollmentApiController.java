@@ -35,28 +35,28 @@ public class EnrollmentApiController {
     @Operation(summary = "수강신청")
     public ApiResponse<EnrollmentResponse> enroll(@Valid @RequestBody EnrollmentCreateRequest request) {
         EnrollmentResponse response = enrollmentService.enroll(request);
-        return ApiResponse.ok(response);
+        return ApiResponse.success(response);
     }
 
     @DeleteMapping("/{enrollmentNo}")
     @Operation(summary = "수강신청 취소")
     public ApiResponse<Void> cancel(@PathVariable Long enrollmentNo) {
         enrollmentService.cancel(enrollmentNo);
-        return ApiResponse.ok();
+        return ApiResponse.success();
     }
 
     @PutMapping("/{enrollmentNo}/approve")
     @Operation(summary = "수강신청 승인 (관리자)")
     public ApiResponse<EnrollmentResponse> approve(@PathVariable Long enrollmentNo) {
         EnrollmentResponse response = enrollmentService.approve(enrollmentNo);
-        return ApiResponse.ok(response);
+        return ApiResponse.success(response);
     }
 
     @PutMapping("/{enrollmentNo}/reject")
     @Operation(summary = "수강신청 거절 (관리자)")
     public ApiResponse<EnrollmentResponse> reject(@PathVariable Long enrollmentNo) {
         EnrollmentResponse response = enrollmentService.reject(enrollmentNo);
-        return ApiResponse.ok(response);
+        return ApiResponse.success(response);
     }
 
     @GetMapping("/my")
@@ -65,7 +65,7 @@ public class EnrollmentApiController {
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         Page<EnrollmentResponse> page = enrollmentService.getMyEnrollments(pageable);
-        return ApiResponse.ok(PageResponse.of(page));
+        return ApiResponse.success(PageResponse.of(page));
     }
 
     @GetMapping
@@ -77,6 +77,6 @@ public class EnrollmentApiController {
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         Page<EnrollmentResponse> page = enrollmentService.search(studentNo, courseNo, status, pageable);
-        return ApiResponse.ok(PageResponse.of(page));
+        return ApiResponse.success(PageResponse.of(page));
     }
 }

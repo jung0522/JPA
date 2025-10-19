@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/project-layout}">
+<head>
+    <title th:text="${pageTitle}">프로젝트 설계</title>
+</head>
+<body>
+    <div layout:fragment="content">
+
+        <!-- Page Title -->
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold text-gray-900 mb-4">프로젝트 설계</h1>
+            <p class="text-xl text-gray-600">학사관리 시스템 - 기술 스택 및 ERD</p>
+        </div>
+
+        <!-- Tech Stack -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🔧 사용 기술 스택</h2>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Backend -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">⚙️</span> Backend
+                    </h3>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                            Java 21
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                            Spring Boot 3.5.6
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                            Spring Data JPA (Hibernate 6)
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                            Spring Security
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                            QueryDSL 5.0.0
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Database -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">🗄️</span> Database
+                    </h3>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            H2 Database (in-memory)
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            P6Spy (SQL 로깅)
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            JPA Auditing
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Security -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">🔐</span> Security
+                    </h3>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                            JWT (jjwt 0.12.3)
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                            BCrypt Password Encoder
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                            Stateless Session
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Frontend -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">🎨</span> Frontend
+                    </h3>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
+                            Thymeleaf (템플릿 엔진)
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
+                            DaisyUI + Tailwind CSS
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
+                            Fetch API (비동기 통신)
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Tools -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">🛠️</span> Tools
+                    </h3>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                            Lombok
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                            Validation (Jakarta Bean Validation)
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                            Swagger/OpenAPI 3
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                            Spring Boot Actuator
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Query Technologies -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">🔍</span> Query Technologies
+                    </h3>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-indigo-500 rounded-full mr-2"></span>
+                            Query Methods (Board)
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-indigo-500 rounded-full mr-2"></span>
+                            JPQL + Fetch Join (Course)
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-indigo-500 rounded-full mr-2"></span>
+                            QueryDSL (Enrollment)
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ERD Section -->
+        <section class="bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">📐 ERD (Entity Relationship Diagram)</h2>
+            <div class="bg-gray-50 rounded-lg p-4 border-2 border-dashed border-gray-300">
+                <img src="/images/erd.png"
+                     alt="ERD Diagram"
+                     class="w-full h-auto rounded"
+                     onerror="this.parentElement.innerHTML='<div class=\'text-center py-20\'><p class=\'text-gray-500 text-lg\'>ERD 이미지를 /images/erd.png 경로에 추가해주세요</p></div>'">
+            </div>
+
+            <div class="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                <h3 class="font-semibold text-gray-900 mb-2">💡 핵심 엔티티 (Step 1)</h3>
+                <ul class="text-sm text-gray-700 space-y-1">
+                    <li>• <strong>User:</strong> 사용자 (ADMIN, INSTRUCTOR, STUDENT)</li>
+                    <li>• <strong>Board:</strong> 게시판 (User와 ManyToOne 단방향)</li>
+                    <li>• <strong>Course:</strong> 강의 (User(instructor)와 ManyToOne 단방향)</li>
+                    <li>• <strong>Enrollment:</strong> 수강신청 (User, Course와 ManyToOne 단방향)</li>
+                    <li>• <strong>UserProfile:</strong> 사용자 프로필 (User와 OneToOne 단방향)</li>
+                </ul>
+            </div>
+        </section>
+
+    </div>
+</body>
+</html>

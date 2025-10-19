@@ -35,7 +35,7 @@ public class CourseApiController {
     @Operation(summary = "강의 생성 (강사만)")
     public ApiResponse<CourseResponse> create(@Valid @RequestBody CourseCreateRequest request) {
         CourseResponse response = courseService.create(request);
-        return ApiResponse.ok(response);
+        return ApiResponse.success(response);
     }
 
     @GetMapping
@@ -44,7 +44,7 @@ public class CourseApiController {
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         Page<CourseResponse> page = courseService.getList(pageable);
-        return ApiResponse.ok(PageResponse.of(page));
+        return ApiResponse.success(PageResponse.of(page));
     }
 
     @GetMapping("/available")
@@ -54,14 +54,14 @@ public class CourseApiController {
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         Page<CourseResponse> page = courseService.searchAvailableCourses(keyword, pageable);
-        return ApiResponse.ok(PageResponse.of(page));
+        return ApiResponse.success(PageResponse.of(page));
     }
 
     @GetMapping("/{courseNo}")
     @Operation(summary = "강의 상세 조회")
     public ApiResponse<CourseResponse> getDetail(@PathVariable Long courseNo) {
         CourseResponse response = courseService.getDetail(courseNo);
-        return ApiResponse.ok(response);
+        return ApiResponse.success(response);
     }
 
     @PutMapping("/{courseNo}")
@@ -71,14 +71,14 @@ public class CourseApiController {
             @Valid @RequestBody CourseUpdateRequest request
     ) {
         CourseResponse response = courseService.update(courseNo, request);
-        return ApiResponse.ok(response);
+        return ApiResponse.success(response);
     }
 
     @DeleteMapping("/{courseNo}")
     @Operation(summary = "강의 삭제 (Step 2에서 구현)")
     public ApiResponse<Void> delete(@PathVariable Long courseNo) {
         courseService.delete(courseNo);
-        return ApiResponse.ok();
+        return ApiResponse.success();
     }
 
     @GetMapping("/my")
@@ -87,6 +87,6 @@ public class CourseApiController {
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         Page<CourseResponse> page = courseService.getMyCourses(pageable);
-        return ApiResponse.ok(PageResponse.of(page));
+        return ApiResponse.success(PageResponse.of(page));
     }
 }

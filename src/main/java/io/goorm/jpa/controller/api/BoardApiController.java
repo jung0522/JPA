@@ -37,7 +37,7 @@ public class BoardApiController {
     @Operation(summary = "게시글 생성")
     public ApiResponse<BoardResponse> create(@Valid @RequestBody BoardCreateRequest request) {
         BoardResponse response = boardService.create(request);
-        return ApiResponse.ok(response);
+        return ApiResponse.success(response);
     }
 
     @GetMapping
@@ -54,14 +54,14 @@ public class BoardApiController {
             page = boardService.getList(pageable);
         }
 
-        return ApiResponse.ok(PageResponse.of(page));
+        return ApiResponse.success(PageResponse.of(page));
     }
 
     @GetMapping("/{boardNo}")
     @Operation(summary = "게시글 상세 조회")
     public ApiResponse<BoardResponse> getDetail(@PathVariable Long boardNo) {
         BoardResponse response = boardService.getDetail(boardNo);
-        return ApiResponse.ok(response);
+        return ApiResponse.success(response);
     }
 
     @PutMapping("/{boardNo}")
@@ -71,14 +71,14 @@ public class BoardApiController {
             @Valid @RequestBody BoardUpdateRequest request
     ) {
         BoardResponse response = boardService.update(boardNo, request);
-        return ApiResponse.ok(response);
+        return ApiResponse.success(response);
     }
 
     @DeleteMapping("/{boardNo}")
     @Operation(summary = "게시글 삭제")
     public ApiResponse<Void> delete(@PathVariable Long boardNo) {
         boardService.delete(boardNo);
-        return ApiResponse.ok();
+        return ApiResponse.success();
     }
 
     @GetMapping("/my")
@@ -87,13 +87,13 @@ public class BoardApiController {
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         Page<BoardResponse> page = boardService.getMyBoards(pageable);
-        return ApiResponse.ok(PageResponse.of(page));
+        return ApiResponse.success(PageResponse.of(page));
     }
 
     @GetMapping("/popular")
     @Operation(summary = "인기 게시글 Top 10")
     public ApiResponse<List<BoardResponse>> getPopularBoards() {
         List<BoardResponse> response = boardService.getPopularBoards();
-        return ApiResponse.ok(response);
+        return ApiResponse.success(response);
     }
 }

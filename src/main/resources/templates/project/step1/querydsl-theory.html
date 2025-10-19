@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/project-layout}">
+<head>
+    <title th:text="${pageTitle}">QueryDSL 기본 이론</title>
+</head>
+<body>
+    <div layout:fragment="content">
+
+        <!-- Page Title -->
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold text-gray-900 mb-4">QueryDSL 기본 이론</h1>
+            <p class="text-xl text-gray-600">타입 안전한 동적 쿼리 작성</p>
+        </div>
+
+        <!-- Step 1 Sub Menu -->
+        <div class="bg-blue-50 rounded-lg p-6 mb-8">
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="/project/step1/overview" class="px-6 py-3 bg-white text-blue-600 border-2 border-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition">1. 구현 내용</a>
+                <a href="/project/step1/querydsl-setup" class="px-6 py-3 bg-white text-blue-600 border-2 border-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition">2. QueryDSL 설정</a>
+                <a href="/project/step1/querydsl-theory" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">3. QueryDSL 이론</a>
+            </div>
+        </div>
+
+        <!-- What is QueryDSL -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🎯 QueryDSL이란?</h2>
+
+            <div class="mb-6">
+                <p class="text-gray-700 mb-4">
+                    QueryDSL은 <strong>타입 안전한 방식</strong>으로 동적 쿼리를 작성할 수 있게 해주는 프레임워크입니다.
+                    문자열 기반 JPQL과 달리 <strong>컴파일 시점에 오류를 발견</strong>할 수 있습니다.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-green-50 border-2 border-green-200 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">✅ 장점</h3>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>• 컴파일 시점 타입 체크</li>
+                        <li>• IDE 자동완성 지원</li>
+                        <li>• 동적 쿼리 작성 용이</li>
+                        <li>• 재사용 가능한 코드</li>
+                    </ul>
+                </div>
+
+                <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">📌 핵심 개념</h3>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>• Q클래스 (QEntity)</li>
+                        <li>• JPAQueryFactory</li>
+                        <li>• BooleanExpression</li>
+                        <li>• Fetch Join</li>
+                    </ul>
+                </div>
+
+                <div class="bg-purple-50 border-2 border-purple-200 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">🎓 사용 사례</h3>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>• 검색 조건이 복잡한 경우</li>
+                        <li>• 동적 필터링</li>
+                        <li>• 페이징 + 정렬</li>
+                        <li>• 집계 쿼리</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Basic Syntax -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">📝 기본 문법</h2>
+
+            <!-- SELECT -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">1. 기본 조회 (SELECT)</h3>
+                <div class="bg-gray-900 rounded-lg p-6 overflow-x-auto">
+                    <pre class="text-green-400 text-sm"><code>// JPQL
+String jpql = "SELECT e FROM Enrollment e WHERE e.deleted = false";
+
+// QueryDSL
+List<Enrollment> result = queryFactory
+    .selectFrom(enrollment)
+    .where(enrollment.deleted.eq(false))
+    .fetch();</code></pre>
+                </div>
+                <div class="mt-3 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                    <p class="text-sm text-gray-700">
+                        <strong>💡 Tip:</strong> <code class="bg-white px-2 py-1 rounded text-xs">selectFrom()</code>은 SELECT와 FROM을 동시에 처리합니다.
+                    </p>
+                </div>
+            </div>
+
+            <!-- WHERE -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">2. 조건 검색 (WHERE)</h3>
+                <div class="bg-gray-900 rounded-lg p-6 overflow-x-auto">
+                    <pre class="text-green-400 text-sm"><code>// 단일 조건
+List<Enrollment> result = queryFactory
+    .selectFrom(enrollment)
+    .where(enrollment.status.eq(EnrollmentStatus.APPROVED))
+    .fetch();
+
+// 복수 조건 (AND)
+List<Enrollment> result = queryFactory
+    .selectFrom(enrollment)
+    .where(
+        enrollment.status.eq(EnrollmentStatus.APPROVED),
+        enrollment.deleted.eq(false)
+    )
+    .fetch();
+
+// OR 조건
+List<Enrollment> result = queryFactory
+    .selectFrom(enrollment)
+    .where(
+        enrollment.status.eq(EnrollmentStatus.APPROVED)
+            .or(enrollment.status.eq(EnrollmentStatus.PENDING))
+    )
+    .fetch();</code></pre>
+                </div>
+            </div>
+
+            <!-- Comparison Operators -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">3. 비교 연산자</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full border border-gray-200">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">연산</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">QueryDSL</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">설명</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm font-mono">=</td>
+                                <td class="px-4 py-3 text-sm font-mono text-blue-600">.eq(value)</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">같음</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm font-mono">!=</td>
+                                <td class="px-4 py-3 text-sm font-mono text-blue-600">.ne(value)</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">같지 않음</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm font-mono">&gt;</td>
+                                <td class="px-4 py-3 text-sm font-mono text-blue-600">.gt(value)</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">초과</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm font-mono">&gt;=</td>
+                                <td class="px-4 py-3 text-sm font-mono text-blue-600">.goe(value)</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">이상</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm font-mono">&lt;</td>
+                                <td class="px-4 py-3 text-sm font-mono text-blue-600">.lt(value)</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">미만</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm font-mono">&lt;=</td>
+                                <td class="px-4 py-3 text-sm font-mono text-blue-600">.loe(value)</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">이하</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm font-mono">LIKE</td>
+                                <td class="px-4 py-3 text-sm font-mono text-blue-600">.like("%value%")</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">포함</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm font-mono">IN</td>
+                                <td class="px-4 py-3 text-sm font-mono text-blue-600">.in(values)</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">포함 여부</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm font-mono">IS NULL</td>
+                                <td class="px-4 py-3 text-sm font-mono text-blue-600">.isNull()</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">null 체크</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- JOIN -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🔗 JOIN</h2>
+
+            <!-- Inner Join -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">1. 기본 JOIN</h3>
+                <div class="bg-gray-900 rounded-lg p-6 overflow-x-auto">
+                    <pre class="text-green-400 text-sm"><code>// Inner Join
+List<Enrollment> result = queryFactory
+    .selectFrom(enrollment)
+    .join(enrollment.student, user)
+    .join(enrollment.course, course)
+    .where(enrollment.deleted.eq(false))
+    .fetch();</code></pre>
+                </div>
+            </div>
+
+            <!-- Fetch Join -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">2. Fetch JOIN (N+1 문제 해결)</h3>
+                <div class="bg-gray-900 rounded-lg p-6 overflow-x-auto mb-4">
+                    <pre class="text-green-400 text-sm"><code>// Fetch Join으로 한 번에 가져오기
+List<Enrollment> result = queryFactory
+    .selectFrom(enrollment)
+    .join(enrollment.student, user).fetchJoin()
+    .join(enrollment.course, course).fetchJoin()
+    .where(enrollment.deleted.eq(false))
+    .fetch();</code></pre>
+                </div>
+                <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                    <p class="text-sm text-gray-700">
+                        <strong>✅ N+1 해결:</strong> <code class="bg-white px-2 py-1 rounded text-xs">fetchJoin()</code>을 사용하면
+                        연관된 엔티티를 한 번의 쿼리로 가져와 N+1 문제를 방지합니다.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Left Join -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">3. LEFT JOIN</h3>
+                <div class="bg-gray-900 rounded-lg p-6 overflow-x-auto">
+                    <pre class="text-green-400 text-sm"><code>// Left Outer Join
+List<Course> result = queryFactory
+    .selectFrom(course)
+    .leftJoin(course.instructor, user).fetchJoin()
+    .where(course.deleted.eq(false))
+    .fetch();</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Paging & Sorting -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">📄 페이징 & 정렬</h2>
+
+            <div class="bg-gray-900 rounded-lg p-6 overflow-x-auto mb-4">
+                <pre class="text-green-400 text-sm"><code>// offset, limit, orderBy
+List<Enrollment> content = queryFactory
+    .selectFrom(enrollment)
+    .where(enrollment.deleted.eq(false))
+    .offset(pageable.getOffset())      // 시작 위치
+    .limit(pageable.getPageSize())     // 가져올 개수
+    .orderBy(enrollment.createdAt.desc())  // 정렬
+    .fetch();
+
+// 전체 개수 조회 (페이징에 필요)
+Long total = queryFactory
+    .select(enrollment.count())
+    .from(enrollment)
+    .where(enrollment.deleted.eq(false))
+    .fetchOne();
+
+// PageImpl 생성
+return new PageImpl<>(content, pageable, total != null ? total : 0);</code></pre>
+            </div>
+
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                <p class="text-sm text-gray-700">
+                    <strong>💡 Tip:</strong> 페이징 쿼리는 <strong>데이터 조회</strong>와 <strong>전체 개수 조회</strong> 두 번 실행됩니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- Dynamic Query -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🎨 동적 쿼리</h2>
+
+            <div class="mb-6">
+                <p class="text-gray-700 mb-4">
+                    사용자가 입력한 검색 조건에 따라 쿼리가 동적으로 변경되어야 할 때 사용합니다.
+                </p>
+            </div>
+
+            <!-- Before: String concatenation -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">❌ 잘못된 방법: 문자열 조합</h3>
+                <div class="bg-gray-900 rounded-lg p-6 overflow-x-auto mb-3">
+                    <pre class="text-green-400 text-sm"><code>// 위험! SQL Injection 가능성
+String jpql = "SELECT e FROM Enrollment e WHERE 1=1";
+if (studentNo != null) {
+    jpql += " AND e.student.userNo = " + studentNo;
+}
+if (status != null) {
+    jpql += " AND e.status = '" + status + "'";
+}</code></pre>
+                </div>
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                    <p class="text-sm text-gray-700">
+                        <strong>⚠️ 위험:</strong> SQL Injection 취약점, 타입 안정성 없음
+                    </p>
+                </div>
+            </div>
+
+            <!-- Correct: QueryDSL where() with null -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">✅ QueryDSL 방법: where() null 무시</h3>
+                <div class="bg-gray-900 rounded-lg p-6 overflow-x-auto mb-3">
+                    <pre class="text-green-400 text-sm"><code>// QueryDSL은 where()에 null이 들어오면 자동으로 무시
+List<Enrollment> result = queryFactory
+    .selectFrom(enrollment)
+    .where(
+        studentNoEq(studentNo),    // null이면 무시
+        courseNoEq(courseNo),      // null이면 무시
+        statusEq(status)           // null이면 무시
+    )
+    .fetch();
+
+// 조건 메서드들
+private BooleanExpression studentNoEq(Long studentNo) {
+    return studentNo != null ? enrollment.student.userNo.eq(studentNo) : null;
+}
+
+private BooleanExpression courseNoEq(Long courseNo) {
+    return courseNo != null ? enrollment.course.courseNo.eq(courseNo) : null;
+}
+
+private BooleanExpression statusEq(EnrollmentStatus status) {
+    return status != null ? enrollment.status.eq(status) : null;
+}</code></pre>
+                </div>
+                <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                    <p class="text-sm text-gray-700">
+                        <strong>✅ 안전:</strong> 타입 안전, 컴파일 체크, null 자동 처리
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Aggregation -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">📊 집계 함수</h2>
+
+            <div class="bg-gray-900 rounded-lg p-6 overflow-x-auto mb-4">
+                <pre class="text-green-400 text-sm"><code>// COUNT
+Long count = queryFactory
+    .select(enrollment.count())
+    .from(enrollment)
+    .where(enrollment.status.eq(EnrollmentStatus.APPROVED))
+    .fetchOne();
+
+// SUM
+Integer total = queryFactory
+    .select(course.currentStudents.sum())
+    .from(course)
+    .where(course.deleted.eq(false))
+    .fetchOne();
+
+// AVG
+Double average = queryFactory
+    .select(course.currentStudents.avg())
+    .from(course)
+    .fetchOne();
+
+// MIN, MAX
+Integer min = queryFactory.select(course.currentStudents.min()).from(course).fetchOne();
+Integer max = queryFactory.select(course.currentStudents.max()).from(course).fetchOne();</code></pre>
+            </div>
+        </section>
+
+        <!-- Step 2 Preview -->
+        <section class="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg shadow-lg p-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🚀 Step 2에서 배울 내용</h2>
+
+            <div class="mb-6">
+                <p class="text-gray-700 mb-4">
+                    Step 1에서는 QueryDSL의 기본 문법과 동적 쿼리를 배웠습니다.
+                    Step 2에서는 더 고급 기능들을 학습합니다.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg p-6 border-2 border-orange-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">🎯 조건 분리 패턴 (BooleanExpression)</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        복잡한 조건을 재사용 가능한 메서드로 분리하여 코드 가독성과 유지보수성을 높이는 방법을 학습합니다.
+                    </p>
+                    <div class="bg-gray-100 rounded p-3 text-xs font-mono">
+                        <code>BooleanExpression isAvailable() {
+    return course.currentStudents.lt(course.maxStudents)
+        .and(course.deleted.eq(false));
+}</code>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg p-6 border-2 border-red-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">🔄 복잡한 조인과 서브쿼리</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        양방향 관계에서의 조인, 서브쿼리 활용, EXISTS 절 등 고급 쿼리 작성 기법을 배웁니다.
+                    </p>
+                </div>
+
+                <div class="bg-white rounded-lg p-6 border-2 border-purple-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">📦 Projection (DTO 직접 조회)</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        엔티티 전체가 아닌 필요한 필드만 DTO로 직접 조회하여 성능을 최적화하는 방법을 학습합니다.
+                    </p>
+                </div>
+
+                <div class="bg-white rounded-lg p-6 border-2 border-blue-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">🎨 QueryDSL + Specification</h3>
+                    <p class="text-sm text-gray-700 mb-3">
+                        Spring Data JPA Specification과 QueryDSL을 결합하여 더욱 강력한 동적 쿼리를 작성합니다.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-orange-100 border-l-4 border-orange-500 p-4 rounded">
+                <p class="text-sm text-gray-800">
+                    <strong>💡 다음 단계:</strong> Step 2에서는 양방향 관계와 함께 더욱 복잡하고 실무적인 QueryDSL 활용 방법을 배웁니다.
+                    특히 <strong>조건 분리 패턴</strong>은 실무에서 매우 중요한 기법이므로 꼭 익혀두세요!
+                </p>
+            </div>
+        </section>
+
+    </div>
+</body>
+</html>

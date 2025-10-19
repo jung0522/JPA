@@ -1,5 +1,8 @@
 package io.goorm.jpa.config;
 
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
@@ -18,6 +21,17 @@ import java.util.Optional;
 @Configuration
 @EnableJpaAuditing
 public class JpaConfig {
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    /**
+     * QueryDSL JPAQueryFactory 빈 등록
+     */
+    @Bean
+    public JPAQueryFactory jpaQueryFactory() {
+        return new JPAQueryFactory(entityManager);
+    }
 
     /**
      * 현재 작업자 정보를 제공하는 Bean
