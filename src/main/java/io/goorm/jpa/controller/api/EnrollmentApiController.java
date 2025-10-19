@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
  * Enrollment API Controller
  * - QueryDSL 사용
  * - Optimistic Lock
+ * - Step 1: 기본 CRUD + 동적 검색
  */
 @Slf4j
 @RestController
@@ -46,14 +47,14 @@ public class EnrollmentApiController {
     }
 
     @PutMapping("/{enrollmentNo}/approve")
-    @Operation(summary = "수강신청 승인 (관리자)")
+    @Operation(summary = "수강신청 승인 (관리자, 강사)")
     public ApiResponse<EnrollmentResponse> approve(@PathVariable Long enrollmentNo) {
         EnrollmentResponse response = enrollmentService.approve(enrollmentNo);
         return ApiResponse.success(response);
     }
 
     @PutMapping("/{enrollmentNo}/reject")
-    @Operation(summary = "수강신청 거절 (관리자)")
+    @Operation(summary = "수강신청 거절 (관리자, 강사)")
     public ApiResponse<EnrollmentResponse> reject(@PathVariable Long enrollmentNo) {
         EnrollmentResponse response = enrollmentService.reject(enrollmentNo);
         return ApiResponse.success(response);
@@ -69,14 +70,15 @@ public class EnrollmentApiController {
     }
 
     @GetMapping
-    @Operation(summary = "수강신청 관리 (관리자, 동적 검색)")
+    @Operation(summary = "수강신청 관리 (관리자, 강사, 동적 검색)")
     public ApiResponse<PageResponse<EnrollmentResponse>> search(
-            @RequestParam(required = false) Long studentNo,
-            @RequestParam(required = false) Long courseNo,
+            @RequestParam(required = false) String searchField,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Boolean include,
             @RequestParam(required = false) EnrollmentStatus status,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        Page<EnrollmentResponse> page = enrollmentService.search(studentNo, courseNo, status, pageable);
+        Page<EnrollmentResponse> page = enrollmentService.searchByAdminConditions(searchField, keyword, include, status, pageable);
         return ApiResponse.success(PageResponse.of(page));
     }
 }

@@ -7,7 +7,7 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <h1 class="text-3xl font-bold mb-6">수강신청 관리 (관리자)</h1>
+    <h1 class="text-3xl font-bold mb-6">수강신청 관리</h1>
 
     <!-- 검색 -->
     <div class="flex gap-3 mb-6">
@@ -66,6 +66,8 @@
         }
 
         currentPage = page;
+        
+        currentPage = page;
         currentFilters = { searchField, keyword, includeCheck, status };
 
         await fetchEnrollments(page, currentFilters);
@@ -78,8 +80,9 @@
         try {
             const params = new URLSearchParams({ page, size: 10 });
 
-            if (filters.studentNo) params.append('studentNo', filters.studentNo);
-            if (filters.courseNo) params.append('courseNo', filters.courseNo);
+            if (filters.searchField) params.append('searchField', filters.searchField);
+            if (filters.keyword) params.append('keyword', filters.keyword);
+            if (filters.includeCheck) params.append('include', filters.includeCheck);
             if (filters.status) params.append('status', filters.status);
 
             const response = await fetch(`/api/enrollments?${params}`, {

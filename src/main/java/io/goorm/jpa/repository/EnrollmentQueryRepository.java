@@ -34,17 +34,48 @@ public class EnrollmentQueryRepository {
     /**
      * 수강신청 동적 검색 (관리자용)
      */
-    public Page<Enrollment> search(Long studentNo, Long courseNo, EnrollmentStatus status, Pageable pageable) {
+    public Page<Enrollment> searchByAdminConditions(String searchField, String keyword, Boolean include, EnrollmentStatus status, Pageable pageable) {
+        com.querydsl.core.BooleanBuilder builder = new com.querydsl.core.BooleanBuilder();
+        
+        // 기본 조건: 삭제되지 않은 것만
+        builder.and(enrollment.deleted.eq(false));
+        
+        // 검색 조건
+        if (searchField != null && keyword != null && !keyword.trim().isEmpty()) {
+            String searchKeyword = keyword.trim();
+            boolean isLike = include != null && include;
+            
+            switch (searchField) {
+                case "studentName":
+                    builder.and(isLike ? enrollment.student.fullName.contains(searchKeyword) : enrollment.student.fullName.eq(searchKeyword));
+                    break;
+                case "courseName":
+                    builder.and(isLike ? enrollment.course.name.contains(searchKeyword) : enrollment.course.name.eq(searchKeyword));
+                    break;
+                case "instructorName":
+                    builder.and(isLike ? enrollment.course.instructor.fullName.contains(searchKeyword) : enrollment.course.instructor.fullName.eq(searchKeyword));
+                    break;
+                case "all":
+                default:
+                    builder.and(
+                        enrollment.student.fullName.contains(searchKeyword)
+                        .or(enrollment.course.name.contains(searchKeyword))
+                        .or(enrollment.course.instructor.fullName.contains(searchKeyword))
+                    );
+                    break;
+            }
+        }
+        
+        // 상태 조건
+        if (status != null) {
+            builder.and(enrollment.status.eq(status));
+        }
+        
         List<Enrollment> content = queryFactory
                 .selectFrom(enrollment)
                 .join(enrollment.student, user).fetchJoin()
                 .join(enrollment.course, course).fetchJoin()
-                .where(
-                        enrollment.deleted.eq(false),
-                        studentNoEq(studentNo),
-                        courseNoEq(courseNo),
-                        statusEq(status)
-                )
+                .where(builder)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .orderBy(enrollment.createdAt.desc())
@@ -53,12 +84,7 @@ public class EnrollmentQueryRepository {
         Long total = queryFactory
                 .select(enrollment.count())
                 .from(enrollment)
-                .where(
-                        enrollment.deleted.eq(false),
-                        studentNoEq(studentNo),
-                        courseNoEq(courseNo),
-                        statusEq(status)
-                )
+                .where(builder)
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0);

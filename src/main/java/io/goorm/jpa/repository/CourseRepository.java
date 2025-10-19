@@ -150,36 +150,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         """)
     Page<Course> findByAvailability(@Param("isAvailable") Boolean isAvailable, Pageable pageable);
 
-    /**
-     * 강사별 강의 통계
-     */
-    @Query("""
-        SELECT i.fullName, 
-               COUNT(c) as courseCount,
-               AVG(c.maxStudents) as avgCapacity,
-               SUM(c.currentStudents) as totalStudents
-        FROM Course c
-        JOIN c.instructor i
-        WHERE c.deleted = false
-        GROUP BY i.fullName
-        ORDER BY courseCount DESC
-        """)
-    java.util.List<Object[]> findInstructorStatistics();
-
-    /**
-     * 월별 강의 개설 통계
-     */
-    @Query("""
-        SELECT YEAR(c.createdAt) as year,
-               MONTH(c.createdAt) as month,
-               COUNT(c) as courseCount,
-               AVG(c.maxStudents) as avgCapacity
-        FROM Course c
-        WHERE c.deleted = false
-        GROUP BY YEAR(c.createdAt), MONTH(c.createdAt)
-        ORDER BY year DESC, month DESC
-        """)
-    java.util.List<Object[]> findMonthlyStatistics();
 
     /**
      * 정원 대비 수강률이 높은 강의

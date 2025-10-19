@@ -213,19 +213,6 @@ public class CourseService {
                 .map(CourseResponse::from);
     }
 
-    /**
-     * 강사별 강의 통계
-     */
-    public java.util.List<Object[]> getInstructorStatistics() {
-        return courseRepository.findInstructorStatistics();
-    }
-
-    /**
-     * 월별 강의 개설 통계
-     */
-    public java.util.List<Object[]> getMonthlyStatistics() {
-        return courseRepository.findMonthlyStatistics();
-    }
 
     /**
      * 동적 조건 검색 (SearchCondition DTO 사용)

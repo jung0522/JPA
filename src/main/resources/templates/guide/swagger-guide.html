@@ -11,8 +11,62 @@
         <!-- Page Title -->
         <div class="mb-8">
             <h1 class="text-4xl font-bold text-gray-900 mb-2" th:text="${pageTitle}">Swagger API 문서 가이드</h1>
-            <p class="text-gray-600">Swagger UI로 API 문서화 및 테스트하기</p>
+            <p class="text-gray-600">학사관리 시스템 API 문서화 및 테스트하기</p>
         </div>
+
+        <!-- Milestone Overview -->
+        <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">📚 학사관리 시스템 - 1단계</h2>
+
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <!-- Current Features -->
+                <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-green-800 mb-4">✅ 현재 구현된 기능</h3>
+                    <ul class="text-sm text-green-700 space-y-2">
+                        <li>• <strong>JWT 인증/인가</strong> - 로그인/로그아웃</li>
+                        <li>• <strong>JPA Auditing</strong> - 생성/수정 시간, 사용자 추적</li>
+                        <li>• <strong>Soft Delete</strong> - 논리적 삭제</li>
+                        <li>• <strong>전역 예외 처리</strong> - 표준화된 에러 응답</li>
+                        <li>• <strong>API 표준 응답 포맷</strong> - 일관된 응답 구조</li>
+                        <li>• <strong>SQL 로깅</strong> - Hibernate SQL 로깅</li>
+                    </ul>
+                </div>
+
+                <!-- Available Modules -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-blue-800 mb-4">🎯 사용 가능한 모듈</h3>
+                    <ul class="text-sm text-blue-700 space-y-2">
+                        <li>• <strong>로그인 대시보드</strong> - 메인 페이지</li>
+                        <li>• <strong>게시판</strong> - Query Methods</li>
+                        <li>• <strong>강의관리</strong> - JPQL + DTO</li>
+                        <li>• <strong>수강신청관리</strong> - QueryDSL + DTO</li>
+                        <li>• <strong>내 수강신청</strong> - 학생 전용</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Test Accounts -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-yellow-800 mb-3">🔑 테스트 계정</h3>
+                <div class="grid md:grid-cols-3 gap-4 text-sm">
+                    <div class="bg-white rounded p-3">
+                        <strong class="text-gray-900">관리자</strong><br>
+                        <code class="text-blue-600">admin / 1234</code><br>
+                        <span class="text-gray-600">모든 기능 접근 가능</span>
+                    </div>
+                    <div class="bg-white rounded p-3">
+                        <strong class="text-gray-900">강사</strong><br>
+                        <code class="text-green-600">instructor01 / 1234</code><br>
+                        <span class="text-gray-600">강의관리, 수강신청관리</span>
+                    </div>
+                    <div class="bg-white rounded p-3">
+                        <strong class="text-gray-900">학생</strong><br>
+                        <code class="text-purple-600">student01 / 1234</code><br>
+                        <span class="text-gray-600">강의 조회, 수강신청</span>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <!-- Swagger UI Access -->
         <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
@@ -30,112 +84,25 @@
             </div>
         </section>
 
-        <!-- Common Annotations -->
+        <!-- Quick Start -->
         <section class="bg-white rounded-lg shadow-lg p-8 mb-8">
-            <h2 class="text-3xl font-bold text-gray-900 mb-6">🏷️ 주요 Swagger 어노테이션</h2>
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">🚀 빠른 시작</h2>
 
-            <div class="space-y-6">
-                <!-- @Tag -->
-                <div class="border border-gray-200 rounded-lg p-5">
-                    <div class="flex items-start mb-3">
-                        <code class="px-3 py-1 bg-blue-100 text-blue-800 font-mono text-sm rounded mr-3">@Tag</code>
-                        <div class="flex-1">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Controller 그룹화</h3>
-                            <p class="text-sm text-gray-600 mb-3">Controller를 논리적 그룹으로 묶어 표시합니다.</p>
-                        </div>
-                    </div>
-                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code>@Tag(name = "인증", description = "로그인/로그아웃 API")
-@RestController
-@RequestMapping("/api/auth")
-public class AuthController {
-    // ...
-}</code></pre>
+            <div class="space-y-4">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-blue-800 mb-2">1. 로그인</h3>
+                    <p class="text-sm text-blue-700">테스트 계정으로 로그인하여 JWT 토큰을 발급받습니다.</p>
                 </div>
 
-                <!-- @Operation -->
-                <div class="border border-gray-200 rounded-lg p-5">
-                    <div class="flex items-start mb-3">
-                        <code class="px-3 py-1 bg-green-100 text-green-800 font-mono text-sm rounded mr-3">@Operation</code>
-                        <div class="flex-1">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-2">API 설명 추가</h3>
-                            <p class="text-sm text-gray-600 mb-3">각 API 메서드에 대한 상세 설명을 추가합니다.</p>
-                        </div>
-                    </div>
-                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code>@Operation(
-    summary = "사용자 로그인",
-    description = "username과 password로 로그인하고 JWT 토큰을 발급받습니다."
-)
-@PostMapping("/login")
-public ResponseEntity&lt;ApiResponse&lt;LoginResponse&gt;&gt; login(...) {
-    // ...
-}</code></pre>
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-green-800 mb-2">2. 인증 설정</h3>
+                    <p class="text-sm text-green-700">Swagger UI에서 Authorize 버튼을 클릭하여 토큰을 입력합니다.</p>
                 </div>
 
-                <!-- @Parameter -->
-                <div class="border border-gray-200 rounded-lg p-5">
-                    <div class="flex items-start mb-3">
-                        <code class="px-3 py-1 bg-purple-100 text-purple-800 font-mono text-sm rounded mr-3">@Parameter</code>
-                        <div class="flex-1">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-2">파라미터 설명</h3>
-                            <p class="text-sm text-gray-600 mb-3">PathVariable, RequestParam 등의 설명을 추가합니다.</p>
-                        </div>
-                    </div>
-                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code>@GetMapping("/{id}")
-public ResponseEntity&lt;User&gt; getUser(
-    @Parameter(description = "사용자 ID", example = "1")
-    @PathVariable Long id
-) {
-    // ...
-}</code></pre>
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-purple-800 mb-2">3. API 테스트</h3>
+                    <p class="text-sm text-purple-700">각 모듈별 API를 테스트해보세요.</p>
                 </div>
-
-                <!-- @Schema -->
-                <div class="border border-gray-200 rounded-lg p-5">
-                    <div class="flex items-start mb-3">
-                        <code class="px-3 py-1 bg-orange-100 text-orange-800 font-mono text-sm rounded mr-3">@Schema</code>
-                        <div class="flex-1">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-2">DTO 필드 설명</h3>
-                            <p class="text-sm text-gray-600 mb-3">Request/Response DTO의 각 필드를 설명합니다.</p>
-                        </div>
-                    </div>
-                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code>public record LoginRequest(
-    @Schema(description = "사용자 아이디", example = "admin")
-    String username,
-
-    @Schema(description = "비밀번호", example = "1234")
-    String password
-) {}</code></pre>
-                </div>
-
-                <!-- @ApiResponse -->
-                <div class="border border-gray-200 rounded-lg p-5">
-                    <div class="flex items-start mb-3">
-                        <code class="px-3 py-1 bg-red-100 text-red-800 font-mono text-sm rounded mr-3">@ApiResponse</code>
-                        <div class="flex-1">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-2">응답 코드 설명</h3>
-                            <p class="text-sm text-gray-600 mb-3">가능한 HTTP 응답 코드와 설명을 추가합니다.</p>
-                        </div>
-                    </div>
-                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code>@Operation(summary = "사용자 로그인")
-@ApiResponses({
-    @ApiResponse(responseCode = "200", description = "로그인 성공"),
-    @ApiResponse(responseCode = "401", description = "인증 실패"),
-    @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
-})
-@PostMapping("/login")
-public ResponseEntity&lt;LoginResponse&gt; login(...) {
-    // ...
-}</code></pre>
-                </div>
-            </div>
-
-            <div class="mt-6 bg-gray-50 p-5 rounded">
-                <h3 class="font-semibold text-gray-900 mb-3">📝 어노테이션 우선순위</h3>
-                <ol class="text-sm text-gray-700 space-y-1 list-decimal list-inside">
-                    <li><strong>필수:</strong> <code class="bg-white px-2 py-1 rounded">@Tag</code> (Controller 그룹화)</li>
-                    <li><strong>권장:</strong> <code class="bg-white px-2 py-1 rounded">@Operation</code> (API 설명)</li>
-                    <li><strong>선택:</strong> <code class="bg-white px-2 py-1 rounded">@Schema</code>, <code class="bg-white px-2 py-1 rounded">@Parameter</code> (상세 문서화)</li>
-                </ol>
             </div>
         </section>
 

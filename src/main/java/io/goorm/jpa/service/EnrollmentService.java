@@ -155,7 +155,7 @@ public class EnrollmentService {
     public EnrollmentResponse approve(Long enrollmentNo) {
         User currentUser = getCurrentUser();
 
-        if (!currentUser.isAdmin()) {
+        if (!currentUser.isAdmin() && !currentUser.isInstructor()) {
             throw new BusinessException(ErrorCode.USER_FORBIDDEN);
         }
 
@@ -179,7 +179,7 @@ public class EnrollmentService {
     public EnrollmentResponse reject(Long enrollmentNo) {
         User currentUser = getCurrentUser();
 
-        if (!currentUser.isAdmin()) {
+        if (!currentUser.isAdmin() && !currentUser.isInstructor()) {
             throw new BusinessException(ErrorCode.USER_FORBIDDEN);
         }
 
@@ -209,14 +209,14 @@ public class EnrollmentService {
     /**
      * 수강신청 관리 (관리자, 동적 검색)
      */
-    public Page<EnrollmentResponse> search(Long studentNo, Long courseNo, EnrollmentStatus status, Pageable pageable) {
+    public Page<EnrollmentResponse> searchByAdminConditions(String searchField, String keyword, Boolean include, EnrollmentStatus status, Pageable pageable) {
         User currentUser = getCurrentUser();
 
-        if (!currentUser.isAdmin()) {
+        if (!currentUser.isAdmin() && !currentUser.isInstructor()) {
             throw new BusinessException(ErrorCode.USER_FORBIDDEN);
         }
 
-        return enrollmentQueryRepository.search(studentNo, courseNo, status, pageable)
+        return enrollmentQueryRepository.searchByAdminConditions(searchField, keyword, include, status, pageable)
                 .map(EnrollmentResponse::from);
     }
 

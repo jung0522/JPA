@@ -21,9 +21,9 @@ import java.util.List;
 
 /**
  * Board API Controller
- * - RESTful API 설계
  * - Query Methods 사용
  * - ManyToOne 단방향
+ * - Step 1: 기본 CRUD + 검색
  */
 @Slf4j
 @RestController
@@ -58,7 +58,7 @@ public class BoardApiController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "게시글 검색 (RESTful)")
+    @Operation(summary = "게시글 검색")
     public ApiResponse<PageResponse<BoardResponse>> searchBoards(
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String content,
