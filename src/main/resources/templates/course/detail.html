@@ -29,9 +29,8 @@
         if (!requireLogin()) return;
 
         try {
-            const token = getToken();
             const response = await fetch(`/api/courses/${courseNo}`, {
-                headers: { 'Authorization': 'Bearer ' + token }
+                credentials: 'include'
             });
 
             if (!response.ok) {

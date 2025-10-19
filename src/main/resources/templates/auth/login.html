@@ -65,11 +65,8 @@
             const result = await response.json();
 
             if (response.ok) {
-                // 토큰 저장
-                localStorage.setItem('token', result.data.token);
-                localStorage.setItem('username', result.data.username);
-                localStorage.setItem('role', result.data.role);
-
+                // 세션 기반이므로 localStorage 저장 불필요
+                // 서버가 자동으로 세션 생성 및 쿠키 발급
                 alert('로그인 성공!');
                 location.href = '/';
             } else {

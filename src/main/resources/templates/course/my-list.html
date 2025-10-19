@@ -31,9 +31,8 @@
         currentPage = page;
 
         try {
-            const token = getToken();
             const response = await fetch(`/api/courses/my?page=${page}&size=12`, {
-                headers: { 'Authorization': 'Bearer ' + token }
+                credentials: 'include'
             });
 
             if (!response.ok) throw new Error('Failed to load my courses');

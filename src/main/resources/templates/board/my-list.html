@@ -28,9 +28,8 @@
         currentPage = page;
 
         try {
-            const token = getToken();
             const response = await fetch(`/api/boards/my?page=${page}&size=10`, {
-                headers: { 'Authorization': 'Bearer ' + token }
+                credentials: 'include'
             });
 
             if (!response.ok) throw new Error('Failed to load my boards');

@@ -53,9 +53,8 @@
         if (!requireLogin()) return;
 
         try {
-            const token = getToken();
             const response = await fetch(`/api/courses/${courseNo}`, {
-                headers: { 'Authorization': 'Bearer ' + token }
+                credentials: 'include'
             });
 
             if (!response.ok) throw new Error('Failed to load course');
@@ -92,16 +91,15 @@
         }
 
         try {
-            const token = getToken();
             const url = isEditMode ? `/api/courses/${courseNo}` : '/api/courses';
             const method = isEditMode ? 'PUT' : 'POST';
 
             const response = await fetch(url, {
                 method: method,
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
+                    'Content-Type': 'application/json'
                 },
+                credentials: 'include',
                 body: JSON.stringify({ name, description, maxStudents })
             });
 

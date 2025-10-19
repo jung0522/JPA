@@ -25,9 +25,8 @@
         currentPage = page;
 
         try {
-            const token = getToken();
             const response = await fetch(`/api/enrollments/my?page=${page}&size=10`, {
-                headers: { 'Authorization': 'Bearer ' + token }
+                credentials: 'include'
             });
 
             if (!response.ok) throw new Error('Failed to load enrollments');
@@ -92,10 +91,9 @@
         if (!confirm('수강신청을 취소하시겠습니까?')) return;
 
         try {
-            const token = getToken();
             const response = await fetch(`/api/enrollments/${enrollmentNo}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': 'Bearer ' + token }
+                credentials: 'include'
             });
 
             if (!response.ok) {

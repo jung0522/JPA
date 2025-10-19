@@ -1,6 +1,6 @@
 /**
  * 인증 관련 공통 함수
- * localStorage를 사용한 토큰 관리
+ * 세션 기반 인증 (쿠키 자동 전송)
  */
 
 /**
@@ -13,46 +13,47 @@ function goLogin() {
 /**
  * 로그아웃
  */
-function logout() {
+async function logout() {
     if (confirm('로그아웃 하시겠습니까?')) {
-        localStorage.clear();
-        location.href = '/';
+        try {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            location.href = '/';
+        }
     }
 }
 
 /**
- * 저장된 토큰 가져오기
+ * 현재 사용자 정보 가져오기 (서버에서 조회)
  */
-function getToken() {
-    return localStorage.getItem('token');
+async function getCurrentUser() {
+    try {
+        const response = await fetch('/api/auth/me', {
+            credentials: 'include'
+        });
+        if (response.ok) {
+            const result = await response.json();
+            return result.data;
+        }
+    } catch (error) {
+        console.error('Get current user error:', error);
+    }
+    return null;
 }
 
 /**
- * 현재 사용자 정보 가져오기
- */
-function getCurrentUser() {
-    return {
-        username: localStorage.getItem('username'),
-        role: localStorage.getItem('role')
-    };
-}
-
-/**
- * 로그인 여부 확인
- */
-function isLoggedIn() {
-    return !!getToken();
-}
-
-/**
- * 로그인 필수 체크 (로그인 안되어 있으면 로그인 페이지로 이동)
+ * 로그인 필수 체크
+ * 세션 기반이므로 서버가 자동으로 인증 체크
+ * 페이지 접근 시 Spring Security가 자동으로 리다이렉트
  */
 function requireLogin() {
-    if (!isLoggedIn()) {
-        alert('로그인이 필요합니다.');
-        goLogin();
-        return false;
-    }
+    // 세션 기반이므로 클라이언트에서 체크 불필요
+    // 서버에서 자동으로 인증 확인
     return true;
 }
 

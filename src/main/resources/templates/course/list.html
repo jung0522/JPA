@@ -50,9 +50,8 @@
         document.getElementById('keyword').value = '';
 
         try {
-            const token = getToken();
             const response = await fetch(`/api/courses?page=${page}&size=12`, {
-                headers: { 'Authorization': 'Bearer ' + token }
+                credentials: 'include'
             });
 
             if (!response.ok) throw new Error('Failed to load courses');
@@ -76,13 +75,12 @@
         isAvailableOnly = true;
 
         try {
-            const token = getToken();
             const url = keyword
                 ? `/api/courses/available?keyword=${encodeURIComponent(keyword)}&page=${page}&size=12`
                 : `/api/courses/available?page=${page}&size=12`;
 
             const response = await fetch(url, {
-                headers: { 'Authorization': 'Bearer ' + token }
+                credentials: 'include'
             });
 
             if (!response.ok) throw new Error('Failed to search courses');

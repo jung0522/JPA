@@ -29,25 +29,37 @@
     <!-- Header Login Status Check -->
     <script>
     // 페이지 로드 시 로그인 상태 확인
-    document.addEventListener('DOMContentLoaded', function() {
-        checkLoginStatus();
+    document.addEventListener('DOMContentLoaded', async function() {
+        await checkLoginStatus();
     });
 
-    function checkLoginStatus() {
-        const token = localStorage.getItem('token');
-        const username = localStorage.getItem('username');
-        const role = localStorage.getItem('role');
+    async function checkLoginStatus() {
+        try {
+            const response = await fetch('/api/auth/me', {
+                credentials: 'include'
+            });
 
-        if (token && username) {
-            // 로그인 상태
-            document.getElementById('before-login').classList.add('hidden');
-            document.getElementById('after-login').classList.remove('hidden');
+            if (response.ok) {
+                const result = await response.json();
+                const user = result.data;
 
-            const roleText = role === 'ADMIN' ? '관리자' :
-                            role === 'INSTRUCTOR' ? '강사' : '학생';
-            document.getElementById('user-info').textContent = `${username}님 (${roleText})`;
-        } else {
-            // 로그아웃 상태
+                if (user) {
+                    // 로그인 상태
+                    document.getElementById('before-login').classList.add('hidden');
+                    document.getElementById('after-login').classList.remove('hidden');
+
+                    const roleText = user.role === 'ADMIN' ? '관리자' :
+                                    user.role === 'INSTRUCTOR' ? '강사' : '학생';
+                    document.getElementById('user-info').textContent = `${user.username}님 (${roleText})`;
+                } else {
+                    // 로그아웃 상태
+                    document.getElementById('before-login').classList.remove('hidden');
+                    document.getElementById('after-login').classList.add('hidden');
+                }
+            }
+        } catch (error) {
+            console.error('Error checking login status:', error);
+            // 에러 시 로그아웃 상태로 표시
             document.getElementById('before-login').classList.remove('hidden');
             document.getElementById('after-login').classList.add('hidden');
         }
