@@ -130,7 +130,84 @@ public class JpaDataInitializer implements CommandLineRunner {
                 .build();
         boardRepository.save(board5);
 
-        log.info("Board test data created: {} boards", 5);
+        Board board6 = Board.builder()
+                .title("JPA N+1 문제 해결 방법")
+                .content("N+1 문제는 JPA를 사용할 때 가장 흔한 성능 이슈입니다.\n\n해결 방법:\n1. Fetch Join 사용\n2. @EntityGraph 활용\n3. Batch Size 설정")
+                .author(instructor01)
+                .build();
+        boardRepository.save(board6);
+
+        Board board7 = Board.builder()
+                .title("Spring Data JPA Best Practices")
+                .content("Spring Data JPA를 효과적으로 사용하기 위한 베스트 프랙티스를 공유합니다.")
+                .author(admin)
+                .build();
+        boardRepository.save(board7);
+
+        Board board8 = Board.builder()
+                .title("QueryDSL 동적 쿼리 작성법")
+                .content("QueryDSL을 활용한 복잡한 동적 쿼리 작성 예제입니다.")
+                .author(instructor01)
+                .build();
+        boardRepository.save(board8);
+
+        Board board9 = Board.builder()
+                .title("Soft Delete vs Hard Delete")
+                .content("데이터 삭제 전략에 대한 고민과 각 방식의 장단점을 정리했습니다.")
+                .author(admin)
+                .build();
+        boardRepository.save(board9);
+
+        Board board10 = Board.builder()
+                .title("Optimistic Lock 활용 사례")
+                .content("낙관적 잠금을 활용한 동시성 제어 방법을 설명합니다.")
+                .author(instructor01)
+                .build();
+        boardRepository.save(board10);
+
+        Board board11 = Board.builder()
+                .title("JPA Auditing 설정하기")
+                .content("@CreatedDate, @LastModifiedDate를 활용한 감사(Audit) 기능 구현 방법입니다.")
+                .author(admin)
+                .build();
+        boardRepository.save(board11);
+
+        Board board12 = Board.builder()
+                .title("Entity 설계 시 주의사항")
+                .content("Entity를 설계할 때 반드시 고려해야 할 사항들을 정리했습니다.\n\n- @Id 전략\n- 연관관계 주인\n- 즉시/지연 로딩")
+                .author(instructor01)
+                .build();
+        boardRepository.save(board12);
+
+        Board board13 = Board.builder()
+                .title("DTO vs Entity")
+                .content("DTO와 Entity의 차이점과 언제 어떤 것을 사용해야 하는지 설명합니다.")
+                .author(admin)
+                .build();
+        boardRepository.save(board13);
+
+        Board board14 = Board.builder()
+                .title("Pagination 구현 방법")
+                .content("Spring Data JPA에서 페이징을 구현하는 다양한 방법을 소개합니다.")
+                .author(instructor01)
+                .build();
+        boardRepository.save(board14);
+
+        Board board15 = Board.builder()
+                .title("데이터베이스 인덱스 전략")
+                .content("JPA에서 @Index를 활용한 인덱스 설계 방법입니다.")
+                .author(admin)
+                .build();
+        boardRepository.save(board15);
+
+        Board board16 = Board.builder()
+                .title("강의 후기 - JPA 기초 과정")
+                .content("JPA 기초 과정을 수강하고 정말 많은 도움이 되었습니다!")
+                .author(student02)
+                .build();
+        boardRepository.save(board16);
+
+        log.info("Board test data created: {} boards", 16);
 
         // Course 테스트 데이터 생성
         Course course1 = Course.builder()
@@ -181,7 +258,7 @@ public class JpaDataInitializer implements CommandLineRunner {
         log.info("  Instructor: instructor01 / 1234");
         log.info("  Students: student01, student02 / 1234");
         log.info("Test data:");
-        log.info("  Boards: 5 posts");
+        log.info("  Boards: 16 posts");
         log.info("  Courses: 5 courses");
     }
 }
