@@ -62,4 +62,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         ORDER BY c.createdAt DESC
         """)
     Page<Course> findByInstructor(@Param("instructor") User instructor, Pageable pageable);
+
+    /**
+     * 삭제되지 않은 강의 수
+     */
+    Long countByDeletedFalse();
 }

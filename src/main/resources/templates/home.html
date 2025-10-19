@@ -3,29 +3,118 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/app-layout}">
 <head>
-    <title>홈</title>
+    <title>대시보드</title>
 </head>
 <body>
 <div layout:fragment="content">
-    <div class="hero min-h-[60vh] bg-base-200 rounded-lg">
-        <div class="hero-content text-center">
-            <div class="max-w-md">
-                <h1 class="text-5xl font-bold">🎓 학사관리 시스템</h1>
-                <p class="py-6">
-                    JPA 학습을 위한 실습 프로젝트입니다.<br>
-                    게시판, 강의 관리, 수강신청 기능을 제공합니다.
-                </p>
-                <div class="flex gap-4 justify-center">
-                    <a href="/board" class="btn btn-primary">게시판</a>
-                    <a href="/course" class="btn btn-secondary">강의</a>
-                    <a href="/enrollment" class="btn btn-accent">수강신청</a>
+    <!-- 통계 섹션 -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="stats shadow">
+            <div class="stat">
+                <div class="stat-figure text-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                </div>
+                <div class="stat-title">전체 게시글</div>
+                <div class="stat-value text-primary" th:text="${dashboard.statistics().totalBoards()}">0</div>
+            </div>
+        </div>
+
+        <div class="stats shadow">
+            <div class="stat">
+                <div class="stat-figure text-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <div class="stat-title">전체 강의</div>
+                <div class="stat-value text-secondary" th:text="${dashboard.statistics().totalCourses()}">0</div>
+            </div>
+        </div>
+
+        <div class="stats shadow">
+            <div class="stat">
+                <div class="stat-figure text-accent">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                </div>
+                <div class="stat-title">전체 수강신청</div>
+                <div class="stat-value text-accent" th:text="${dashboard.statistics().totalEnrollments()}">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- 최근 게시글 -->
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title">📝 최근 게시글</h2>
+                <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead>
+                        <tr>
+                            <th>제목</th>
+                            <th>작성자</th>
+                            <th>작성일</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="board : ${dashboard.recentBoards()}" class="hover">
+                            <td>
+                                <a th:href="@{/board/{boardNo}(boardNo=${board.boardNo()})}"
+                                   th:text="${board.title()}"
+                                   class="link link-hover">제목</a>
+                            </td>
+                            <td th:text="${board.authorName()}">작성자</td>
+                            <td th:text="${#temporals.format(board.createdAt(), 'MM-dd HH:mm')}">날짜</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(dashboard.recentBoards())}">
+                            <td colspan="3" class="text-center text-gray-500">게시글이 없습니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-actions justify-end mt-4">
+                    <a href="/board" class="btn btn-sm btn-primary">더보기</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 인기 강의 TOP 5 (Step 2) -->
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title">
+                    🏆 인기 강의 TOP 5
+                    <span class="badge badge-warning badge-sm">Step 2</span>
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead>
+                        <tr>
+                            <th>순위</th>
+                            <th>강의명</th>
+                            <th>강사</th>
+                            <th>수강생</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="course, iterStat : ${dashboard.popularCourses()}" class="hover">
+                            <td th:text="${iterStat.count}">1</td>
+                            <td th:text="${course.courseName()}">강의명</td>
+                            <td th:text="${course.instructorName()}">강사</td>
+                            <td>
+                                <span class="badge badge-success" th:text="${course.studentCount()}">0</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="alert alert-warning mt-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    <span class="text-xs">이 기능은 Step 2(양방향 관계)에서 실제 데이터로 구현됩니다.</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-        <!-- 게시판 카드 -->
+    <!-- 바로가기 -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
         <div class="card bg-base-100 shadow-xl">
             <div class="card-body">
                 <h2 class="card-title">📝 게시판</h2>
@@ -37,7 +126,6 @@
             </div>
         </div>
 
-        <!-- 강의 카드 -->
         <div class="card bg-base-100 shadow-xl">
             <div class="card-body">
                 <h2 class="card-title">📚 강의</h2>
@@ -49,7 +137,6 @@
             </div>
         </div>
 
-        <!-- 수강신청 카드 -->
         <div class="card bg-base-100 shadow-xl">
             <div class="card-body">
                 <h2 class="card-title">✍️ 수강신청</h2>
@@ -62,7 +149,7 @@
         </div>
     </div>
 
-    <div class="alert alert-info shadow-lg mt-12">
+    <div class="alert alert-info shadow-lg mt-8">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
@@ -70,6 +157,7 @@
             <h3 class="font-bold">Step 1: ManyToOne 단방향</h3>
             <div class="text-xs">이 프로젝트는 ManyToOne 단방향 관계만 사용합니다. 양방향 관계는 Step 2에서 학습합니다.</div>
         </div>
+        <a href="/project" class="btn btn-sm">프로젝트 문서</a>
     </div>
 </div>
 </body>

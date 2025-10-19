@@ -22,4 +22,9 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
      * 중복 수강신청 확인
      */
     boolean existsByStudentAndCourseAndDeletedFalse(User student, Course course);
+
+    /**
+     * 삭제되지 않은 수강신청 수
+     */
+    Long countByDeletedFalse();
 }

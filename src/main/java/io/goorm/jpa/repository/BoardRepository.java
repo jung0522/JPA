@@ -35,4 +35,9 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
      */
     @Query("SELECT b FROM Board b WHERE b.deleted = false ORDER BY b.viewCount DESC")
     List<Board> findTop10ByOrderByViewCountDesc(Pageable pageable);
+
+    /**
+     * 삭제되지 않은 게시글 수
+     */
+    Long countByDeletedFalse();
 }
