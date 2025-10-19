@@ -57,4 +57,11 @@ public class ProjectController {
         model.addAttribute("pageTitle", "Step 2 변경사항");
         return "project/step2/changes";
     }
+
+    @GetMapping("/auth-session")
+    public String authSession(Model model) {
+        log.info("Auth session document page accessed");
+        model.addAttribute("pageTitle", "인증 방식: JWT → 세션 전환");
+        return "project/auth-session";
+    }
 }
