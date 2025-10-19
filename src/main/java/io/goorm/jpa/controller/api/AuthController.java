@@ -6,12 +6,15 @@ import io.goorm.jpa.dto.auth.LoginResponse;
 import io.goorm.jpa.entity.User;
 import io.goorm.jpa.repository.UserRepository;
 import io.goorm.jpa.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -27,9 +30,15 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(
-            @RequestBody @Valid LoginRequest request) {
+            @RequestBody @Valid LoginRequest request,
+            HttpServletRequest httpRequest) {
 
         LoginResponse response = authService.login(request);
+
+        // SecurityContext를 세션에 명시적으로 저장
+        SecurityContext context = SecurityContextHolder.getContext();
+        HttpSession session = httpRequest.getSession(true);
+        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
