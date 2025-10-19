@@ -3,12 +3,18 @@ package io.goorm.jpa.service;
 import io.goorm.jpa.dto.course.CourseCreateRequest;
 import io.goorm.jpa.dto.course.CourseResponse;
 import io.goorm.jpa.dto.course.CourseUpdateRequest;
+import io.goorm.jpa.dto.course.CourseSearchCondition;
+import io.goorm.jpa.dto.curriculum.CurriculumResponse;
+import io.goorm.jpa.dto.user.UserResponse;
 import io.goorm.jpa.entity.Course;
 import io.goorm.jpa.entity.User;
 import io.goorm.jpa.exception.BusinessException;
 import io.goorm.jpa.exception.ErrorCode;
 import io.goorm.jpa.repository.CourseRepository;
 import io.goorm.jpa.repository.UserRepository;
+import io.goorm.jpa.repository.CurriculumRepository;
+import io.goorm.jpa.repository.EnrollmentRepository;
+import io.goorm.jpa.enums.EnrollmentStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -16,6 +22,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * Course Service
@@ -30,6 +38,8 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
+    private final CurriculumRepository curriculumRepository;
+    private final EnrollmentRepository enrollmentRepository;
 
     /**
      * 강의 생성 (강사만)
@@ -133,6 +143,137 @@ public class CourseService {
 
         return courseRepository.findByInstructor(currentUser, pageable)
                 .map(CourseResponse::from);
+    }
+
+    // ===== 복잡한 검색 메서드들 (JPQL) =====
+
+    /**
+     * 강의명과 강사명으로 통합 검색
+     */
+    public Page<CourseResponse> searchByCourseAndInstructor(String courseName, String instructorName, Pageable pageable) {
+        return courseRepository.searchByCourseAndInstructor(courseName, instructorName, pageable)
+                .map(CourseResponse::from);
+    }
+
+    /**
+     * 정원 범위로 검색
+     */
+    public Page<CourseResponse> findByCapacityRange(Integer minCapacity, Integer maxCapacity, Pageable pageable) {
+        return courseRepository.findByCapacityRange(minCapacity, maxCapacity, pageable)
+                .map(CourseResponse::from);
+    }
+
+    /**
+     * 수강 가능한 강의만 검색
+     */
+    public Page<CourseResponse> findAvailableCourses(String keyword, Pageable pageable) {
+        return courseRepository.findAvailableCourses(keyword, pageable)
+                .map(CourseResponse::from);
+    }
+
+    /**
+     * 인기 강의 검색 (수강생 수 기준)
+     */
+    public Page<CourseResponse> findPopularCourses(Integer minStudents, Pageable pageable) {
+        return courseRepository.findPopularCourses(minStudents, pageable)
+                .map(CourseResponse::from);
+    }
+
+    /**
+     * 최근 개설된 강의 검색
+     */
+    public Page<CourseResponse> findRecentCourses(java.time.LocalDateTime startDate, Pageable pageable) {
+        return courseRepository.findRecentCourses(startDate, pageable)
+                .map(CourseResponse::from);
+    }
+
+    /**
+     * 강의 상태별 검색 (수강 가능/마감)
+     */
+    public Page<CourseResponse> findByAvailability(Boolean isAvailable, Pageable pageable) {
+        return courseRepository.findByAvailability(isAvailable, pageable)
+                .map(CourseResponse::from);
+    }
+
+    /**
+     * 정원 대비 수강률이 높은 강의
+     */
+    public Page<CourseResponse> findHighEnrollmentCourses(Double minRatio, Pageable pageable) {
+        return courseRepository.findHighEnrollmentCourses(minRatio, pageable)
+                .map(CourseResponse::from);
+    }
+
+    /**
+     * 복합 조건 검색
+     */
+    public Page<CourseResponse> findCoursesByComplexConditions(String courseName, String instructorName, 
+                                                              Integer minCapacity, Integer maxCapacity, 
+                                                              Boolean isAvailable, Pageable pageable) {
+        return courseRepository.findCoursesByComplexConditions(courseName, instructorName, minCapacity, maxCapacity, isAvailable, pageable)
+                .map(CourseResponse::from);
+    }
+
+    /**
+     * 강사별 강의 통계
+     */
+    public java.util.List<Object[]> getInstructorStatistics() {
+        return courseRepository.findInstructorStatistics();
+    }
+
+    /**
+     * 월별 강의 개설 통계
+     */
+    public java.util.List<Object[]> getMonthlyStatistics() {
+        return courseRepository.findMonthlyStatistics();
+    }
+
+    /**
+     * 동적 조건 검색 (SearchCondition DTO 사용)
+     */
+    public Page<CourseResponse> searchCourses(CourseSearchCondition condition, Pageable pageable) {
+        Page<Course> page = courseRepository.findCoursesByDynamicConditions(
+            condition.getCourseName(),
+            condition.getInstructorName(),
+            condition.getDescription(),
+            condition.getMinCapacity(),
+            condition.getMaxCapacity(),
+            condition.getMinCurrentStudents(),
+            condition.getMaxCurrentStudents(),
+            condition.getIsAvailable(),
+            condition.getMinEnrollmentRatio(),
+            condition.getStartDate(),
+            condition.getEndDate(),
+            condition.getSortBy(),
+            pageable
+        );
+        return page.map(CourseResponse::from);
+    }
+
+
+    /**
+     * 강의 커리큘럼 조회 (Step 1: 팝업용)
+     */
+    public List<CurriculumResponse> getCurriculums(Long courseNo) {
+        Course course = courseRepository.findById(courseNo)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
+        
+        return curriculumRepository.findByCourseNoOrderByWeekNumber(courseNo)
+                .stream()
+                .map(CurriculumResponse::from)
+                .toList();
+    }
+
+    /**
+     * 강의 수강생 목록 조회 (Step 1: 팝업용)
+     */
+    public List<UserResponse> getEnrolledStudents(Long courseNo) {
+        Course course = courseRepository.findById(courseNo)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
+        
+        return enrollmentRepository.findByCourseAndStatusAndDeletedFalse(course, EnrollmentStatus.APPROVED)
+                .stream()
+                .map(enrollment -> UserResponse.from(enrollment.getStudent()))
+                .toList();
     }
 
     /**

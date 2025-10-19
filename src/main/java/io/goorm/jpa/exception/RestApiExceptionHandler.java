@@ -28,10 +28,7 @@ public class RestApiExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
-        log.warn("[BusinessException] code={}, detailMessage={}, args={}",
-                e.getErrorCode().getCode(),
-                e.getDetailMessage(),
-                e.getArgs() != null ? Arrays.toString(e.getArgs()) : "none");
+        log.error("[BusinessException] code={}, message={}", e.getErrorCode().getCode(), e.getMessage(), e);
 
         String message = getMessage(e.getErrorCode(), e.getArgs());
         ErrorResponse response = ErrorResponse.of(e.getErrorCode().getCode(), message);

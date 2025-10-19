@@ -8,19 +8,45 @@
 <body>
 <div layout:fragment="content">
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold">강의</h1>
+        <h1 class="text-3xl font-bold text-gray-900">강의관리</h1>
         <div id="create-button-area"></div>
     </div>
 
     <!-- 검색 -->
-    <div class="flex gap-2 mb-6">
-        <input type="text" id="keyword" placeholder="강의명 검색" class="input input-bordered flex-1" />
-        <button onclick="searchCourses()" class="btn btn-secondary">수강 가능 검색</button>
-        <button onclick="loadCourses()" class="btn btn-ghost">전체보기</button>
+    <div class="flex gap-3 mb-6">
+        <select id="searchField" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option value="all">전체</option>
+            <option value="courseName">강의명</option>
+            <option value="instructorName">강사명</option>
+            <option value="description">설명</option>
+        </select>
+        <input type="text" id="keyword" placeholder="검색어" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+        <label class="flex items-center">
+            <input type="checkbox" id="includeCheck" class="mr-2">
+            <span class="text-sm">포함</span>
+        </label>
+        <button onclick="searchCourses()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">검색</button>
+        <button onclick="loadCourses()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">전체보기</button>
     </div>
 
     <!-- 강의 목록 -->
-    <div id="course-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">번호</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">강의명</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">강사</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">수강인원</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작성일</th>
+                </tr>
+            </thead>
+            <tbody id="course-list" class="bg-white divide-y divide-gray-200">
+                <!-- 강의 목록이 여기에 동적으로 삽입됩니다 -->
+            </tbody>
+        </table>
+    </div>
 
     <!-- 페이징 -->
     <div id="pagination" class="flex justify-center mt-6"></div>
@@ -30,24 +56,30 @@
     let currentKeyword = '';
     let isAvailableOnly = false;
 
+
     // 페이지 로드 시 권한 확인
-    document.addEventListener('DOMContentLoaded', function() {
-        const user = getCurrentUser();
-        if (user.role === 'INSTRUCTOR' || user.role === 'ADMIN') {
+    document.addEventListener('DOMContentLoaded', async function() {
+        const user = await getCurrentUser();
+        if (user && (user.role === 'INSTRUCTOR' || user.role === 'ADMIN')) {
             document.getElementById('create-button-area').innerHTML =
-                '<a href="/course/new" class="btn btn-primary">강의 생성</a>';
+                '<button onclick="createCourse()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">강의 생성</button>';
         }
         loadCourses();
     });
+
+    // 강의 생성 (Step 2에서 구현)
+    function createCourse() {
+        alert('강의 생성 기능은 Step 2(양방향 + Cascade)에서 구현 예정입니다.\n\nStep 2에서는 다음이 개선됩니다:\n- 강의 정보와 커리큘럼을 한 번에 생성\n- 양방향 관계로 데이터 일관성 보장\n- Cascade로 연관 데이터 자동 처리');
+    }
 
     // 강의 목록 로드
     async function loadCourses(page = 0) {
         if (!requireLogin()) return;
 
         currentPage = page;
-        currentKeyword = '';
-        isAvailableOnly = false;
         document.getElementById('keyword').value = '';
+        document.getElementById('searchField').value = 'all';
+        document.getElementById('includeCheck').checked = false;
 
         try {
             const response = await fetch(`/api/courses?page=${page}&size=12`, {
@@ -65,21 +97,214 @@
         }
     }
 
-    // 수강 가능한 강의 검색
+    // 강의 검색
     async function searchCourses(page = 0) {
         if (!requireLogin()) return;
 
-        const keyword = document.getElementById('keyword').value;
+        const searchField = document.getElementById('searchField').value;
+        const keyword = document.getElementById('keyword').value.trim();
+        const includeCheck = document.getElementById('includeCheck').checked;
+
+        if (!keyword) {
+            alert('검색어를 입력하세요.');
+            return;
+        }
+
         currentPage = page;
-        currentKeyword = keyword;
-        isAvailableOnly = true;
 
         try {
-            const url = keyword
-                ? `/api/courses/available?keyword=${encodeURIComponent(keyword)}&page=${page}&size=12`
-                : `/api/courses/available?page=${page}&size=12`;
+            let url = '/api/courses/search?';
+            const params = new URLSearchParams();
+            params.append('searchField', searchField);
+            params.append('keyword', keyword);
+            params.append('include', includeCheck);
+            params.append('page', page);
+            params.append('size', '12');
+            url += params.toString();
 
             const response = await fetch(url, {
+                credentials: 'include'
+            });
+
+            if (!response.ok) throw new Error('Failed to search courses');
+
+            const result = await response.json();
+            renderCourses(result.data.content);
+            renderPagination(result.data.pageInfo);
+        } catch (error) {
+            console.error('Error searching courses:', error);
+            alert('강의 검색에 실패했습니다.');
+        }
+    }
+
+    // ===== 고급 검색 함수들 (JPQL) =====
+
+    // 강의명과 강사명으로 통합 검색
+    async function searchByCourseAndInstructor(page = 0) {
+        if (!requireLogin()) return;
+
+        const courseName = document.getElementById('courseName').value;
+        const instructorName = document.getElementById('instructorName').value;
+
+        try {
+            const params = new URLSearchParams();
+            if (courseName) params.append('courseName', courseName);
+            if (instructorName) params.append('instructorName', instructorName);
+            params.append('page', page);
+            params.append('size', '12');
+
+            const response = await fetch(`/api/courses/search/course-and-instructor?${params}`, {
+                credentials: 'include'
+            });
+
+            if (!response.ok) throw new Error('Failed to search courses');
+
+            const result = await response.json();
+            renderCourses(result.data.content);
+            renderPagination(result.data.pageInfo);
+        } catch (error) {
+            console.error('Error searching courses:', error);
+            alert('강의 검색에 실패했습니다.');
+        }
+    }
+
+    // 정원 범위로 검색
+    async function searchByCapacityRange(page = 0) {
+        if (!requireLogin()) return;
+
+        const minCapacity = document.getElementById('minCapacity').value;
+        const maxCapacity = document.getElementById('maxCapacity').value;
+
+        try {
+            const params = new URLSearchParams();
+            if (minCapacity) params.append('minCapacity', minCapacity);
+            if (maxCapacity) params.append('maxCapacity', maxCapacity);
+            params.append('page', page);
+            params.append('size', '12');
+
+            const response = await fetch(`/api/courses/search/capacity-range?${params}`, {
+                credentials: 'include'
+            });
+
+            if (!response.ok) throw new Error('Failed to search courses');
+
+            const result = await response.json();
+            renderCourses(result.data.content);
+            renderPagination(result.data.pageInfo);
+        } catch (error) {
+            console.error('Error searching courses:', error);
+            alert('강의 검색에 실패했습니다.');
+        }
+    }
+
+    // 수강 가능 여부로 검색
+    async function searchByAvailability(page = 0) {
+        if (!requireLogin()) return;
+
+        const availability = document.getElementById('availability').value;
+        const minStudents = document.getElementById('minStudents').value;
+
+        try {
+            const params = new URLSearchParams();
+            if (availability) params.append('isAvailable', availability);
+            if (minStudents) params.append('minStudents', minStudents);
+            params.append('page', page);
+            params.append('size', '12');
+
+            const response = await fetch(`/api/courses/search/availability?${params}`, {
+                credentials: 'include'
+            });
+
+            if (!response.ok) throw new Error('Failed to search courses');
+
+            const result = await response.json();
+            renderCourses(result.data.content);
+            renderPagination(result.data.pageInfo);
+        } catch (error) {
+            console.error('Error searching courses:', error);
+            alert('강의 검색에 실패했습니다.');
+        }
+    }
+
+    // 수강률이 높은 강의 검색
+    async function searchByHighEnrollment(page = 0) {
+        if (!requireLogin()) return;
+
+        const minRatio = document.getElementById('minRatio').value;
+        if (!minRatio) {
+            alert('최소 수강률을 입력해주세요.');
+            return;
+        }
+
+        try {
+            const params = new URLSearchParams();
+            params.append('minRatio', minRatio);
+            params.append('page', page);
+            params.append('size', '12');
+
+            const response = await fetch(`/api/courses/search/high-enrollment?${params}`, {
+                credentials: 'include'
+            });
+
+            if (!response.ok) throw new Error('Failed to search courses');
+
+            const result = await response.json();
+            renderCourses(result.data.content);
+            renderPagination(result.data.pageInfo);
+        } catch (error) {
+            console.error('Error searching courses:', error);
+            alert('강의 검색에 실패했습니다.');
+        }
+    }
+
+    // 인기 강의 검색
+    async function searchPopularCourses(page = 0) {
+        if (!requireLogin()) return;
+
+        const minStudents = document.getElementById('minStudents').value;
+
+        try {
+            const params = new URLSearchParams();
+            if (minStudents) params.append('minStudents', minStudents);
+            params.append('page', page);
+            params.append('size', '12');
+
+            const response = await fetch(`/api/courses/search/popular?${params}`, {
+                credentials: 'include'
+            });
+
+            if (!response.ok) throw new Error('Failed to search courses');
+
+            const result = await response.json();
+            renderCourses(result.data.content);
+            renderPagination(result.data.pageInfo);
+        } catch (error) {
+            console.error('Error searching courses:', error);
+            alert('강의 검색에 실패했습니다.');
+        }
+    }
+
+    // 복합 조건 검색
+    async function searchByComplexConditions(page = 0) {
+        if (!requireLogin()) return;
+
+        const courseName = document.getElementById('courseName').value;
+        const instructorName = document.getElementById('instructorName').value;
+        const minCapacity = document.getElementById('minCapacity').value;
+        const maxCapacity = document.getElementById('maxCapacity').value;
+        const availability = document.getElementById('availability').value;
+
+        try {
+            const params = new URLSearchParams();
+            if (courseName) params.append('courseName', courseName);
+            if (instructorName) params.append('instructorName', instructorName);
+            if (minCapacity) params.append('minCapacity', minCapacity);
+            if (maxCapacity) params.append('maxCapacity', maxCapacity);
+            if (availability) params.append('isAvailable', availability);
+            params.append('page', page);
+            params.append('size', '12');
+
+            const response = await fetch(`/api/courses/search/complex?${params}`, {
                 credentials: 'include'
             });
 
@@ -99,35 +324,45 @@
         const listDiv = document.getElementById('course-list');
 
         if (courses.length === 0) {
-            listDiv.innerHTML = '<div class="col-span-full alert">강의가 없습니다.</div>';
+            listDiv.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                        강의가 없습니다.
+                    </td>
+                </tr>
+            `;
             return;
         }
 
-        listDiv.innerHTML = courses.map(course => {
+        listDiv.innerHTML = courses.map((course, index) => {
             const isFull = course.currentStudents >= course.maxStudents;
             const statusBadge = isFull
-                ? '<span class="badge badge-error">마감</span>'
-                : '<span class="badge badge-success">수강가능</span>';
+                ? '<span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">마감</span>'
+                : '<span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">수강가능</span>';
 
             return `
-                <div class="card bg-base-100 shadow-md hover:shadow-lg transition">
-                    <div class="card-body">
-                        <h2 class="card-title">
-                            <a href="/course/${course.courseNo}" class="link link-hover">
-                                ${course.name}
-                            </a>
-                            ${statusBadge}
-                        </h2>
-                        <p class="text-sm text-gray-600 line-clamp-2">
-                            ${course.description || '설명 없음'}
-                        </p>
-                        <div class="divider my-2"></div>
-                        <div class="flex justify-between items-center text-sm">
-                            <span>강사: ${course.instructorName}</span>
-                            <span>인원: ${course.currentStudents}/${course.maxStudents}</span>
-                        </div>
-                    </div>
-                </div>
+                <tr class="hover:bg-gray-50 cursor-pointer" onclick="location.href='/course/${course.courseNo}'">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${courses.length - index}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-900">
+                        <a href="/course/${course.courseNo}" class="text-blue-600 hover:text-blue-800 hover:underline">
+                            ${course.name}
+                        </a>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${course.instructorName}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${course.currentStudents}/${course.maxStudents}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${statusBadge}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${new Date(course.createdAt).toLocaleDateString()}
+                    </td>
+                </tr>
             `;
         }).join('');
     }
@@ -141,22 +376,52 @@
             return;
         }
 
-        let html = '<div class="join">';
-
-        if (pageInfo.currentPage > 0) {
-            html += `<button class="join-item btn" onclick="goToPage(${pageInfo.currentPage - 1})">«</button>`;
+        let html = '<nav class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">';
+        html += '<div class="flex flex-1 justify-between sm:hidden">';
+        
+        // 모바일 이전/다음 버튼
+        if (pageInfo.page > 0) {
+            html += `<button onclick="goToPage(${pageInfo.page - 1})" class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">이전</button>`;
         }
-
-        for (let i = 0; i < pageInfo.totalPages; i++) {
-            const active = i === pageInfo.currentPage ? 'btn-active' : '';
-            html += `<button class="join-item btn ${active}" onclick="goToPage(${i})">${i + 1}</button>`;
+        if (pageInfo.page < pageInfo.totalPages - 1) {
+            html += `<button onclick="goToPage(${pageInfo.page + 1})" class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">다음</button>`;
         }
-
-        if (pageInfo.currentPage < pageInfo.totalPages - 1) {
-            html += `<button class="join-item btn" onclick="goToPage(${pageInfo.currentPage + 1})">»</button>`;
-        }
-
+        
         html += '</div>';
+        html += '<div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">';
+        html += `<div class="text-sm text-gray-700">총 <span class="font-medium">${pageInfo.totalElements}</span>개 중 <span class="font-medium">${pageInfo.page * pageInfo.size + 1}</span>-<span class="font-medium">${Math.min((pageInfo.page + 1) * pageInfo.size, pageInfo.totalElements)}</span>개 표시</div>`;
+        html += '<div class="flex">';
+        
+        // 이전 버튼
+        if (pageInfo.page > 0) {
+            html += `<button onclick="goToPage(${pageInfo.page - 1})" class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                <span class="sr-only">이전</span>
+                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                </svg>
+            </button>`;
+        }
+        
+        // 페이지 번호들
+        const startPage = Math.max(0, pageInfo.page - 2);
+        const endPage = Math.min(pageInfo.totalPages - 1, pageInfo.page + 2);
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const active = i === pageInfo.page ? 'bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600' : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0';
+            html += `<button onclick="goToPage(${i})" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold ${active}">${i + 1}</button>`;
+        }
+        
+        // 다음 버튼
+        if (pageInfo.page < pageInfo.totalPages - 1) {
+            html += `<button onclick="goToPage(${pageInfo.page + 1})" class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                <span class="sr-only">다음</span>
+                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                </svg>
+            </button>`;
+        }
+        
+        html += '</div></div></nav>';
         paginationDiv.innerHTML = html;
     }
 

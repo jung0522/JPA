@@ -44,17 +44,28 @@ public class EnrollmentService {
      */
     @Transactional
     public EnrollmentResponse enroll(EnrollmentCreateRequest request) {
+        log.info("수강신청 시작: courseNo={}", request.courseNo());
+        
         User currentUser = getCurrentUser();
+        log.info("현재 사용자: userNo={}, username={}", currentUser.getUserNo(), currentUser.getUsername());
 
         Course course = courseRepository.findById(request.courseNo())
-                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.error("강의를 찾을 수 없음: courseNo={}", request.courseNo());
+                    return new BusinessException(ErrorCode.COURSE_NOT_FOUND);
+                });
 
         if (course.getDeleted()) {
+            log.error("삭제된 강의: courseNo={}, name={}", course.getCourseNo(), course.getName());
             throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
         }
 
+        log.info("강의 정보: courseNo={}, name={}, currentStudents={}, maxStudents={}", 
+                course.getCourseNo(), course.getName(), course.getCurrentStudents(), course.getMaxStudents());
+
         // 중복 수강신청 확인
         if (enrollmentRepository.existsByStudentAndCourseAndDeletedFalse(currentUser, course)) {
+            log.error("중복 수강신청: studentNo={}, courseNo={}", currentUser.getUserNo(), course.getCourseNo());
             throw new BusinessException(ErrorCode.ENROLLMENT_ALREADY_EXISTS);
         }
 

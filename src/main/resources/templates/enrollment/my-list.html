@@ -45,40 +45,38 @@
         const listDiv = document.getElementById('enrollment-list');
 
         if (enrollments.length === 0) {
-            listDiv.innerHTML = '<div class="alert">수강신청 내역이 없습니다.</div>';
+            listDiv.innerHTML = '<div class="text-center py-8 text-gray-500">수강신청 내역이 없습니다.</div>';
             return;
         }
 
         listDiv.innerHTML = enrollments.map(enroll => {
             const statusBadge = {
-                'PENDING': '<span class="badge badge-warning">대기</span>',
-                'APPROVED': '<span class="badge badge-success">승인</span>',
-                'REJECTED': '<span class="badge badge-error">거절</span>'
+                'PENDING': '<span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">대기</span>',
+                'APPROVED': '<span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">승인</span>',
+                'REJECTED': '<span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">거절</span>'
             }[enroll.status];
 
             const cancelButton = enroll.status === 'PENDING'
-                ? `<button onclick="cancelEnrollment(${enroll.enrollmentNo})" class="btn btn-sm btn-error">취소</button>`
+                ? `<button onclick="cancelEnrollment(${enroll.enrollmentNo})" class="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors">취소</button>`
                 : '';
 
             return `
-                <div class="card bg-base-100 shadow-md mb-4">
-                    <div class="card-body">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                                <h2 class="card-title">
-                                    <a href="/course/${enroll.courseNo}" class="link link-hover">
-                                        ${enroll.courseName}
-                                    </a>
-                                    ${statusBadge}
-                                </h2>
-                                <p class="text-sm text-gray-600 mt-2">
-                                    강사: ${enroll.instructorName} |
-                                    신청일: ${new Date(enroll.createdAt).toLocaleDateString()}
-                                </p>
-                            </div>
-                            <div class="flex gap-2">
-                                ${cancelButton}
-                            </div>
+                <div class="bg-white rounded-lg shadow-md p-6 mb-4">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h2 class="text-xl font-bold text-gray-900 mb-2">
+                                <a href="/course/${enroll.courseNo}" class="text-blue-600 hover:text-blue-800 hover:underline">
+                                    ${enroll.courseName}
+                                </a>
+                                ${statusBadge}
+                            </h2>
+                            <p class="text-sm text-gray-600 mt-2">
+                                강사: ${enroll.instructorName} |
+                                신청일: ${new Date(enroll.createdAt).toLocaleDateString()}
+                            </p>
+                        </div>
+                        <div class="flex gap-2">
+                            ${cancelButton}
                         </div>
                     </div>
                 </div>

@@ -17,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -134,6 +135,137 @@ public class BoardService {
 
         board.delete();
         log.info("Board deleted: boardNo={}, author={}", boardNo, currentUser.getUsername());
+    }
+
+    // ===== 다양한 검색 메서드들 =====
+
+    /**
+     * 내용으로 검색
+     */
+    public Page<BoardResponse> searchByContent(String keyword, Pageable pageable) {
+        return boardRepository.findByContentContainingAndDeletedFalse(keyword, pageable)
+                .map(BoardResponse::from);
+    }
+
+    /**
+     * 제목 또는 내용으로 검색
+     */
+    public Page<BoardResponse> searchByTitleOrContent(String titleKeyword, String contentKeyword, Pageable pageable) {
+        return boardRepository.findByTitleContainingOrContentContainingAndDeletedFalse(titleKeyword, contentKeyword, pageable)
+                .map(BoardResponse::from);
+    }
+
+    /**
+     * 작성자명으로 검색
+     */
+    public Page<BoardResponse> searchByAuthorName(String authorName, Pageable pageable) {
+        return boardRepository.findByAuthorFullNameContainingAndDeletedFalse(authorName, pageable)
+                .map(BoardResponse::from);
+    }
+
+    /**
+     * 날짜 범위로 검색
+     */
+    public Page<BoardResponse> searchByDateRange(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        return boardRepository.findByCreatedAtBetweenAndDeletedFalse(startDate, endDate, pageable)
+                .map(BoardResponse::from);
+    }
+
+    /**
+     * 조회수 이상인 게시글 검색
+     */
+    public Page<BoardResponse> searchByMinViewCount(Integer minViewCount, Pageable pageable) {
+        return boardRepository.findByViewCountGreaterThanEqualAndDeletedFalse(minViewCount, pageable)
+                .map(BoardResponse::from);
+    }
+
+    /**
+     * 조회수 범위로 검색
+     */
+    public Page<BoardResponse> searchByViewCountRange(Integer minViewCount, Integer maxViewCount, Pageable pageable) {
+        return boardRepository.findByViewCountBetweenAndDeletedFalse(minViewCount, maxViewCount, pageable)
+                .map(BoardResponse::from);
+    }
+
+    /**
+     * 복합 검색 - 제목 + 작성자
+     */
+    public Page<BoardResponse> searchByTitleAndAuthor(String titleKeyword, User author, Pageable pageable) {
+        return boardRepository.findByTitleContainingAndAuthorAndDeletedFalse(titleKeyword, author, pageable)
+                .map(BoardResponse::from);
+    }
+
+    /**
+     * 복합 검색 - 제목 + 조회수 이상
+     */
+    public Page<BoardResponse> searchByTitleAndMinViewCount(String titleKeyword, Integer minViewCount, Pageable pageable) {
+        return boardRepository.findByTitleContainingAndViewCountGreaterThanEqualAndDeletedFalse(titleKeyword, minViewCount, pageable)
+                .map(BoardResponse::from);
+    }
+
+    /**
+     * 조회수 내림차순 정렬
+     */
+    public Page<BoardResponse> getListOrderByViewCountDesc(Pageable pageable) {
+        return boardRepository.findByDeletedFalseOrderByViewCountDesc(pageable)
+                .map(BoardResponse::from);
+    }
+
+    /**
+     * 조회수 오름차순 정렬
+     */
+    public Page<BoardResponse> getListOrderByViewCountAsc(Pageable pageable) {
+        return boardRepository.findByDeletedFalseOrderByViewCountAsc(pageable)
+                .map(BoardResponse::from);
+    }
+
+    /**
+     * 인기 게시글 Top N
+     */
+    public List<BoardResponse> getPopularBoards(Pageable pageable) {
+        return boardRepository.findTopByOrderByViewCountDesc(pageable)
+                .stream()
+                .map(BoardResponse::from)
+                .toList();
+    }
+
+    /**
+     * 최신 게시글 Top N
+     */
+    public List<BoardResponse> getRecentBoards(Pageable pageable) {
+        return boardRepository.findTopByOrderByCreatedAtDesc(pageable)
+                .stream()
+                .map(BoardResponse::from)
+                .toList();
+    }
+
+    /**
+     * 통합 검색 (제목, 내용, 작성자명)
+     */
+    public Page<BoardResponse> searchAll(String title, String content, String author, Pageable pageable) {
+        return boardRepository.searchByTitleAndContentAndAuthor(title, content, author, pageable)
+                .map(BoardResponse::from);
+    }
+
+    /**
+     * 통계 - 특정 작성자의 게시글 수
+     */
+    public Long countByAuthor(User author) {
+        return boardRepository.countByAuthorAndDeletedFalse(author);
+    }
+
+    /**
+     * 통계 - 조회수 이상인 게시글 수
+     */
+    public Long countByMinViewCount(Integer minViewCount) {
+        return boardRepository.countByViewCountGreaterThanEqualAndDeletedFalse(minViewCount);
+    }
+
+    /**
+     * 통계 - 특정 기간 내 게시글 수
+     */
+    public Long countByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
+        return boardRepository.countByCreatedAtBetweenAndDeletedFalse(startDate, endDate);
     }
 
     /**

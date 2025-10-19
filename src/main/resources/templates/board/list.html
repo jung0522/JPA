@@ -8,19 +8,42 @@
 <body>
 <div layout:fragment="content">
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold">게시판</h1>
-        <a href="/board/new" class="btn btn-primary">글쓰기</a>
+        <h1 class="text-3xl font-bold text-gray-900">게시판</h1>
+        <a href="/board/new" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">글쓰기</a>
     </div>
 
     <!-- 검색 -->
-    <div class="flex gap-2 mb-6">
-        <input type="text" id="keyword" placeholder="제목 검색" class="input input-bordered flex-1" />
-        <button onclick="searchBoards()" class="btn btn-secondary">검색</button>
-        <button onclick="loadBoards()" class="btn btn-ghost">전체보기</button>
+    <div class="flex gap-3 mb-6">
+        <input type="text" id="titleKeyword" placeholder="제목 검색" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+        <input type="text" id="contentKeyword" placeholder="내용 검색" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+        <input type="text" id="authorKeyword" placeholder="작성자 검색" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+        <select id="sortBy" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option value="createdAt,desc">최신순</option>
+            <option value="viewCount,desc">조회수 높은순</option>
+            <option value="viewCount,asc">조회수 낮은순</option>
+            <option value="title,asc">제목순</option>
+        </select>
+        <button onclick="searchBoards()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">검색</button>
+        <button onclick="loadBoards()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">전체보기</button>
     </div>
 
     <!-- 게시글 목록 -->
-    <div id="board-list"></div>
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">번호</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">제목</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작성자</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">조회수</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작성일</th>
+                </tr>
+            </thead>
+            <tbody id="board-list" class="bg-white divide-y divide-gray-200">
+                <!-- 게시글 목록이 여기에 동적으로 삽입됩니다 -->
+            </tbody>
+        </table>
+    </div>
 
     <!-- 페이징 -->
     <div id="pagination" class="flex justify-center mt-6"></div>
@@ -34,8 +57,10 @@
         if (!requireLogin()) return;
 
         currentPage = page;
-        currentKeyword = '';
-        document.getElementById('keyword').value = '';
+        document.getElementById('titleKeyword').value = '';
+        document.getElementById('contentKeyword').value = '';
+        document.getElementById('authorKeyword').value = '';
+        document.getElementById('sortBy').value = 'createdAt,desc';
 
         try {
             const response = await fetch(`/api/boards?page=${page}&size=10`, {
@@ -57,17 +82,25 @@
     async function searchBoards(page = 0) {
         if (!requireLogin()) return;
 
-        const keyword = document.getElementById('keyword').value;
-        if (!keyword) {
-            alert('검색어를 입력하세요.');
-            return;
-        }
+        const titleKeyword = document.getElementById('titleKeyword').value.trim();
+        const contentKeyword = document.getElementById('contentKeyword').value.trim();
+        const authorKeyword = document.getElementById('authorKeyword').value.trim();
+        const sortBy = document.getElementById('sortBy').value;
 
-        currentPage = page;
-        currentKeyword = keyword;
+        let url = '/api/boards/search?';
+        const params = new URLSearchParams();
+        
+        if (titleKeyword) params.append('title', titleKeyword);
+        if (contentKeyword) params.append('content', contentKeyword);
+        if (authorKeyword) params.append('author', authorKeyword);
+        params.append('sortBy', sortBy);
+        params.append('page', page);
+        params.append('size', '10');
+
+        url += params.toString();
 
         try {
-            const response = await fetch(`/api/boards?keyword=${encodeURIComponent(keyword)}&page=${page}&size=10`, {
+            const response = await fetch(url, {
                 credentials: 'include'
             });
 
@@ -76,6 +109,7 @@
             const result = await response.json();
             renderBoards(result.data.content);
             renderPagination(result.data.pageInfo);
+            currentPage = page;
         } catch (error) {
             console.error('Error searching boards:', error);
             alert('게시글 검색에 실패했습니다.');
@@ -87,24 +121,36 @@
         const listDiv = document.getElementById('board-list');
 
         if (boards.length === 0) {
-            listDiv.innerHTML = '<div class="alert">게시글이 없습니다.</div>';
+            listDiv.innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                        게시글이 없습니다.
+                    </td>
+                </tr>
+            `;
             return;
         }
 
-        listDiv.innerHTML = boards.map(board => `
-            <div class="card bg-base-100 shadow-md mb-4 hover:shadow-lg transition">
-                <div class="card-body">
-                    <h2 class="card-title">
-                        <a href="/board/${board.boardNo}" class="link link-hover">
-                            ${board.title}
-                        </a>
-                    </h2>
-                    <p class="text-sm text-gray-600">
-                        ${board.authorName} | 조회수: ${board.viewCount} |
-                        ${new Date(board.createdAt).toLocaleDateString()}
-                    </p>
-                </div>
-            </div>
+        listDiv.innerHTML = boards.map((board, index) => `
+            <tr class="hover:bg-gray-50 cursor-pointer" onclick="location.href='/board/${board.boardNo}'">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${boards.length - index}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-900">
+                    <a href="/board/${board.boardNo}" class="text-blue-600 hover:text-blue-800 hover:underline">
+                        ${board.title}
+                    </a>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${board.authorName}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${board.viewCount}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${new Date(board.createdAt).toLocaleDateString()}
+                </td>
+            </tr>
         `).join('');
     }
 
@@ -117,25 +163,52 @@
             return;
         }
 
-        let html = '<div class="join">';
-
-        // 이전 버튼
-        if (pageInfo.currentPage > 0) {
-            html += `<button class="join-item btn" onclick="goToPage(${pageInfo.currentPage - 1})">«</button>`;
+        let html = '<nav class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">';
+        html += '<div class="flex flex-1 justify-between sm:hidden">';
+        
+        // 모바일 이전/다음 버튼
+        if (pageInfo.page > 0) {
+            html += `<button onclick="goToPage(${pageInfo.page - 1})" class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">이전</button>`;
         }
-
-        // 페이지 번호
-        for (let i = 0; i < pageInfo.totalPages; i++) {
-            const active = i === pageInfo.currentPage ? 'btn-active' : '';
-            html += `<button class="join-item btn ${active}" onclick="goToPage(${i})">${i + 1}</button>`;
+        if (pageInfo.page < pageInfo.totalPages - 1) {
+            html += `<button onclick="goToPage(${pageInfo.page + 1})" class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">다음</button>`;
         }
-
-        // 다음 버튼
-        if (pageInfo.currentPage < pageInfo.totalPages - 1) {
-            html += `<button class="join-item btn" onclick="goToPage(${pageInfo.currentPage + 1})">»</button>`;
-        }
-
+        
         html += '</div>';
+        html += '<div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">';
+        html += `<div class="text-sm text-gray-700">총 <span class="font-medium">${pageInfo.totalElements}</span>개 중 <span class="font-medium">${pageInfo.page * pageInfo.size + 1}</span>-<span class="font-medium">${Math.min((pageInfo.page + 1) * pageInfo.size, pageInfo.totalElements)}</span>개 표시</div>`;
+        html += '<div class="flex">';
+        
+        // 이전 버튼
+        if (pageInfo.page > 0) {
+            html += `<button onclick="goToPage(${pageInfo.page - 1})" class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                <span class="sr-only">이전</span>
+                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                </svg>
+            </button>`;
+        }
+        
+        // 페이지 번호들
+        const startPage = Math.max(0, pageInfo.page - 2);
+        const endPage = Math.min(pageInfo.totalPages - 1, pageInfo.page + 2);
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const active = i === pageInfo.page ? 'bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600' : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0';
+            html += `<button onclick="goToPage(${i})" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold ${active}">${i + 1}</button>`;
+        }
+        
+        // 다음 버튼
+        if (pageInfo.page < pageInfo.totalPages - 1) {
+            html += `<button onclick="goToPage(${pageInfo.page + 1})" class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                <span class="sr-only">다음</span>
+                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                </svg>
+            </button>`;
+        }
+        
+        html += '</div></div></nav>';
         paginationDiv.innerHTML = html;
     }
 
@@ -148,13 +221,14 @@
         }
     }
 
+
     // 페이지 로드시 실행
     document.addEventListener('DOMContentLoaded', function() {
         loadBoards();
     });
 
     // 엔터키로 검색
-    document.getElementById('keyword').addEventListener('keypress', function(e) {
+    document.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             searchBoards();
         }

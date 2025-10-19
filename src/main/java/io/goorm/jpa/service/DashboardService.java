@@ -2,9 +2,12 @@ package io.goorm.jpa.service;
 
 import io.goorm.jpa.dto.board.BoardResponse;
 import io.goorm.jpa.dto.dashboard.DashboardResponse;
+import io.goorm.jpa.dto.dashboard.PopularCourse;
+import io.goorm.jpa.dto.dashboard.PopularCourseCondition;
 import io.goorm.jpa.entity.Board;
 import io.goorm.jpa.repository.BoardRepository;
 import io.goorm.jpa.repository.CourseRepository;
+import io.goorm.jpa.repository.EnrollmentQueryRepository;
 import io.goorm.jpa.repository.EnrollmentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +30,7 @@ public class DashboardService {
     private final BoardRepository boardRepository;
     private final CourseRepository courseRepository;
     private final EnrollmentRepository enrollmentRepository;
+    private final EnrollmentQueryRepository enrollmentQueryRepository;
 
     /**
      * 대시보드 데이터 조회
@@ -50,14 +54,18 @@ public class DashboardService {
                 .map(BoardResponse::from)
                 .toList();
 
-        // Step 2 예정: 인기 강의 (예제 데이터)
-        List<DashboardResponse.PopularCourse> popularCourses = List.of(
-                new DashboardResponse.PopularCourse(1L, "JPA 기초부터 실전까지", "김강사", 25),
-                new DashboardResponse.PopularCourse(2L, "Spring Boot 완벽 가이드", "김강사", 20),
-                new DashboardResponse.PopularCourse(3L, "QueryDSL 마스터하기", "김강사", 18),
-                new DashboardResponse.PopularCourse(4L, "데이터베이스 설계와 최적화", "김강사", 15),
-                new DashboardResponse.PopularCourse(5L, "RESTful API 설계", "김강사", 12)
-        );
+        // 인기 강의 TOP 5 (실제 데이터 조회)
+        PopularCourseCondition condition = PopularCourseCondition.of(5);
+        List<PopularCourse> popularCoursesData = enrollmentQueryRepository.findPopularCourses(condition);
+        
+        List<DashboardResponse.PopularCourse> popularCourses = popularCoursesData.stream()
+                .map(pc -> new DashboardResponse.PopularCourse(
+                        pc.courseNo(),
+                        pc.courseName(),
+                        pc.instructorName(),
+                        pc.studentCount().intValue()
+                ))
+                .toList();
 
         return new DashboardResponse(statistics, recentBoardResponses, popularCourses);
     }

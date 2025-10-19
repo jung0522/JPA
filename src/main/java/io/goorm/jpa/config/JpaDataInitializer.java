@@ -2,11 +2,16 @@ package io.goorm.jpa.config;
 
 import io.goorm.jpa.entity.Board;
 import io.goorm.jpa.entity.Course;
+import io.goorm.jpa.entity.Curriculum;
+import io.goorm.jpa.entity.Enrollment;
 import io.goorm.jpa.entity.User;
+import io.goorm.jpa.enums.EnrollmentStatus;
 import io.goorm.jpa.enums.UserRole;
 import io.goorm.jpa.repository.BoardRepository;
 import io.goorm.jpa.repository.CourseRepository;
+import io.goorm.jpa.repository.EnrollmentRepository;
 import io.goorm.jpa.repository.UserRepository;
+import io.goorm.jpa.repository.CurriculumRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -30,6 +35,8 @@ public class JpaDataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final BoardRepository boardRepository;
     private final CourseRepository courseRepository;
+    private final EnrollmentRepository enrollmentRepository;
+    private final CurriculumRepository curriculumRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -262,6 +269,110 @@ public class JpaDataInitializer implements CommandLineRunner {
 
         log.info("Course test data created: {} courses", 5);
 
+        // Enrollment 테스트 데이터 생성
+        // student01이 course1, course2에 수강신청
+        Enrollment enrollment1 = Enrollment.builder()
+                .student(student01)
+                .course(course1)
+                .build();
+        enrollment1.approve(); // 승인 상태로 설정
+        enrollmentRepository.save(enrollment1);
+
+        Enrollment enrollment2 = Enrollment.builder()
+                .student(student01)
+                .course(course2)
+                .build();
+        enrollment2.approve(); // 승인 상태로 설정
+        enrollmentRepository.save(enrollment2);
+
+        // student02가 course1, course3에 수강신청
+        Enrollment enrollment3 = Enrollment.builder()
+                .student(student02)
+                .course(course1)
+                .build();
+        enrollment3.approve(); // 승인 상태로 설정
+        enrollmentRepository.save(enrollment3);
+
+        Enrollment enrollment4 = Enrollment.builder()
+                .student(student02)
+                .course(course3)
+                .build();
+        enrollment4.approve(); // 승인 상태로 설정
+        enrollmentRepository.save(enrollment4);
+
+        // student01이 course4에 대기 중인 수강신청
+        Enrollment enrollment5 = Enrollment.builder()
+                .student(student01)
+                .course(course4)
+                .build();
+        // PENDING 상태로 유지 (승인하지 않음)
+        enrollmentRepository.save(enrollment5);
+
+        // student02가 course5에 거절된 수강신청
+        Enrollment enrollment6 = Enrollment.builder()
+                .student(student02)
+                .course(course5)
+                .build();
+        enrollment6.reject(); // 거절 상태로 설정
+        enrollmentRepository.save(enrollment6);
+
+        log.info("Enrollment test data created: {} enrollments", 6);
+
+        // Curriculum 테스트 데이터 생성
+        // course1의 커리큘럼
+        Curriculum curriculum1 = Curriculum.builder()
+                .weekNumber(1)
+                .title("JPA 소개")
+                .description("JPA의 기본 개념과 설정 방법을 학습합니다.")
+                .materials("노트북, JPA 공식 문서")
+                .duration(90)
+                .course(course1)
+                .build();
+        curriculumRepository.save(curriculum1);
+
+        Curriculum curriculum2 = Curriculum.builder()
+                .weekNumber(2)
+                .title("엔티티 매핑")
+                .description("엔티티와 테이블 매핑 방법을 학습합니다.")
+                .materials("노트북, 예제 코드")
+                .duration(120)
+                .course(course1)
+                .build();
+        curriculumRepository.save(curriculum2);
+
+        Curriculum curriculum3 = Curriculum.builder()
+                .weekNumber(3)
+                .title("관계 매핑")
+                .description("OneToOne, OneToMany, ManyToOne 관계를 학습합니다.")
+                .materials("노트북, 실습 프로젝트")
+                .duration(150)
+                .course(course1)
+                .build();
+        curriculumRepository.save(curriculum3);
+
+        // course2의 커리큘럼
+        Curriculum curriculum4 = Curriculum.builder()
+                .weekNumber(1)
+                .title("Spring Security 기초")
+                .description("Spring Security의 기본 개념을 학습합니다.")
+                .materials("노트북, Spring Security 문서")
+                .duration(90)
+                .course(course2)
+                .build();
+        curriculumRepository.save(curriculum4);
+
+        Curriculum curriculum5 = Curriculum.builder()
+                .weekNumber(2)
+                .title("인증과 인가")
+                .description("사용자 인증과 권한 관리 방법을 학습합니다.")
+                .materials("노트북, 예제 프로젝트")
+                .duration(120)
+                .course(course2)
+                .build();
+        curriculumRepository.save(curriculum5);
+
+        log.info("Curriculum test data created: {} curriculums", 5);
+
         log.info("=== JPA Data Initialization Completed ===");
         log.info("Login credentials:");
         log.info("  Admin: admin / 1234");
@@ -270,5 +381,7 @@ public class JpaDataInitializer implements CommandLineRunner {
         log.info("Test data:");
         log.info("  Boards: 16 posts");
         log.info("  Courses: 5 courses");
+        log.info("  Enrollments: 6 enrollments");
+        log.info("  Curriculums: 5 curriculums");
     }
 }

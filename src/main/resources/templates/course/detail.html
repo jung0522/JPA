@@ -9,15 +9,55 @@
 <div layout:fragment="content">
     <div id="course-detail"></div>
 
-    <!-- Step 2 예정: 커리큘럼 탭 -->
-    <div class="tabs tabs-boxed mt-8">
-        <a class="tab tab-active">강의 정보</a>
-        <a class="tab" onclick="alert('Step 2에서 구현 예정')">커리큘럼 (Step 2)</a>
-        <a class="tab" onclick="alert('Step 2에서 구현 예정')">수강생 목록 (Step 2)</a>
+    <!-- 탭 영역 -->
+    <div class="mt-8">
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8">
+                <button onclick="showTab('curriculum')" id="curriculum-tab-btn" class="py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    📚 커리큘럼 (Step 2)
+                </button>
+                <button onclick="showTab('students')" id="students-tab-btn" class="py-2 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600">
+                    👥 수강생 목록
+                </button>
+            </nav>
+        </div>
+        
+        <!-- 탭 콘텐츠 -->
+        <div class="mt-6">
+            <!-- 커리큘럼 탭 (Step 2 알림) -->
+            <div id="curriculum-tab-content" class="hidden">
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.725-1.36 3.49 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-yellow-800">Step 2에서 구현 예정</h3>
+                            <div class="mt-2 text-sm text-yellow-700">
+                                <p>커리큘럼 탭은 Step 2(양방향 관계 + 편의 메서드)에서 구현됩니다.</p>
+                                <p>현재는 위의 "커리큘럼 보기" 버튼을 사용해주세요.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 수강생 목록 탭 (Step 1에서 구현) - 기본 활성화 -->
+            <div id="students-tab-content">
+                <div id="students-content">
+                    <div class="text-center py-8">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <p class="mt-2 text-sm text-gray-500">수강생 목록을 불러오는 중...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="flex justify-between mt-6">
-        <a href="/course" class="btn btn-ghost">목록</a>
+        <a href="/course" class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">← 목록</a>
         <div id="action-buttons"></div>
     </div>
 
@@ -29,9 +69,12 @@
         if (!requireLogin()) return;
 
         try {
+            console.log('Loading course detail for courseNo:', courseNo);
             const response = await fetch(`/api/courses/${courseNo}`, {
                 credentials: 'include'
             });
+
+            console.log('API response status:', response.status);
 
             if (!response.ok) {
                 if (response.status === 404) {
@@ -43,10 +86,12 @@
             }
 
             const result = await response.json();
+            console.log('API response data:', result);
             const course = result.data;
+            console.log('Course data:', course);
 
             renderCourseDetail(course);
-            renderActionButtons(course);
+            await renderActionButtons(course);
         } catch (error) {
             console.error('Error loading course:', error);
             alert('강의를 불러오는데 실패했습니다.');
@@ -59,29 +104,34 @@
         const isFull = course.currentStudents >= course.maxStudents;
 
         detailDiv.innerHTML = `
-            <div class="card bg-base-100 shadow-xl">
-                <div class="card-body">
-                    <h1 class="card-title text-3xl">${course.name}</h1>
-                    <div class="flex items-center gap-4 mt-2">
-                        <span class="badge ${isFull ? 'badge-error' : 'badge-success'}">
-                            ${isFull ? '마감' : '수강가능'}
-                        </span>
-                    </div>
-                    <div class="divider"></div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h1 class="text-3xl font-bold text-gray-900 mb-4">${course.name}</h1>
+                <div class="flex items-center gap-4 mb-6">
+                    <span class="px-3 py-1 rounded-full text-sm font-medium ${isFull ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
+                        ${isFull ? '마감' : '수강가능'}
+                    </span>
+                </div>
+                <div class="border-t border-gray-200 pt-6 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <p class="text-sm text-gray-600">강사</p>
-                            <p class="font-bold">${course.instructorName}</p>
+                            <p class="text-sm text-gray-600 mb-1">강사</p>
+                            <p class="text-lg font-semibold text-gray-900">${course.instructorName}</p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-600">수강 인원</p>
-                            <p class="font-bold">${course.currentStudents} / ${course.maxStudents}명</p>
+                            <p class="text-sm text-gray-600 mb-1">수강 인원</p>
+                            <p class="text-lg font-semibold text-gray-900">${course.currentStudents} / ${course.maxStudents}명</p>
                         </div>
                     </div>
-                    <div class="divider"></div>
-                    <div>
-                        <p class="text-sm text-gray-600">강의 설명</p>
-                        <p class="mt-2 whitespace-pre-wrap">${course.description || '설명 없음'}</p>
+                </div>
+                <div class="border-t border-gray-200 pt-6 mb-6">
+                    <p class="text-sm text-gray-600 mb-2">강의 설명</p>
+                    <p class="text-gray-900 whitespace-pre-wrap">${course.description || '설명 없음'}</p>
+                </div>
+                <div class="border-t border-gray-200 pt-6">
+                    <div class="flex gap-3 justify-center">
+                        <button onclick="showCurriculum()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            📚 커리큘럼 보기
+                        </button>
                     </div>
                 </div>
             </div>
@@ -89,28 +139,222 @@
     }
 
     // 액션 버튼 렌더링
-    function renderActionButtons(course) {
-        const user = getCurrentUser();
+    async function renderActionButtons(course) {
+        const user = await getCurrentUser();
         const buttonsDiv = document.getElementById('action-buttons');
 
-        if (user.role === 'INSTRUCTOR' || user.role === 'ADMIN') {
+        if (user && (user.role === 'INSTRUCTOR' || user.role === 'ADMIN')) {
+            // 강사/관리자: 수정, 삭제 버튼 (Step 2에서 구현)
             buttonsDiv.innerHTML = `
-                <div class="flex gap-2">
-                    <a href="/course/edit/${course.courseNo}" class="btn btn-primary">수정</a>
-                    <button onclick="deleteCourse()" class="btn btn-error">삭제</button>
+                <div class="flex gap-3">
+                    <button onclick="editCourse()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">수정</button>
+                    <button onclick="deleteCourse()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">삭제</button>
+                </div>
+            `;
+        } else if (user && user.role === 'STUDENT') {
+            // 학생: 수강신청 버튼 (Step 1에서 구현)
+            const isFull = course.currentStudents >= course.maxStudents;
+            const buttonText = isFull ? '마감' : '수강신청';
+            const buttonClass = isFull ? 'px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed' : 'px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors';
+            const buttonAction = isFull ? 'alert("수강 정원이 마감되었습니다.")' : 'enrollCourse()';
+            
+            buttonsDiv.innerHTML = `
+                <div class="flex gap-3">
+                    <button onclick="${buttonAction}" class="${buttonClass}">${buttonText}</button>
+                </div>
+            `;
+        } else {
+            // 로그인하지 않은 사용자
+            buttonsDiv.innerHTML = `
+                <div class="flex gap-3">
+                    <button onclick="goLogin()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">로그인 후 수강신청</button>
                 </div>
             `;
         }
     }
 
+    // 강의 수정 (Step 2에서 구현)
+    function editCourse() {
+        alert('강의 수정 기능은 Step 2(양방향 + Cascade)에서 구현 예정입니다.\n\nStep 2에서는 다음이 개선됩니다:\n- 강의 정보와 커리큘럼을 한 번에 관리\n- 양방향 관계로 데이터 일관성 보장\n- Cascade로 연관 데이터 자동 처리');
+    }
+
     // 강의 삭제 (Step 2에서 구현)
     function deleteCourse() {
-        alert('이 기능은 Step 2(양방향 + Cascade)에서 구현 예정입니다.');
+        alert('강의 삭제 기능은 Step 2(양방향 + Cascade)에서 구현 예정입니다.\n\nStep 2에서는 다음이 개선됩니다:\n- 연관된 수강신청 데이터 자동 처리\n- Cascade로 데이터 일관성 보장');
+    }
+
+    // 수강신청 (Step 1에서 구현)
+    async function enrollCourse() {
+        if (!confirm('이 강의에 수강신청 하시겠습니까?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/enrollments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    courseNo: course.courseNo
+                })
+            });
+
+            if (response.ok) {
+                alert('수강신청이 완료되었습니다!');
+                // 페이지 새로고침하여 수강생 수 업데이트
+                location.reload();
+            } else {
+                const result = await response.json();
+                alert(result.message || '수강신청에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Enrollment error:', error);
+            alert('수강신청 중 오류가 발생했습니다.');
+        }
+    }
+
+    // 커리큘럼 팝업 표시
+    async function showCurriculum() {
+        try {
+            console.log('Loading curriculum for courseNo:', courseNo);
+            const response = await fetch(`/api/courses/${courseNo}/curriculums`, {
+                credentials: 'include'
+            });
+
+            console.log('Curriculum API response status:', response.status);
+
+            if (!response.ok) throw new Error('Failed to load curriculum');
+
+            const result = await response.json();
+            console.log('Curriculum API response data:', result);
+            const curriculums = result.data;
+            console.log('Curriculums array:', curriculums);
+
+            if (curriculums.length === 0) {
+                alert('등록된 커리큘럼이 없습니다.');
+                return;
+            }
+
+            const curriculumHtml = curriculums.map(curriculum => `
+                <div class="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-lg text-gray-900">${curriculum.weekNumber}주차</h4>
+                            <h5 class="font-semibold text-base text-gray-800 mt-1">${curriculum.title}</h5>
+                            <p class="text-sm text-gray-600 mt-2">${curriculum.description || '설명 없음'}</p>
+                            ${curriculum.materials ? `<p class="text-xs text-gray-500 mt-2">📋 준비물: ${curriculum.materials}</p>` : ''}
+                        </div>
+                        ${curriculum.duration ? `<span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">${curriculum.duration}분</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            const modal = `
+                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" id="curriculum-modal">
+                    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-96">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-xl font-bold text-gray-900">📚 커리큘럼 (${curriculums.length}주차)</h3>
+                        </div>
+                        <div class="p-6 max-h-80 overflow-y-auto">
+                            ${curriculumHtml}
+                        </div>
+                        <div class="p-6 border-t border-gray-200 flex justify-end">
+                            <button onclick="closeCurriculum()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">닫기</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modal);
+        } catch (error) {
+            console.error('Error loading curriculum:', error);
+            alert('커리큘럼을 불러오는데 실패했습니다.');
+        }
+    }
+
+    // 탭 전환
+    async function showTab(tabName) {
+        // 탭 버튼 활성화
+        document.querySelectorAll('[id$="-tab-btn"]').forEach(btn => {
+            btn.className = 'py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300';
+        });
+        
+        // 탭 콘텐츠 숨기기
+        document.querySelectorAll('[id$="-tab-content"]').forEach(content => {
+            content.classList.add('hidden');
+        });
+        
+        if (tabName === 'curriculum') {
+            document.getElementById('curriculum-tab-btn').className = 'py-2 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600';
+            document.getElementById('curriculum-tab-content').classList.remove('hidden');
+        } else if (tabName === 'students') {
+            document.getElementById('students-tab-btn').className = 'py-2 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600';
+            document.getElementById('students-tab-content').classList.remove('hidden');
+            
+            // 수강생 목록 로드
+            await loadStudentsInTab();
+        }
+    }
+
+    // 탭 내에서 수강생 목록 로드
+    async function loadStudentsInTab() {
+        try {
+            console.log('Loading students for courseNo:', courseNo);
+            const response = await fetch(`/api/courses/${courseNo}/students`, {
+                credentials: 'include'
+            });
+            
+            console.log('Students API response status:', response.status);
+            
+            if (!response.ok) throw new Error('Failed to load students');
+            
+            const result = await response.json();
+            console.log('Students API response data:', result);
+            const students = result.data;
+            console.log('Students array:', students);
+            
+            const studentsHtml = students.length === 0 
+                ? '<div class="text-center py-8 text-gray-500">수강생이 없습니다.</div>'
+                : students.map((student, index) => `
+                    <div class="flex justify-between items-center p-4 border-b border-gray-200 hover:bg-gray-50">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span class="text-sm font-medium text-blue-600">${index + 1}</span>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-900">${student.fullName}</p>
+                                <p class="text-sm text-gray-500">${student.username}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">수강중</span>
+                            <span class="text-xs text-gray-400">${student.email}</span>
+                        </div>
+                    </div>
+                `).join('');
+            
+            document.getElementById('students-content').innerHTML = studentsHtml;
+        } catch (error) {
+            console.error('Error loading students:', error);
+            document.getElementById('students-content').innerHTML = 
+                '<div class="text-center py-8 text-red-500">수강생 목록을 불러오는데 실패했습니다.</div>';
+        }
+    }
+
+    // 팝업 닫기 함수
+    function closeCurriculum() {
+        const modal = document.getElementById('curriculum-modal');
+        if (modal) {
+            modal.remove();
+        }
     }
 
     // 페이지 로드시 실행
     document.addEventListener('DOMContentLoaded', function() {
         loadCourseDetail();
+        // 수강생 목록 탭을 기본으로 로드
+        loadStudentsInTab();
     });
     </script>
 </div>

@@ -9,105 +9,106 @@
 <div layout:fragment="content">
     <!-- 통계 섹션 -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="stats shadow">
-            <div class="stat">
-                <div class="stat-figure text-primary">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="w-8 h-8 text-blue-600"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                 </div>
-                <div class="stat-title">전체 게시글</div>
-                <div class="stat-value text-primary" th:text="${dashboard.statistics().totalBoards()}">0</div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">전체 게시글</p>
+                    <p class="text-2xl font-semibold text-gray-900" th:text="${dashboard.statistics().totalBoards()}">0</p>
+                </div>
             </div>
         </div>
 
-        <div class="stats shadow">
-            <div class="stat">
-                <div class="stat-figure text-secondary">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="w-8 h-8 text-green-600"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                 </div>
-                <div class="stat-title">전체 강의</div>
-                <div class="stat-value text-secondary" th:text="${dashboard.statistics().totalCourses()}">0</div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">전체 강의</p>
+                    <p class="text-2xl font-semibold text-gray-900" th:text="${dashboard.statistics().totalCourses()}">0</p>
+                </div>
             </div>
         </div>
 
-        <div class="stats shadow">
-            <div class="stat">
-                <div class="stat-figure text-accent">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="w-8 h-8 text-purple-600"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
                 </div>
-                <div class="stat-title">전체 수강신청</div>
-                <div class="stat-value text-accent" th:text="${dashboard.statistics().totalEnrollments()}">0</div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">전체 수강신청</p>
+                    <p class="text-2xl font-semibold text-gray-900" th:text="${dashboard.statistics().totalEnrollments()}">0</p>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- 최근 게시글 -->
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <h2 class="card-title">📝 최근 게시글</h2>
+        <div class="bg-white rounded-lg shadow-lg">
+            <div class="p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">📝 최근 게시글</h2>
                 <div class="overflow-x-auto">
-                    <table class="table table-sm">
-                        <thead>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
                         <tr>
-                            <th>제목</th>
-                            <th>작성자</th>
-                            <th>작성일</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">제목</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작성자</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작성일</th>
                         </tr>
                         </thead>
-                        <tbody>
-                        <tr th:each="board : ${dashboard.recentBoards()}" class="hover">
-                            <td>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                        <tr th:each="board : ${dashboard.recentBoards()}" class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
                                 <a th:href="@{/board/{boardNo}(boardNo=${board.boardNo()})}"
                                    th:text="${board.title()}"
-                                   class="link link-hover">제목</a>
+                                   class="text-blue-600 hover:text-blue-800 hover:underline">제목</a>
                             </td>
-                            <td th:text="${board.authorName()}">작성자</td>
-                            <td th:text="${#temporals.format(board.createdAt(), 'MM-dd HH:mm')}">날짜</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${board.authorName()}">작성자</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${#temporals.format(board.createdAt(), 'MM-dd HH:mm')}">날짜</td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(dashboard.recentBoards())}">
-                            <td colspan="3" class="text-center text-gray-500">게시글이 없습니다.</td>
+                            <td colspan="3" class="px-6 py-4 text-center text-gray-500">게시글이 없습니다.</td>
                         </tr>
                         </tbody>
                     </table>
                 </div>
-                <div class="card-actions justify-end mt-4">
-                    <a href="/board" class="btn btn-sm btn-primary">더보기</a>
+                <div class="flex justify-end mt-4">
+                    <a href="/board" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">더보기</a>
                 </div>
             </div>
         </div>
 
-        <!-- 인기 강의 TOP 5 (Step 2) -->
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <h2 class="card-title">
+        <!-- 인기 강의 TOP 5 -->
+        <div class="bg-white rounded-lg shadow-lg">
+            <div class="p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">
                     🏆 인기 강의 TOP 5
-                    <span class="badge badge-warning badge-sm">Step 2</span>
                 </h2>
                 <div class="overflow-x-auto">
-                    <table class="table table-sm">
-                        <thead>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
                         <tr>
-                            <th>순위</th>
-                            <th>강의명</th>
-                            <th>강사</th>
-                            <th>수강생</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">순위</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">강의명</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">강사</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">수강생</th>
                         </tr>
                         </thead>
-                        <tbody>
-                        <tr th:each="course, iterStat : ${dashboard.popularCourses()}" class="hover">
-                            <td th:text="${iterStat.count}">1</td>
-                            <td th:text="${course.courseName()}">강의명</td>
-                            <td th:text="${course.instructorName()}">강사</td>
-                            <td>
-                                <span class="badge badge-success" th:text="${course.studentCount()}">0</span>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                        <tr th:each="course, iterStat : ${dashboard.popularCourses()}" class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" th:text="${iterStat.count}">1</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" th:text="${course.courseName()}">강의명</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${course.instructorName()}">강사</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full" th:text="${course.studentCount()}">0</span>
                             </td>
                         </tr>
                         </tbody>
                     </table>
-                </div>
-                <div class="alert alert-warning mt-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                    <span class="text-xs">이 기능은 Step 2(양방향 관계)에서 실제 데이터로 구현됩니다.</span>
                 </div>
             </div>
         </div>
@@ -115,49 +116,47 @@
 
     <!-- 바로가기 -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <h2 class="card-title">📝 게시판</h2>
-                <p>자유롭게 글을 작성하고 공유하세요.</p>
-                <div class="card-actions justify-end">
-                    <a href="/board" class="btn btn-sm btn-primary">바로가기</a>
-                </div>
-                <div class="badge badge-outline mt-2">Query Methods</div>
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-2">📝 게시판</h2>
+            <p class="text-gray-600 mb-4">자유롭게 글을 작성하고 공유하세요.</p>
+            <div class="flex justify-between items-center">
+                <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">Query Methods</span>
+                <a href="/board" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">바로가기</a>
             </div>
         </div>
 
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <h2 class="card-title">📚 강의</h2>
-                <p>다양한 강의를 둘러보고 수강하세요.</p>
-                <div class="card-actions justify-end">
-                    <a href="/course" class="btn btn-sm btn-secondary">바로가기</a>
-                </div>
-                <div class="badge badge-outline mt-2">JPQL</div>
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-2">📚 강의</h2>
+            <p class="text-gray-600 mb-4">다양한 강의를 둘러보고 수강하세요.</p>
+            <div class="flex justify-between items-center">
+                <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">JPQL</span>
+                <a href="/course" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">바로가기</a>
             </div>
         </div>
 
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <h2 class="card-title">✍️ 수강신청</h2>
-                <p>원하는 강의를 신청하고 관리하세요.</p>
-                <div class="card-actions justify-end">
-                    <a href="/enrollment" class="btn btn-sm btn-accent">바로가기</a>
-                </div>
-                <div class="badge badge-outline mt-2">QueryDSL</div>
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-2">✍️ 수강신청</h2>
+            <p class="text-gray-600 mb-4">원하는 강의를 신청하고 관리하세요.</p>
+            <div class="flex justify-between items-center">
+                <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">QueryDSL</span>
+                <a href="/enrollment/me" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm">바로가기</a>
             </div>
         </div>
     </div>
 
-    <div class="alert alert-info shadow-lg mt-8">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <div>
-            <h3 class="font-bold">Step 1: ManyToOne 단방향</h3>
-            <div class="text-xs">이 프로젝트는 ManyToOne 단방향 관계만 사용합니다. 양방향 관계는 Step 2에서 학습합니다.</div>
+    <div class="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+        <div class="flex">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div class="ml-3 flex-1">
+                <h3 class="text-lg font-semibold text-blue-900">Step 1: ManyToOne 단방향</h3>
+                <p class="mt-1 text-sm text-blue-800">이 프로젝트는 ManyToOne 단방향 관계만 사용합니다. 양방향 관계는 Step 2에서 학습합니다.</p>
+            </div>
+            <div class="ml-4">
+                <a href="/project" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">프로젝트 문서</a>
+            </div>
         </div>
-        <a href="/project" class="btn btn-sm">프로젝트 문서</a>
     </div>
 </div>
 </body>

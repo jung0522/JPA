@@ -27,6 +27,7 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginPage("/auth/login")
+                        .defaultSuccessUrl("/", true)  // 로그인 성공 후 원래 URL로 리다이렉트
                         .permitAll()
                 )
                 .authorizeHttpRequests(auth -> auth

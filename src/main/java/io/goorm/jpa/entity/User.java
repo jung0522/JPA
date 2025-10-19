@@ -35,18 +35,45 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 20)
     private UserRole role;
 
+    @Column(length = 20)
+    private String phone;
+
+    @Column(length = 200)
+    private String address;
+
+    @Column(length = 500)
+    private String bio;
+
     @Builder
+    public User(String username, String password, String email, String fullName, UserRole role, String phone, String address, String bio) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.fullName = fullName;
+        this.role = role;
+        this.phone = phone;
+        this.address = address;
+        this.bio = bio;
+    }
+
+    // 기존 코드 호환성을 위한 생성자 (phone, address, bio는 null)
     public User(String username, String password, String email, String fullName, UserRole role) {
         this.username = username;
         this.password = password;
         this.email = email;
         this.fullName = fullName;
         this.role = role;
+        this.phone = null;
+        this.address = null;
+        this.bio = null;
     }
 
-    public void updateProfile(String email, String fullName) {
+    public void updateProfile(String email, String fullName, String phone, String address, String bio) {
         this.email = email;
         this.fullName = fullName;
+        this.phone = phone;
+        this.address = address;
+        this.bio = bio;
     }
 
     public void updatePassword(String encodedPassword) {

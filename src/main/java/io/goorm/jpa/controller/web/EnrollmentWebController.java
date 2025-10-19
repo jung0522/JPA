@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequiredArgsConstructor
 public class EnrollmentWebController {
 
-    @GetMapping
+    @GetMapping("/me")
     public String myEnrollments(Model model) {
         log.info("My enrollments page accessed");
         model.addAttribute("pageTitle", "내 수강신청");

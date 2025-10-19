@@ -51,6 +51,11 @@
                     const roleText = user.role === 'ADMIN' ? '관리자' :
                                     user.role === 'INSTRUCTOR' ? '강사' : '학생';
                     document.getElementById('user-info').textContent = `${user.username}님 (${roleText})`;
+
+                    // 학생용 내 수강신청 버튼 표시
+                    if (user.role === 'STUDENT') {
+                        document.getElementById('my-enrollment-btn').classList.remove('hidden');
+                    }
                 } else {
                     // 로그아웃 상태
                     document.getElementById('before-login').classList.remove('hidden');

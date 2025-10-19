@@ -9,33 +9,27 @@
 <div layout:fragment="content">
     <h1 class="text-3xl font-bold mb-6">수강신청 관리 (관리자)</h1>
 
-    <!-- 동적 검색 -->
-    <div class="card bg-base-100 shadow-md mb-6">
-        <div class="card-body">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="form-control">
-                    <label class="label"><span class="label-text">학생 번호</span></label>
-                    <input type="number" id="studentNo" placeholder="학생 번호" class="input input-bordered" />
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">강의 번호</span></label>
-                    <input type="number" id="courseNo" placeholder="강의 번호" class="input input-bordered" />
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">상태</span></label>
-                    <select id="status" class="select select-bordered">
-                        <option value="">전체</option>
-                        <option value="PENDING">대기</option>
-                        <option value="APPROVED">승인</option>
-                        <option value="REJECTED">거절</option>
-                    </select>
-                </div>
-            </div>
-            <div class="card-actions justify-end mt-4">
-                <button onclick="searchEnrollments()" class="btn btn-primary">검색</button>
-                <button onclick="loadEnrollments()" class="btn btn-ghost">전체보기</button>
-            </div>
-        </div>
+    <!-- 검색 -->
+    <div class="flex gap-3 mb-6">
+        <select id="searchField" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option value="all">전체</option>
+            <option value="studentName">학생명</option>
+            <option value="courseName">강의명</option>
+            <option value="instructorName">강사명</option>
+        </select>
+        <input type="text" id="keyword" placeholder="검색어" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+        <label class="flex items-center">
+            <input type="checkbox" id="includeCheck" class="mr-2">
+            <span class="text-sm">포함</span>
+        </label>
+        <select id="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option value="">전체 상태</option>
+            <option value="PENDING">대기</option>
+            <option value="APPROVED">승인</option>
+            <option value="REJECTED">거절</option>
+        </select>
+        <button onclick="searchEnrollments()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">검색</button>
+        <button onclick="loadEnrollments()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">전체보기</button>
     </div>
 
     <!-- 수강신청 목록 -->
@@ -51,9 +45,9 @@
     // 전체 수강신청 로드
     async function loadEnrollments(page = 0) {
         currentPage = page;
-        currentFilters = {};
-        document.getElementById('studentNo').value = '';
-        document.getElementById('courseNo').value = '';
+        document.getElementById('keyword').value = '';
+        document.getElementById('searchField').value = 'all';
+        document.getElementById('includeCheck').checked = false;
         document.getElementById('status').value = '';
 
         await fetchEnrollments(page, {});
@@ -61,12 +55,18 @@
 
     // 검색
     async function searchEnrollments(page = 0) {
-        const studentNo = document.getElementById('studentNo').value;
-        const courseNo = document.getElementById('courseNo').value;
+        const searchField = document.getElementById('searchField').value;
+        const keyword = document.getElementById('keyword').value.trim();
+        const includeCheck = document.getElementById('includeCheck').checked;
         const status = document.getElementById('status').value;
 
+        if (!keyword) {
+            alert('검색어를 입력하세요.');
+            return;
+        }
+
         currentPage = page;
-        currentFilters = { studentNo, courseNo, status };
+        currentFilters = { searchField, keyword, includeCheck, status };
 
         await fetchEnrollments(page, currentFilters);
     }
