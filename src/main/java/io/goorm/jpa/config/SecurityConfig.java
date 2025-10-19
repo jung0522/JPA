@@ -25,6 +25,10 @@ public class SecurityConfig {
                         .maximumSessions(1)
                         .maxSessionsPreventsLogin(false)
                 )
+                .formLogin(form -> form
+                        .loginPage("/auth/login")
+                        .permitAll()
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/home").permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
@@ -39,6 +43,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/board/**", "/course/**", "/enrollment/**").authenticated()
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.sendRedirect("/auth/login");
+                        })
                 )
                 .headers(headers -> headers
                         .frameOptions(frameOptions -> frameOptions.disable())
