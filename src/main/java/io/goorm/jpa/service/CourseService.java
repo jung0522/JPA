@@ -244,7 +244,7 @@ public class CourseService {
         Course course = courseRepository.findById(courseNo)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
         
-        return curriculumRepository.findByCourseNoOrderByWeekNumber(courseNo)
+        return curriculumRepository.findByCourseCourseNoOrderByWeekNumber(courseNo)
                 .stream()
                 .map(CurriculumResponse::from)
                 .toList();

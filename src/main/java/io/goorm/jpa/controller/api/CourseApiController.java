@@ -89,6 +89,12 @@ public class CourseApiController {
 
     // ===== Step 1: 팝업용 API 엔드포인트 =====
 
+    @GetMapping("/{courseNo}/curriculums")
+    @Operation(summary = "강의 커리큘럼 목록 조회")
+    public ApiResponse<List<CurriculumResponse>> getCurriculums(@PathVariable Long courseNo) {
+        List<CurriculumResponse> curriculums = courseService.getCurriculums(courseNo);
+        return ApiResponse.success(curriculums);
+    }
 
     @GetMapping("/{courseNo}/students")
     @Operation(summary = "강의 수강생 목록 조회")

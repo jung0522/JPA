@@ -23,7 +23,7 @@ public class SwaggerConfig {
                                 ## 학사관리 시스템 - 1단계
 
                                 ### 현재 구현된 기능
-                                - ✅ JWT 인증/인가
+                                - ✅ 세션 인증/인가
                                 - ✅ JPA Auditing (생성/수정 시간, 사용자 추적)
                                 - ✅ Soft Delete
                                 - ✅ 전역 예외 처리
@@ -46,11 +46,6 @@ public class SwaggerConfig {
                                 1. `/api/auth/login` 으로 로그인 (세션 기반)
                                 2. 브라우저에서 자동으로 쿠키 설정됨
                                 3. 각 모듈별 API 테스트
-
-                                ### 다음 단계 (2단계)
-                                - **통계 기능** - 월별 강의 개설, 강사별 강의 통계
-                                - **양방향 관계** - Course ↔ Curriculum, User ↔ Enrollment
-                                - **편의 메서드** - Cascade, Orphan Removal
                                 """)
                         .version("0.0.1-SNAPSHOT")
                 )
