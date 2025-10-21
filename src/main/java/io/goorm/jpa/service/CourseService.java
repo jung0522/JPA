@@ -96,18 +96,22 @@ public class CourseService {
     }
 
     /**
-     * 강의 수정 (강사 본인만)
+     * 강의 수정 (강사 본인만) - Step 2: 비관적 락 적용
      */
     @Transactional
     public CourseResponse update(Long courseNo, CourseUpdateRequest request) {
-        Course course = courseRepository.findById(courseNo)
-                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
+        User currentUser = getCurrentUser();
+
+        // Step 2: 비관적 락으로 동시성 제어
+        Course course = courseRepository.findByIdAndInstructorForUpdate(courseNo, currentUser);
+        
+        if (course == null) {
+            throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
+        }
 
         if (course.getDeleted()) {
             throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
         }
-
-        User currentUser = getCurrentUser();
 
         // 강사 본인 또는 관리자만 수정 가능
         if (!course.isInstructor(currentUser) && !currentUser.isAdmin()) {
@@ -121,14 +125,31 @@ public class CourseService {
     }
 
     /**
-     * 강의 삭제 (Step 2에서 구현 - Cascade 필요)
-     * Step 1에서는 구현하지 않음
+     * 강의 삭제 - Step 2: Cascade + 비관적 락 구현
      */
     @Transactional
     public void delete(Long courseNo) {
-        // Step 1: 양방향 없이 삭제는 위험 (주차/차시 고아 데이터)
-        // Step 2에서 Cascade로 구현
-        throw new BusinessException(ErrorCode.COURSE_FORBIDDEN);
+        User currentUser = getCurrentUser();
+
+        // Step 2: 비관적 락으로 동시성 제어
+        Course course = courseRepository.findByIdAndInstructorForDelete(courseNo, currentUser);
+        
+        if (course == null) {
+            throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
+        }
+
+        if (course.getDeleted()) {
+            throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
+        }
+
+        // 강사 본인 또는 관리자만 삭제 가능
+        if (!course.isInstructor(currentUser) && !currentUser.isAdmin()) {
+            throw new BusinessException(ErrorCode.COURSE_FORBIDDEN);
+        }
+
+        // Step 2: Cascade.ALL + orphanRemoval로 연관 데이터 자동 삭제
+        course.delete();
+        log.info("Course deleted: courseNo={}, instructor={}", courseNo, currentUser.getUsername());
     }
 
     /**
