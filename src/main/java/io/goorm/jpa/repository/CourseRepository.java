@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.repository.query.Param;
 
 import jakarta.persistence.LockModeType;
@@ -45,11 +46,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Page<Course> findAllWithInstructor(Pageable pageable);
 
     /**
-     * 강의 상세 조회 (Fetch Join)
+     * 강의 상세 조회 (Step 2-4: @EntityGraph로 간소화)
      */
+    @EntityGraph(attributePaths = {"instructor"})
     @Query("""
         SELECT c FROM Course c
-        JOIN FETCH c.instructor
         WHERE c.courseNo = :courseNo
         AND c.deleted = false
         """)
@@ -322,12 +323,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Course findByIdForEnrollment(@Param("courseNo") Long courseNo);
 
     /**
-     * 강의 조회 (비관적 락 - 수강생 수 변경 시 동시성 제어)
+     * 강의 조회 (비관적 락 - Step 2-4: @EntityGraph로 간소화)
      */
+    @EntityGraph(attributePaths = {"instructor"})
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         SELECT c FROM Course c
-        JOIN FETCH c.instructor
         WHERE c.courseNo = :courseNo
         AND c.deleted = false
         """)

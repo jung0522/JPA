@@ -7,6 +7,7 @@ import io.goorm.jpa.enums.EnrollmentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.repository.query.Param;
 
 import jakarta.persistence.LockModeType;
@@ -42,8 +43,9 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     // ===== Step 2: 비관적 락(Pessimistic Lock) 메서드들 =====
 
     /**
-     * 수강신청 조회 (비관적 락 - 승인/거절 시 동시성 제어)
+     * 수강신청 조회 (비관적 락 - Step 2-4: @EntityGraph로 간소화)
      */
+    @EntityGraph(attributePaths = {"student", "course"})
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         SELECT e FROM Enrollment e
@@ -53,8 +55,9 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     Optional<Enrollment> findByIdForUpdate(@Param("enrollmentNo") Long enrollmentNo);
 
     /**
-     * 학생의 수강신청 조회 (비관적 락 - 중복 신청 방지)
+     * 학생의 수강신청 조회 (비관적 락 - Step 2-4: @EntityGraph로 간소화)
      */
+    @EntityGraph(attributePaths = {"student", "course"})
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         SELECT e FROM Enrollment e
