@@ -6,6 +6,7 @@ import io.goorm.jpa.dto.course.CourseUpdateRequest;
 import io.goorm.jpa.dto.course.CourseSearchCondition;
 import io.goorm.jpa.dto.curriculum.CurriculumResponse;
 import io.goorm.jpa.dto.user.UserResponse;
+import io.goorm.jpa.dto.dashboard.CourseStatistics;
 import io.goorm.jpa.entity.Course;
 import io.goorm.jpa.entity.User;
 import io.goorm.jpa.exception.BusinessException;
@@ -14,6 +15,7 @@ import io.goorm.jpa.repository.CourseRepository;
 import io.goorm.jpa.repository.UserRepository;
 import io.goorm.jpa.repository.CurriculumRepository;
 import io.goorm.jpa.repository.EnrollmentRepository;
+import io.goorm.jpa.repository.querydsl.CourseQueryRepository;
 import io.goorm.jpa.enums.EnrollmentStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +42,7 @@ public class CourseService {
     private final UserRepository userRepository;
     private final CurriculumRepository curriculumRepository;
     private final EnrollmentRepository enrollmentRepository;
+    private final CourseQueryRepository courseQueryRepository;
 
     /**
      * 강의 생성 (강사만)
@@ -282,6 +285,79 @@ public class CourseService {
                 .stream()
                 .map(enrollment -> UserResponse.from(enrollment.getStudent()))
                 .toList();
+    }
+
+    // ===== Step 2-3: QueryDSL 통계 기능 =====
+
+    /**
+     * 강의 전체 통계
+     */
+    public CourseStatistics getCourseStatistics() {
+        return courseQueryRepository.getCourseStatistics();
+    }
+
+    /**
+     * 강의별 상세 통계
+     */
+    public List<CourseStatistics> getCourseDetailedStatistics() {
+        return courseQueryRepository.getCourseDetailedStatistics();
+    }
+
+    /**
+     * 강사별 강의 통계
+     */
+    public List<CourseStatistics> getInstructorStatistics() {
+        return courseQueryRepository.getInstructorStatistics();
+    }
+
+    /**
+     * 월별 강의 개설 통계
+     */
+    public List<CourseStatistics> getMonthlyCourseStatistics() {
+        return courseQueryRepository.getMonthlyCourseStatistics();
+    }
+
+    /**
+     * 강의별 커리큘럼 통계
+     */
+    public List<CourseStatistics> getCourseCurriculumStatistics() {
+        return courseQueryRepository.getCourseCurriculumStatistics();
+    }
+
+    /**
+     * 인기 강의 TOP N
+     */
+    public List<CourseResponse> getPopularCourses(int limit) {
+        return courseQueryRepository.findPopularCourses(limit)
+                .stream()
+                .map(CourseResponse::from)
+                .toList();
+    }
+
+    /**
+     * 수강 가능한 강의 목록
+     */
+    public List<CourseResponse> getAvailableCourses() {
+        return courseQueryRepository.findAvailableCourses()
+                .stream()
+                .map(CourseResponse::from)
+                .toList();
+    }
+
+    /**
+     * 강의 텍스트 검색 (QueryDSL)
+     */
+    public Page<CourseResponse> searchCoursesByText(String searchText, Pageable pageable) {
+        return courseQueryRepository.searchCoursesByText(searchText, pageable)
+                .map(CourseResponse::from);
+    }
+
+    /**
+     * 강의 고급 검색 (QueryDSL + 공통 조건 모듈)
+     */
+    public Page<CourseResponse> searchCoursesAdvanced(CourseSearchCondition condition, Pageable pageable) {
+        return courseQueryRepository.searchCourses(condition, pageable)
+                .map(CourseResponse::from);
     }
 
     /**

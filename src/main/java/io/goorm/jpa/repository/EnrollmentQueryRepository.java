@@ -9,6 +9,7 @@ import io.goorm.jpa.dto.enrollment.AdminEnrollmentSearchCondition;
 import io.goorm.jpa.entity.Enrollment;
 import io.goorm.jpa.entity.User;
 import io.goorm.jpa.enums.EnrollmentStatus;
+import io.goorm.jpa.repository.querydsl.CommonQueryConditions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -32,50 +33,18 @@ public class EnrollmentQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     /**
-     * 수강신청 동적 검색 (관리자용)
+     * 수강신청 동적 검색 (관리자용) - Step 2-3: 공통 조건 모듈 활용
      */
     public Page<Enrollment> searchByAdminConditions(String searchField, String keyword, Boolean include, EnrollmentStatus status, Pageable pageable) {
-        com.querydsl.core.BooleanBuilder builder = new com.querydsl.core.BooleanBuilder();
-        
-        // 기본 조건: 삭제되지 않은 것만
-        builder.and(enrollment.deleted.eq(false));
-        
-        // 검색 조건
-        if (searchField != null && keyword != null && !keyword.trim().isEmpty()) {
-            String searchKeyword = keyword.trim();
-            boolean isLike = include != null && include;
-            
-            switch (searchField) {
-                case "studentName":
-                    builder.and(isLike ? enrollment.student.fullName.contains(searchKeyword) : enrollment.student.fullName.eq(searchKeyword));
-                    break;
-                case "courseName":
-                    builder.and(isLike ? enrollment.course.name.contains(searchKeyword) : enrollment.course.name.eq(searchKeyword));
-                    break;
-                case "instructorName":
-                    builder.and(isLike ? enrollment.course.instructor.fullName.contains(searchKeyword) : enrollment.course.instructor.fullName.eq(searchKeyword));
-                    break;
-                case "all":
-                default:
-                    builder.and(
-                        enrollment.student.fullName.contains(searchKeyword)
-                        .or(enrollment.course.name.contains(searchKeyword))
-                        .or(enrollment.course.instructor.fullName.contains(searchKeyword))
-                    );
-                    break;
-            }
-        }
-        
-        // 상태 조건
-        if (status != null) {
-            builder.and(enrollment.status.eq(status));
-        }
-        
         List<Enrollment> content = queryFactory
                 .selectFrom(enrollment)
                 .join(enrollment.student, user).fetchJoin()
                 .join(enrollment.course, course).fetchJoin()
-                .where(builder)
+                .where(
+                    CommonQueryConditions.notDeleted(enrollment.deleted),
+                    createSearchCondition(searchField, keyword, include),
+                    CommonQueryConditions.enumEq(enrollment.status, status)
+                )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .orderBy(enrollment.createdAt.desc())
@@ -84,14 +53,18 @@ public class EnrollmentQueryRepository {
         Long total = queryFactory
                 .select(enrollment.count())
                 .from(enrollment)
-                .where(builder)
+                .where(
+                    CommonQueryConditions.notDeleted(enrollment.deleted),
+                    createSearchCondition(searchField, keyword, include),
+                    CommonQueryConditions.enumEq(enrollment.status, status)
+                )
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0);
     }
 
     /**
-     * 내 수강신청 목록
+     * 내 수강신청 목록 - Step 2-3: 공통 조건 모듈 활용
      */
     public Page<Enrollment> findByStudent(User student, Pageable pageable) {
         List<Enrollment> content = queryFactory
@@ -100,7 +73,7 @@ public class EnrollmentQueryRepository {
                 .join(course.instructor, user).fetchJoin()
                 .where(
                         enrollment.student.eq(student),
-                        enrollment.deleted.eq(false)
+                        CommonQueryConditions.notDeleted(enrollment.deleted)
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -112,7 +85,7 @@ public class EnrollmentQueryRepository {
                 .from(enrollment)
                 .where(
                         enrollment.student.eq(student),
-                        enrollment.deleted.eq(false)
+                        CommonQueryConditions.notDeleted(enrollment.deleted)
                 )
                 .fetchOne();
 
@@ -255,92 +228,83 @@ public class EnrollmentQueryRepository {
                 .toList();
     }
 
-    // ===== 동적 조건 메소드들 =====
+    // ===== Step 2-3: 공통 조건 모듈 활용 =====
 
     /**
-     * 동적 조건: 학생 번호
+     * 검색 조건 생성 (공통 조건 모듈 활용)
      */
-    private BooleanExpression studentNoEq(Long studentNo) {
-        return studentNo != null ? enrollment.student.userNo.eq(studentNo) : null;
+    private BooleanExpression createSearchCondition(String searchField, String keyword, Boolean include) {
+        if (searchField == null || keyword == null || keyword.trim().isEmpty()) {
+            return null;
+        }
+        
+        String searchKeyword = keyword.trim();
+        
+        return switch (searchField) {
+            case "studentName" -> CommonQueryConditions.stringContains(
+                enrollment.student.fullName, searchKeyword, include);
+            case "courseName" -> CommonQueryConditions.stringContains(
+                enrollment.course.name, searchKeyword, include);
+            case "instructorName" -> CommonQueryConditions.stringContains(
+                enrollment.course.instructor.fullName, searchKeyword, include);
+            case "all" -> textSearch(searchKeyword);
+            default -> textSearch(searchKeyword);
+        };
     }
 
-    // ===== 추가 동적 조건 메소드들 =====
+    /**
+     * 텍스트 검색 (전체 필드)
+     */
+    private BooleanExpression textSearch(String searchText) {
+        if (searchText == null || searchText.trim().isEmpty()) return null;
+        
+        String trimmedText = searchText.trim();
+        return enrollment.student.fullName.contains(trimmedText)
+            .or(enrollment.course.name.contains(trimmedText))
+            .or(enrollment.course.instructor.fullName.contains(trimmedText));
+    }
+
+    // ===== 기존 동적 조건 메서드들 (공통 조건 모듈 활용) =====
 
     private BooleanExpression studentNameContains(String studentName) {
-        return studentName != null && !studentName.trim().isEmpty() 
-            ? enrollment.student.fullName.contains(studentName) : null;
+        return CommonQueryConditions.stringContains(enrollment.student.fullName, studentName);
     }
     
     private BooleanExpression studentNameContains(String studentName, Boolean include) {
-        if (studentName == null || studentName.trim().isEmpty()) return null;
-        return include != null && include 
-            ? enrollment.student.fullName.contains(studentName) 
-            : enrollment.student.fullName.eq(studentName);
+        return CommonQueryConditions.stringContains(enrollment.student.fullName, studentName, include);
     }
 
     private BooleanExpression courseNameContains(String courseName) {
-        return courseName != null && !courseName.trim().isEmpty() 
-            ? enrollment.course.name.contains(courseName) : null;
+        return CommonQueryConditions.stringContains(enrollment.course.name, courseName);
     }
     
     private BooleanExpression courseNameContains(String courseName, Boolean include) {
-        if (courseName == null || courseName.trim().isEmpty()) return null;
-        return include != null && include 
-            ? enrollment.course.name.contains(courseName) 
-            : enrollment.course.name.eq(courseName);
+        return CommonQueryConditions.stringContains(enrollment.course.name, courseName, include);
     }
 
     private BooleanExpression instructorNameContains(String instructorName) {
-        return instructorName != null && !instructorName.trim().isEmpty() 
-            ? enrollment.course.instructor.fullName.contains(instructorName) : null;
+        return CommonQueryConditions.stringContains(enrollment.course.instructor.fullName, instructorName);
     }
     
     private BooleanExpression instructorNameContains(String instructorName, Boolean include) {
-        if (instructorName == null || instructorName.trim().isEmpty()) return null;
-        return include != null && include 
-            ? enrollment.course.instructor.fullName.contains(instructorName) 
-            : enrollment.course.instructor.fullName.eq(instructorName);
+        return CommonQueryConditions.stringContains(enrollment.course.instructor.fullName, instructorName, include);
     }
 
     private BooleanExpression statusIn(List<EnrollmentStatus> statusList) {
-        return statusList != null && !statusList.isEmpty() 
-            ? enrollment.status.in(statusList) : null;
+        return CommonQueryConditions.enumIn(enrollment.status, statusList);
     }
 
     private BooleanExpression createdAtBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate) {
-        if (startDate != null && endDate != null) {
-            return enrollment.createdAt.between(startDate, endDate);
-        } else if (startDate != null) {
-            return enrollment.createdAt.goe(startDate);
-        } else if (endDate != null) {
-            return enrollment.createdAt.loe(endDate);
-        }
-        return null;
+        return CommonQueryConditions.dateBetween(enrollment.createdAt, startDate, endDate);
     }
 
     private BooleanExpression courseCapacityBetween(Integer minCapacity, Integer maxCapacity) {
-        if (minCapacity != null && maxCapacity != null) {
-            return enrollment.course.maxStudents.between(minCapacity, maxCapacity);
-        } else if (minCapacity != null) {
-            return enrollment.course.maxStudents.goe(minCapacity);
-        } else if (maxCapacity != null) {
-            return enrollment.course.maxStudents.loe(maxCapacity);
-        }
-        return null;
+        return CommonQueryConditions.numberBetween(enrollment.course.maxStudents, minCapacity, maxCapacity);
     }
 
     private BooleanExpression enrollmentRatioBetween(Double minRatio, Double maxRatio) {
-        if (minRatio != null && maxRatio != null) {
-            return enrollment.course.maxStudents.gt(0)
-                .and(enrollment.course.currentStudents.divide(enrollment.course.maxStudents).between(minRatio, maxRatio));
-        } else if (minRatio != null) {
-            return enrollment.course.maxStudents.gt(0)
-                .and(enrollment.course.currentStudents.divide(enrollment.course.maxStudents).goe(minRatio));
-        } else if (maxRatio != null) {
-            return enrollment.course.maxStudents.gt(0)
-                .and(enrollment.course.currentStudents.divide(enrollment.course.maxStudents).loe(maxRatio));
-        }
-        return null;
+        return CommonQueryConditions.ratioBetween(
+            enrollment.course.currentStudents, enrollment.course.maxStudents, minRatio, maxRatio);
     }
 
     private com.querydsl.core.types.OrderSpecifier<?> createOrderSpecifier(org.springframework.data.domain.Sort sort) {
