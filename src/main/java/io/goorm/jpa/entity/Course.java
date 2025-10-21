@@ -4,15 +4,19 @@ import io.goorm.jpa.entity.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 강의 엔티티
  * - ManyToOne 단방향 (Course → User)
+ * - OneToMany 양방향 (Course ↔ Curriculum)
  * - JPQL 사용
  * - Pessimistic Lock (Step 2)
  */
 @Entity
 @Getter
-@ToString(exclude = "instructor")
+@ToString(exclude = {"instructor", "curriculums", "enrollments"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "course")
@@ -38,6 +42,14 @@ public class Course extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "instructor_no", nullable = false)
     private User instructor;
+
+    // ===== Step 2: 양방향 관계 추가 =====
+    
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Curriculum> curriculums = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Enrollment> enrollments = new ArrayList<>();
 
     @Builder
     public Course(String name, String description, Integer maxStudents, User instructor) {
@@ -85,5 +97,81 @@ public class Course extends BaseEntity {
      */
     public boolean isInstructor(User user) {
         return this.instructor.equals(user);
+    }
+
+    // ===== Step 2: 편의 메서드 추가 =====
+    
+    /**
+     * 커리큘럼 추가 (편의 메서드)
+     */
+    public void addCurriculum(Curriculum curriculum) {
+        curriculums.add(curriculum);
+        curriculum.setCourse(this);
+    }
+    
+    /**
+     * 커리큘럼 제거 (편의 메서드)
+     */
+    public void removeCurriculum(Curriculum curriculum) {
+        curriculums.remove(curriculum);
+        curriculum.setCourse(null);
+    }
+    
+    /**
+     * 커리큘럼 개수 조회
+     */
+    public int getCurriculumCount() {
+        return curriculums.size();
+    }
+    
+    /**
+     * 커리큘럼이 있는지 확인
+     */
+    public boolean hasCurriculums() {
+        return !curriculums.isEmpty();
+    }
+    
+    // ===== Enrollment 관련 편의 메서드 =====
+    
+    /**
+     * 수강신청 추가 (편의 메서드)
+     */
+    public void addEnrollment(Enrollment enrollment) {
+        enrollments.add(enrollment);
+        enrollment.setCourse(this);
+        this.currentStudents++;
+    }
+    
+    /**
+     * 수강신청 제거 (편의 메서드)
+     */
+    public void removeEnrollment(Enrollment enrollment) {
+        enrollments.remove(enrollment);
+        enrollment.setCourse(null);
+        if (this.currentStudents > 0) {
+            this.currentStudents--;
+        }
+    }
+    
+    /**
+     * 수강생 목록 조회
+     */
+    public List<Enrollment> getEnrollments() {
+        return new ArrayList<>(enrollments);
+    }
+    
+    /**
+     * 수강생 수 조회 (실제 등록된 수강생 수)
+     */
+    public int getActualStudentCount() {
+        return enrollments.size();
+    }
+    
+    /**
+     * 특정 학생의 수강신청 여부 확인
+     */
+    public boolean isEnrolledBy(User student) {
+        return enrollments.stream()
+                .anyMatch(enrollment -> enrollment.getStudent().equals(student));
     }
 }
