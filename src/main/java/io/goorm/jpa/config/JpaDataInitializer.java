@@ -28,7 +28,7 @@ import java.util.List;
 
 @Slf4j
 @Component
-@Profile("jpa")
+@Profile({"jpa", "db"})
 @RequiredArgsConstructor
 public class JpaDataInitializer implements CommandLineRunner {
 
