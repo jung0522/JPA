@@ -2,6 +2,8 @@ package io.goorm.jpa.service;
 
 import io.goorm.jpa.dto.enrollment.EnrollmentCreateRequest;
 import io.goorm.jpa.dto.enrollment.EnrollmentResponse;
+import io.goorm.jpa.dto.enrollment.BatchEnrollmentRequest;
+import io.goorm.jpa.dto.enrollment.BatchEnrollmentResponse;
 import io.goorm.jpa.entity.Course;
 import io.goorm.jpa.entity.Enrollment;
 import io.goorm.jpa.entity.User;
@@ -20,6 +22,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 /**
  * Enrollment Service
@@ -186,6 +191,142 @@ public class EnrollmentService {
 
         return enrollmentQueryRepository.searchByAdminConditions(searchField, keyword, include, status, pageable)
                 .map(EnrollmentResponse::from);
+    }
+
+    // ===== Step 2-4: 배치 처리 메서드들 =====
+
+    /**
+     * 수강신청 일괄 승인/거절
+     */
+    @Transactional
+    public BatchEnrollmentResponse batchProcessEnrollments(BatchEnrollmentRequest request) {
+        log.info("배치 처리 시작: action={}, count={}", request.getAction(), request.getEnrollmentCount());
+        
+        User currentUser = getCurrentUser();
+        
+        // 관리자 또는 강사 권한 확인
+        if (!currentUser.isAdmin() && !currentUser.isInstructor()) {
+            throw new BusinessException(ErrorCode.USER_FORBIDDEN);
+        }
+
+        // 요청 유효성 검증
+        if (!request.hasEnrollments()) {
+            throw new BusinessException(ErrorCode.ENROLLMENT_NOT_FOUND);
+        }
+
+        // 비관적 락으로 수강신청 일괄 조회
+        List<Enrollment> enrollments = enrollmentRepository.findPendingByIdsForBatchUpdate(request.getEnrollmentIds());
+        
+        if (enrollments.isEmpty()) {
+            log.warn("처리 가능한 수강신청이 없음: requested={}, found=0", request.getEnrollmentCount());
+            return BatchEnrollmentResponse.failure(
+                request.getAction(), 
+                request.getEnrollmentCount(), 
+                List.of("처리 가능한 수강신청이 없습니다.")
+            );
+        }
+
+        // 개별 처리 결과 수집
+        List<BatchEnrollmentResponse.EnrollmentProcessResult> results = new ArrayList<>();
+        
+        for (Enrollment enrollment : enrollments) {
+            try {
+                processEnrollment(enrollment, request.getAction(), request.getReason());
+                
+                results.add(BatchEnrollmentResponse.EnrollmentProcessResult.builder()
+                    .enrollmentId(enrollment.getEnrollmentNo())
+                    .success(true)
+                    .message(String.format("수강신청 %s 완료", 
+                        request.isApprove() ? "승인" : "거절"))
+                    .build());
+                    
+                log.info("수강신청 처리 완료: enrollmentNo={}, action={}", 
+                    enrollment.getEnrollmentNo(), request.getAction());
+                    
+            } catch (Exception e) {
+                results.add(BatchEnrollmentResponse.EnrollmentProcessResult.builder()
+                    .enrollmentId(enrollment.getEnrollmentNo())
+                    .success(false)
+                    .error(e.getMessage())
+                    .build());
+                    
+                log.error("수강신청 처리 실패: enrollmentNo={}, error={}", 
+                    enrollment.getEnrollmentNo(), e.getMessage());
+            }
+        }
+
+        // 응답 생성
+        BatchEnrollmentResponse response = BatchEnrollmentResponse.success(
+            request.getAction(), 
+            request.getEnrollmentCount(), 
+            results
+        );
+
+        log.info("배치 처리 완료: total={}, success={}, failure={}", 
+            response.getTotalCount(), response.getSuccessCount(), response.getFailureCount());
+
+        return response;
+    }
+
+    /**
+     * 강의별 수강신청 일괄 승인/거절
+     */
+    @Transactional
+    public BatchEnrollmentResponse batchProcessEnrollmentsByCourse(Long courseNo, BatchEnrollmentRequest.BatchAction action, String reason) {
+        log.info("강의별 배치 처리 시작: courseNo={}, action={}", courseNo, action);
+        
+        User currentUser = getCurrentUser();
+        
+        // 강의 조회 및 권한 확인
+        Course course = courseRepository.findById(courseNo)
+            .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
+            
+        if (!course.isInstructor(currentUser) && !currentUser.isAdmin()) {
+            throw new BusinessException(ErrorCode.COURSE_FORBIDDEN);
+        }
+
+        // 강의별 대기 중인 수강신청 조회
+        List<Enrollment> enrollments = enrollmentRepository.findPendingByCourseForBatchUpdate(course);
+        
+        if (enrollments.isEmpty()) {
+            log.warn("강의별 처리 가능한 수강신청이 없음: courseNo={}", courseNo);
+            return BatchEnrollmentResponse.failure(
+                action, 
+                0, 
+                List.of("처리 가능한 수강신청이 없습니다.")
+            );
+        }
+
+        // 수강신청 ID 목록 생성
+        List<Long> enrollmentIds = enrollments.stream()
+            .map(Enrollment::getEnrollmentNo)
+            .collect(Collectors.toList());
+
+        // 배치 처리 요청 생성
+        BatchEnrollmentRequest request = BatchEnrollmentRequest.builder()
+            .enrollmentIds(enrollmentIds)
+            .action(action)
+            .reason(reason)
+            .build();
+
+        return batchProcessEnrollments(request);
+    }
+
+    /**
+     * 개별 수강신청 처리
+     */
+    private void processEnrollment(Enrollment enrollment, BatchEnrollmentRequest.BatchAction action, String reason) {
+        if (action == BatchEnrollmentRequest.BatchAction.APPROVE) {
+            enrollment.approve();
+        } else if (action == BatchEnrollmentRequest.BatchAction.REJECT) {
+            enrollment.reject();
+        }
+        
+        // 처리 사유가 있으면 로그에 기록
+        if (reason != null && !reason.trim().isEmpty()) {
+            log.info("수강신청 처리 사유: enrollmentNo={}, reason={}", 
+                enrollment.getEnrollmentNo(), reason);
+        }
     }
 
     /**

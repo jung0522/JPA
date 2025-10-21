@@ -4,6 +4,8 @@ import io.goorm.jpa.dto.common.ApiResponse;
 import io.goorm.jpa.dto.common.PageResponse;
 import io.goorm.jpa.dto.enrollment.EnrollmentCreateRequest;
 import io.goorm.jpa.dto.enrollment.EnrollmentResponse;
+import io.goorm.jpa.dto.enrollment.BatchEnrollmentRequest;
+import io.goorm.jpa.dto.enrollment.BatchEnrollmentResponse;
 import io.goorm.jpa.enums.EnrollmentStatus;
 import io.goorm.jpa.service.EnrollmentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -80,5 +82,25 @@ public class EnrollmentApiController {
     ) {
         Page<EnrollmentResponse> page = enrollmentService.searchByAdminConditions(searchField, keyword, include, status, pageable);
         return ApiResponse.success(PageResponse.of(page));
+    }
+
+    // ===== Step 2-4: 배치 처리 API =====
+
+    @PostMapping("/batch")
+    @Operation(summary = "수강신청 일괄 승인/거절 (관리자, 강사)")
+    public ApiResponse<BatchEnrollmentResponse> batchProcess(@Valid @RequestBody BatchEnrollmentRequest request) {
+        BatchEnrollmentResponse response = enrollmentService.batchProcessEnrollments(request);
+        return ApiResponse.success(response);
+    }
+
+    @PostMapping("/batch/course/{courseNo}")
+    @Operation(summary = "강의별 수강신청 일괄 승인/거절 (관리자, 강사)")
+    public ApiResponse<BatchEnrollmentResponse> batchProcessByCourse(
+            @PathVariable Long courseNo,
+            @RequestParam BatchEnrollmentRequest.BatchAction action,
+            @RequestParam(required = false) String reason
+    ) {
+        BatchEnrollmentResponse response = enrollmentService.batchProcessEnrollmentsByCourse(courseNo, action, reason);
+        return ApiResponse.success(response);
     }
 }

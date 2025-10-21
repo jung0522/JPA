@@ -91,4 +91,44 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
         ORDER BY e.createdAt ASC
         """)
     List<Enrollment> findPendingEnrollmentsForUpdate(@Param("course") Course course);
+
+    // ===== Step 2-4: 배치 처리 메서드들 =====
+
+    /**
+     * 수강신청 일괄 조회 (비관적 락 - 배치 처리용)
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT e FROM Enrollment e
+        WHERE e.enrollmentNo IN :enrollmentIds
+        AND e.deleted = false
+        ORDER BY e.createdAt ASC
+        """)
+    List<Enrollment> findByIdsForBatchUpdate(@Param("enrollmentIds") List<Long> enrollmentIds);
+
+    /**
+     * 대기 상태 수강신청만 일괄 조회 (비관적 락)
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT e FROM Enrollment e
+        WHERE e.enrollmentNo IN :enrollmentIds
+        AND e.status = 'PENDING'
+        AND e.deleted = false
+        ORDER BY e.createdAt ASC
+        """)
+    List<Enrollment> findPendingByIdsForBatchUpdate(@Param("enrollmentIds") List<Long> enrollmentIds);
+
+    /**
+     * 강의별 대기 중인 수강신청 조회 (비관적 락 - 강의별 일괄 처리)
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT e FROM Enrollment e
+        WHERE e.course = :course
+        AND e.status = 'PENDING'
+        AND e.deleted = false
+        ORDER BY e.createdAt ASC
+        """)
+    List<Enrollment> findPendingByCourseForBatchUpdate(@Param("course") Course course);
 }
