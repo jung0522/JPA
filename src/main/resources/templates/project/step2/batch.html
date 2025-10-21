@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/step2-layout}">
+<head>
+    <title>배치 처리와 성능 최적화</title>
+    <style>
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .feature-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        .warning {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-6 py-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold mb-2">
+                        <i class="fas fa-tasks mr-3"></i>
+                        배치 처리와 성능 최적화
+                    </h1>
+                    <p class="text-xl text-blue-100">
+                        일괄 처리, @EntityGraph, N+1 문제 해결
+                    </p>
+                </div>
+                <a href="/project/step2/overview" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition">
+                    <i class="fas fa-arrow-left mr-2"></i>목록으로
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-12">
+        <!-- 개요 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-info-circle text-blue-600 mr-3"></i>
+                배치 처리와 성능 최적화 개요
+            </h2>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="feature-card">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-tasks text-4xl text-purple-600 mb-3"></i>
+                        <h3 class="text-xl font-bold text-gray-800">배치 처리</h3>
+                    </div>
+                    <ul class="text-gray-600 space-y-1">
+                        <li>• 수강신청 일괄 승인/거절</li>
+                        <li>• 강의별 일괄 처리</li>
+                        <li>• 처리 결과 추적</li>
+                        <li>• 에러 핸들링</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-tachometer-alt text-4xl text-orange-600 mb-3"></i>
+                        <h3 class="text-xl font-bold text-gray-800">성능 최적화</h3>
+                    </div>
+                    <ul class="text-gray-600 space-y-1">
+                        <li>• @EntityGraph 활용</li>
+                        <li>• N+1 문제 해결</li>
+                        <li>• Fetch Join 최적화</li>
+                        <li>• Batch Size 설정</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 배치 처리 DTO -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-file-code text-green-600 mr-3"></i>
+                배치 처리 DTO
+            </h2>
+            
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- BatchEnrollmentRequest -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">BatchEnrollmentRequest</h3>
+                    <div class="code-block">
+<span class="text-gray-400">// 수강신청 일괄 처리 요청 DTO</span>
+<span class="text-blue-400">@Data</span>
+<span class="text-blue-400">@Builder</span>
+<span class="text-blue-400">@NoArgsConstructor</span>
+<span class="text-blue-400">@AllArgsConstructor</span>
+<span class="text-blue-400">public class</span> <span class="text-green-400">BatchEnrollmentRequest</span> <span class="text-white">{</span>
+
+    <span class="text-yellow-400">@NotEmpty</span><span class="text-white">(message = </span><span class="text-orange-400">"처리할 수강신청 ID 목록은 필수입니다."</span><span class="text-white">)</span>
+    <span class="text-blue-400">private</span> <span class="text-white">List&lt;Long&gt; enrollmentIds;</span>
+
+    <span class="text-yellow-400">@NotNull</span><span class="text-white">(message = </span><span class="text-orange-400">"처리 액션은 필수입니다. (APPROVE 또는 REJECT)"</span><span class="text-white">)</span>
+    <span class="text-blue-400">private</span> <span class="text-white">BatchAction action;</span>
+
+    <span class="text-blue-400">private</span> <span class="text-white">String reason;</span> <span class="text-gray-400">// 처리 사유 (선택 사항)</span>
+
+    <span class="text-blue-400">public int</span> <span class="text-green-400">getEnrollmentCount</span><span class="text-white">() {</span>
+        <span class="text-blue-400">return</span> <span class="text-white">enrollmentIds != </span><span class="text-orange-400">null</span> <span class="text-white">? enrollmentIds.size() : 0;</span>
+    <span class="text-white">}</span>
+
+    <span class="text-blue-400">public boolean</span> <span class="text-green-400">isApprove</span><span class="text-white">() {</span>
+        <span class="text-blue-400">return</span> <span class="text-white">BatchAction.APPROVE.equals(action);</span>
+    <span class="text-white">}</span>
+
+    <span class="text-blue-400">public enum</span> <span class="text-green-400">BatchAction</span> <span class="text-white">{</span>
+        <span class="text-white">APPROVE, REJECT</span>
+    <span class="text-white">}</span>
+<span class="text-white">}</span>
+                    </div>
+                </div>
+
+                <!-- BatchEnrollmentResponse -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">BatchEnrollmentResponse</h3>
+                    <div class="code-block">
+<span class="text-gray-400">// 수강신청 일괄 처리 응답 DTO</span>
+<span class="text-blue-400">@Data</span>
+<span class="text-blue-400">@Builder</span>
+<span class="text-blue-400">public class</span> <span class="text-green-400">BatchEnrollmentResponse</span> <span class="text-white">{</span>
+    <span class="text-blue-400">private</span> <span class="text-white">BatchEnrollmentRequest.BatchAction action;</span>
+    <span class="text-blue-400">private</span> <span class="text-white">int totalCount;</span>
+    <span class="text-blue-400">private</span> <span class="text-white">int successCount;</span>
+    <span class="text-blue-400">private</span> <span class="text-white">int failureCount;</span>
+    <span class="text-blue-400">private</span> <span class="text-white">List&lt;EnrollmentProcessResult&gt; results;</span>
+    <span class="text-blue-400">private</span> <span class="text-white">List&lt;String&gt; errors;</span>
+
+    <span class="text-gray-400">// 정적 팩토리 메서드</span>
+    <span class="text-blue-400">public static</span> <span class="text-white">BatchEnrollmentResponse success</span><span class="text-white">(BatchEnrollmentRequest.BatchAction action, int totalCount, List&lt;EnrollmentProcessResult&gt; results) {</span>
+        <span class="text-white">long success = results.stream().filter(EnrollmentProcessResult::isSuccess).count();</span>
+        <span class="text-white">long failure = results.stream().filter(r -&gt; !r.isSuccess()).count();</span>
+        <span class="text-blue-400">return</span> <span class="text-white">BatchEnrollmentResponse.builder()</span>
+                <span class="text-white">.action(action)</span>
+                <span class="text-white">.totalCount(totalCount)</span>
+                <span class="text-white">.successCount((int) success)</span>
+                <span class="text-white">.failureCount((int) failure)</span>
+                <span class="text-white">.results(results)</span>
+                <span class="text-white">.build();</span>
+    <span class="text-white">}</span>
+
+    <span class="text-blue-400">@Data</span>
+    <span class="text-blue-400">@Builder</span>
+    <span class="text-blue-400">public static class</span> <span class="text-green-400">EnrollmentProcessResult</span> <span class="text-white">{</span>
+        <span class="text-blue-400">private</span> <span class="text-white">Long enrollmentId;</span>
+        <span class="text-blue-400">private</span> <span class="text-white">boolean success;</span>
+        <span class="text-blue-400">private</span> <span class="text-white">String message;</span>
+        <span class="text-blue-400">private</span> <span class="text-white">String error;</span>
+    <span class="text-white">}</span>
+<span class="text-white">}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 배치 처리 Service -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-cogs text-purple-600 mr-3"></i>
+                배치 처리 Service 구현
+            </h2>
+            
+            <div class="space-y-8">
+                <!-- 일반 배치 처리 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">1. 일반 배치 처리</h3>
+                    <div class="code-block">
+<span class="text-gray-400">@Transactional</span>
+<span class="text-blue-400">public</span> <span class="text-white">BatchEnrollmentResponse batchProcessEnrollments</span><span class="text-white">(BatchEnrollmentRequest request) {</span>
+    <span class="text-gray-400">// 1. 수강신청 조회 (비관적 락)</span>
+    <span class="text-white">List&lt;Enrollment&gt; enrollments = enrollmentRepository.findByIdsForBatchUpdate(request.getEnrollmentIds());</span>
+    
+    <span class="text-gray-400">// 2. 처리 가능한 수강신청이 없으면 예외 발생</span>
+    <span class="text-blue-400">if</span> <span class="text-white">(enrollments.isEmpty()) {</span>
+        <span class="text-blue-400">throw new</span> <span class="text-white">BusinessException(ErrorCode.ENROLLMENT_BATCH_NO_ITEMS);</span>
+    <span class="text-white">}</span>
+    
+    <span class="text-gray-400">// 3. 개별 처리</span>
+    <span class="text-white">List&lt;EnrollmentProcessResult&gt; results = enrollments.stream()</span>
+        <span class="text-white">.map(enrollment -&gt; processEnrollment(enrollment, request.getAction(), request.getReason()))</span>
+        <span class="text-white">.collect(Collectors.toList());</span>
+    
+    <span class="text-gray-400">// 4. 응답 생성</span>
+    <span class="text-blue-400">return</span> <span class="text-white">BatchEnrollmentResponse.success(request.getAction(), request.getEnrollmentCount(), results);</span>
+<span class="text-white">}</span>
+
+<span class="text-gray-400">// 개별 수강신청 처리</span>
+<span class="text-blue-400">private</span> <span class="text-white">EnrollmentProcessResult processEnrollment</span><span class="text-white">(Enrollment enrollment, BatchEnrollmentRequest.BatchAction action, String reason) {</span>
+    <span class="text-blue-400">try</span> <span class="text-white">{</span>
+        <span class="text-gray-400">// 대기 상태가 아닌 수강신청은 처리할 수 없음</span>
+        <span class="text-blue-400">if</span> <span class="text-white">(enrollment.getStatus() != EnrollmentStatus.PENDING) {</span>
+            <span class="text-blue-400">throw new</span> <span class="text-white">BusinessException(ErrorCode.ENROLLMENT_ALREADY_PROCESSED);</span>
+        <span class="text-white">}</span>
+        
+        <span class="text-blue-400">if</span> <span class="text-white">(action == BatchEnrollmentRequest.BatchAction.APPROVE) {</span>
+            <span class="text-white">enrollment.approve();</span>
+                <span class="text-blue-400">return</span> <span class="text-white">EnrollmentProcessResult.builder()</span>
+                    <span class="text-white">.enrollmentId(enrollment.getId())</span>
+                    <span class="text-white">.success(</span><span class="text-orange-400">true</span><span class="text-white">)</span>
+                    <span class="text-white">.message(BATCH_APPROVE_SUCCESS_MESSAGE)</span>
+                    <span class="text-white">.build();</span>
+        <span class="text-white">} else {</span>
+            <span class="text-white">enrollment.reject(reason);</span>
+            <span class="text-blue-400">return</span> <span class="text-white">EnrollmentProcessResult.builder()</span>
+                <span class="text-white">.enrollmentId(enrollment.getId())</span>
+                <span class="text-white">.success(</span><span class="text-orange-400">true</span><span class="text-white">)</span>
+                <span class="text-white">.message(BATCH_REJECT_SUCCESS_MESSAGE)</span>
+                <span class="text-white">.build();</span>
+        <span class="text-white">}</span>
+    <span class="text-blue-400">} catch</span> <span class="text-white">(Exception e) {</span>
+        <span class="text-blue-400">return</span> <span class="text-white">EnrollmentProcessResult.builder()</span>
+            <span class="text-white">.enrollmentId(enrollment.getId())</span>
+            <span class="text-white">.success(</span><span class="text-orange-400">false</span><span class="text-white">)</span>
+            <span class="text-white">.error(e.getMessage())</span>
+            <span class="text-white">.build();</span>
+    <span class="text-white">}</span>
+<span class="text-white">}</span>
+                    </div>
+                </div>
+
+                <!-- 강의별 배치 처리 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">2. 강의별 배치 처리</h3>
+                    <div class="code-block">
+<span class="text-gray-400">@Transactional</span>
+<span class="text-blue-400">public</span> <span class="text-white">BatchEnrollmentResponse batchProcessEnrollmentsByCourse</span><span class="text-white">(Long courseNo, BatchEnrollmentRequest.BatchAction action, String reason) {</span>
+    <span class="text-gray-400">// 1. 강의 조회</span>
+    <span class="text-white">Course course = courseRepository.findById(courseNo)</span>
+        <span class="text-white">.orElseThrow(() -&gt; new IllegalArgumentException(</span><span class="text-orange-400">"존재하지 않는 강의입니다"</span><span class="text-white">));</span>
+    
+    <span class="text-gray-400">// 2. 대기 중인 수강신청 조회 (비관적 락)</span>
+    <span class="text-white">List&lt;Enrollment&gt; enrollments = enrollmentRepository.findPendingByCourseForBatchUpdate(course);</span>
+    
+    <span class="text-gray-400">// 3. 처리 가능한 수강신청이 없으면 예외 발생</span>
+    <span class="text-blue-400">if</span> <span class="text-white">(enrollments.isEmpty()) {</span>
+        <span class="text-blue-400">throw new</span> <span class="text-white">BusinessException(ErrorCode.ENROLLMENT_BATCH_NO_ITEMS);</span>
+    <span class="text-white">}</span>
+    
+    <span class="text-gray-400">// 4. 개별 처리</span>
+    <span class="text-white">List&lt;EnrollmentProcessResult&gt; results = enrollments.stream()</span>
+        <span class="text-white">.map(enrollment -&gt; processEnrollment(enrollment, action, reason))</span>
+        <span class="text-white">.collect(Collectors.toList());</span>
+    
+    <span class="text-gray-400">// 5. 응답 생성</span>
+    <span class="text-blue-400">return</span> <span class="text-white">BatchEnrollmentResponse.success(action, enrollments.size(), results);</span>
+<span class="text-white">}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- @EntityGraph 최적화 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-optimize text-orange-600 mr-3"></i>
+                @EntityGraph 최적화
+            </h2>
+            
+            <div class="space-y-8">
+                <!-- @EntityGraph 개요 -->
+                <div class="success">
+                    <h3 class="text-lg font-bold mb-3">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        @EntityGraph 장점
+                    </h3>
+                    <ul class="space-y-1">
+                        <li><strong>코드 간소화:</strong> JPQL JOIN FETCH 대신 어노테이션으로 간단하게</li>
+                        <li><strong>가독성 향상:</strong> 메서드명만으로도 어떤 연관 엔티티를 가져오는지 명확</li>
+                        <li><strong>유지보수성:</strong> 연관 엔티티 변경 시 어노테이션만 수정하면 됨</li>
+                        <li><strong>재사용성:</strong> 여러 메서드에서 동일한 @EntityGraph 재사용 가능</li>
+                    </ul>
+                </div>
+
+                <!-- CourseRepository @EntityGraph -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">CourseRepository @EntityGraph 적용</h3>
+                    <div class="code-block">
+<span class="text-gray-400">// 기존: JPQL JOIN FETCH</span>
+<span class="text-white">@Query(</span><span class="text-orange-400">"SELECT c FROM Course c JOIN FETCH c.instructor WHERE c.courseNo = :courseNo"</span><span class="text-white">)</span>
+<span class="text-blue-400">Optional&lt;Course&gt;</span> <span class="text-green-400">findByIdWithInstructor</span><span class="text-white">(Long courseNo);</span>
+
+<span class="text-gray-400">// 개선: @EntityGraph</span>
+<span class="text-yellow-400">@EntityGraph</span><span class="text-white">(attributePaths = {</span><span class="text-orange-400">"instructor"</span><span class="text-white">})</span>
+<span class="text-blue-400">Optional&lt;Course&gt;</span> <span class="text-green-400">findByIdWithInstructor</span><span class="text-white">(Long courseNo);</span>
+
+<span class="text-gray-400">// 수정용 조회 (비관적 락 + @EntityGraph)</span>
+<span class="text-yellow-400">@Lock</span><span class="text-white">(LockModeType.PESSIMISTIC_WRITE)</span>
+<span class="text-yellow-400">@EntityGraph</span><span class="text-white">(attributePaths = {</span><span class="text-orange-400">"instructor"</span><span class="text-white">})</span>
+<span class="text-blue-400">Optional&lt;Course&gt;</span> <span class="text-green-400">findByIdForUpdate</span><span class="text-white">(Long courseNo);</span>
+                    </div>
+                </div>
+
+                <!-- EnrollmentRepository @EntityGraph -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">EnrollmentRepository @EntityGraph 적용</h3>
+                    <div class="code-block">
+<span class="text-gray-400">// 기존: JPQL JOIN FETCH</span>
+<span class="text-white">@Query(</span><span class="text-orange-400">"SELECT e FROM Enrollment e JOIN FETCH e.student JOIN FETCH e.course WHERE e.id = :enrollmentId"</span><span class="text-white">)</span>
+<span class="text-blue-400">Optional&lt;Enrollment&gt;</span> <span class="text-green-400">findByIdForUpdate</span><span class="text-white">(Long enrollmentId);</span>
+
+<span class="text-gray-400">// 개선: @EntityGraph</span>
+<span class="text-yellow-400">@Lock</span><span class="text-white">(LockModeType.PESSIMISTIC_WRITE)</span>
+<span class="text-yellow-400">@EntityGraph</span><span class="text-white">(attributePaths = {</span><span class="text-orange-400">"student"</span><span class="text-white">, </span><span class="text-orange-400">"course"</span><span class="text-white">})</span>
+<span class="text-blue-400">Optional&lt;Enrollment&gt;</span> <span class="text-green-400">findByIdForUpdate</span><span class="text-white">(Long enrollmentId);</span>
+
+<span class="text-gray-400">// 학생-강의별 조회 (비관적 락 + @EntityGraph)</span>
+<span class="text-yellow-400">@Lock</span><span class="text-white">(LockModeType.PESSIMISTIC_WRITE)</span>
+<span class="text-yellow-400">@EntityGraph</span><span class="text-white">(attributePaths = {</span><span class="text-orange-400">"student"</span><span class="text-white">, </span><span class="text-orange-400">"course"</span><span class="text-white">})</span>
+<span class="text-blue-400">Optional&lt;Enrollment&gt;</span> <span class="text-green-400">findByStudentAndCourseForUpdate</span><span class="text-white">(User student, Course course);</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- N+1 문제 해결 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-bug text-red-600 mr-3"></i>
+                N+1 문제 해결
+            </h2>
+            
+            <div class="space-y-8">
+                <!-- N+1 문제 개요 -->
+                <div class="warning">
+                    <h3 class="text-lg font-bold mb-3">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        N+1 문제란?
+                    </h3>
+                    <p>1개의 쿼리로 N개의 엔티티를 조회한 후, 각 엔티티의 연관 엔티티에 접근할 때마다 추가 쿼리가 발생하는 문제</p>
+                </div>
+
+                <!-- 해결 방법 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">해결 방법</h3>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg">
+                            <h4 class="text-lg font-bold text-blue-800 mb-3">1. @EntityGraph</h4>
+                            <ul class="text-blue-700 space-y-1">
+                                <li>• 연관 엔티티를 한 번에 조회</li>
+                                <li>• 코드 간소화</li>
+                                <li>• 가독성 향상</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-green-50 border-l-4 border-green-400 p-6 rounded-lg">
+                            <h4 class="text-lg font-bold text-green-800 mb-3">2. Batch Size 설정</h4>
+                            <ul class="text-green-700 space-y-1">
+                                <li>• application-jpa.properties 설정</li>
+                                <li>• default_batch_fetch_size=100</li>
+                                <li>• 자동으로 IN 쿼리로 최적화</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 설정 확인 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">설정 확인</h3>
+                    <div class="code-block">
+<span class="text-gray-400"># application-jpa.properties</span>
+<span class="text-white"># N+1 방지</span>
+<span class="text-white">spring.jpa.properties.hibernate.default_batch_fetch_size=100</span>
+
+<span class="text-white"># Batch Insert/Update 설정</span>
+<span class="text-white">spring.jpa.properties.hibernate.jdbc.batch_size=50</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- API 사용 예시 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-code text-indigo-600 mr-3"></i>
+                API 사용 예시
+            </h2>
+            
+            <div class="bg-gray-900 rounded-lg p-6 text-green-400 font-mono text-sm">
+                <div class="mb-4">
+                    <span class="text-yellow-400"># 수강신청 일괄 승인</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-blue-400">POST</span> <span class="text-white">/api/enrollments/batch</span>
+                </div>
+                <div class="ml-4 mb-4">
+                    <div>{</div>
+                    <div class="ml-4">"enrollmentIds": [1, 2, 3, 4, 5],</div>
+                    <div class="ml-4">"action": "APPROVE",</div>
+                    <div class="ml-4">"reason": "일괄 승인 처리"</div>
+                    <div>}</div>
+                </div>
+                
+                <div class="mb-4">
+                    <span class="text-yellow-400"># 강의별 일괄 거절</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-blue-400">POST</span> <span class="text-white">/api/enrollments/batch/course/1?action=REJECT&reason=정원초과</span>
+                </div>
+                
+                <div class="mb-4">
+                    <span class="text-yellow-400"># 응답 예시</span>
+                </div>
+                <div class="ml-4 mb-4">
+                    <div>{</div>
+                    <div class="ml-4">"success": true,</div>
+                    <div class="ml-4">"data": {</div>
+                    <div class="ml-8">"action": "APPROVE",</div>
+                    <div class="ml-8">"totalCount": 5,</div>
+                    <div class="ml-8">"successCount": 5,</div>
+                    <div class="ml-8">"failureCount": 0,</div>
+                    <div class="ml-8">"results": [...]</div>
+                    <div class="ml-4">}</div>
+                    <div>}</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 미완성 과제 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-clipboard-list text-yellow-600 mr-3"></i>
+                미완성 과제
+            </h2>
+            
+            <div class="space-y-6">
+                <!-- UI 구현 과제 -->
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-lg">
+                    <h3 class="text-xl font-bold text-yellow-800 mb-3">
+                        <i class="fas fa-paint-brush mr-2"></i>
+                        UI 구현 과제
+                    </h3>
+                    <ul class="text-yellow-700 space-y-2">
+                        <li><strong>관리자 수강신청 관리 페이지:</strong> 체크박스로 여러 수강신청 선택, "일괄 승인" / "일괄 거절" 버튼</li>
+                        <li><strong>강의별 수강신청 관리:</strong> 강의 상세 페이지에서 "전체 승인" / "전체 거절" 버튼</li>
+                        <li><strong>배치 처리 결과 모달:</strong> 일괄 처리 후 성공/실패 통계 및 실패 목록 표시</li>
+                    </ul>
+                </div>
+
+                <!-- @EntityGraph 추가 과제 -->
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg">
+                    <h3 class="text-xl font-bold text-blue-800 mb-3">
+                        <i class="fas fa-optimize mr-2"></i>
+                        @EntityGraph 추가 과제
+                    </h3>
+                    <ul class="text-blue-700 space-y-2">
+                        <li><strong>CourseRepository.findByInstructor():</strong> @EntityGraph로 변경</li>
+                        <li><strong>EnrollmentRepository.findByCourseAndStatusForUpdate():</strong> @EntityGraph로 변경</li>
+                        <li><strong>CourseRepository.searchAvailableCourses():</strong> @EntityGraph로 변경</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        </main>
+    </div>
+</body>
+</html>

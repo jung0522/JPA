@@ -87,4 +87,13 @@ public class GuideController {
 
         return "guide/p6spy-guide";
     }
+
+    @GetMapping("/testing")
+    public String testingGuide(Model model) {
+        log.info("Testing guide page accessed");
+
+        model.addAttribute("pageTitle", "테스트 가이드");
+
+        return "guide/testing-guide";
+    }
 }

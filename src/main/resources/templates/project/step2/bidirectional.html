@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/step2-layout}">
+<head>
+    <title>양방향 관계와 편의 메서드</title>
+    <style>
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Header -->
+        <header class="gradient-bg text-white shadow-lg">
+            <div class="container mx-auto px-6 py-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-4xl font-bold mb-2">
+                            <i class="fas fa-exchange-alt mr-3"></i>
+                            양방향 관계와 편의 메서드
+                        </h1>
+                        <p class="text-xl text-blue-100">
+                            Course ↔ Curriculum, Course ↔ Enrollment 관계 구현
+                        </p>
+                    </div>
+                    <a href="/project/step2/overview" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition">
+                        <i class="fas fa-arrow-left mr-2"></i>목록으로
+                    </a>
+                </div>
+            </div>
+        </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-12">
+        <!-- 개요 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-info-circle text-blue-600 mr-3"></i>
+                양방향 관계란?
+            </h2>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg mb-6">
+                <h3 class="text-xl font-bold text-blue-800 mb-3">Step 1 vs Step 2 비교</h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-bold text-red-700 mb-2">Step 1 (단방향)</h4>
+                        <ul class="text-red-600 space-y-1">
+                            <li>• Course → Curriculum (N:1)</li>
+                            <li>• Course → Enrollment (N:1)</li>
+                            <li>• User → Enrollment (N:1)</li>
+                            <li>• 팝업 방식 API 필요</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-green-700 mb-2">Step 2 (양방향)</h4>
+                        <ul class="text-green-600 space-y-1">
+                            <li>• Course ↔ Curriculum (N:1 + 1:N)</li>
+                            <li>• Course ↔ Enrollment (N:1 + 1:N)</li>
+                            <li>• User ↔ Enrollment (N:1 + 1:N)</li>
+                            <li>• 직접 접근 가능</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Course ↔ Curriculum 관계 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-book text-green-600 mr-3"></i>
+                Course ↔ Curriculum 양방향 관계
+            </h2>
+            
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Course 엔티티 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">Course 엔티티</h3>
+                    <div class="code-block">
+<span class="text-yellow-400">@Entity</span>
+<span class="text-blue-400">public class</span> <span class="text-green-400">Course</span> <span class="text-white">{</span>
+    
+    <span class="text-gray-400">// 기존 필드들...</span>
+    
+    <span class="text-yellow-400">@OneToMany</span><span class="text-white">(mappedBy = </span><span class="text-orange-400">"course"</span><span class="text-white">, </span>
+                   <span class="text-white">cascade = CascadeType.ALL, </span>
+                   <span class="text-white">orphanRemoval = </span><span class="text-orange-400">true</span><span class="text-white">)</span>
+    <span class="text-blue-400">private</span> <span class="text-white">List&lt;Curriculum&gt; curriculums = </span><span class="text-blue-400">new</span> <span class="text-white">ArrayList&lt;&gt;();</span>
+    
+    <span class="text-gray-400">// 편의 메서드</span>
+    <span class="text-blue-400">public void</span> <span class="text-green-400">addCurriculum</span><span class="text-white">(Curriculum curriculum) {</span>
+        <span class="text-white">curriculums.add(curriculum);</span>
+        <span class="text-white">curriculum.setCourse(</span><span class="text-blue-400">this</span><span class="text-white">);</span>
+    <span class="text-white">}</span>
+    
+    <span class="text-blue-400">public void</span> <span class="text-green-400">removeCurriculum</span><span class="text-white">(Curriculum curriculum) {</span>
+        <span class="text-white">curriculums.remove(curriculum);</span>
+        <span class="text-white">curriculum.setCourse(</span><span class="text-orange-400">null</span><span class="text-white">);</span>
+    <span class="text-white">}</span>
+    
+    <span class="text-blue-400">public int</span> <span class="text-green-400">getCurriculumCount</span><span class="text-white">() {</span>
+        <span class="text-blue-400">return</span> <span class="text-white">curriculums.size();</span>
+    <span class="text-white">}</span>
+<span class="text-white">}</span>
+                    </div>
+                </div>
+
+                <!-- Curriculum 엔티티 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">Curriculum 엔티티</h3>
+                    <div class="code-block">
+<span class="text-yellow-400">@Entity</span>
+<span class="text-blue-400">public class</span> <span class="text-green-400">Curriculum</span> <span class="text-white">{</span>
+    
+    <span class="text-gray-400">// 기존 필드들...</span>
+    
+    <span class="text-yellow-400">@ManyToOne</span><span class="text-white">(fetch = FetchType.LAZY)</span>
+    <span class="text-yellow-400">@JoinColumn</span><span class="text-white">(name = </span><span class="text-orange-400">"course_no"</span><span class="text-white">, nullable = </span><span class="text-orange-400">false</span><span class="text-white">)</span>
+    <span class="text-blue-400">private</span> <span class="text-white">Course course;</span>
+    
+    <span class="text-gray-400">// 양방향 관계를 위한 setter</span>
+    <span class="text-blue-400">public void</span> <span class="text-green-400">setCourse</span><span class="text-white">(Course course) {</span>
+        <span class="text-white">this.course = course;</span>
+    <span class="text-white">}</span>
+<span class="text-white">}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 사용 예시 -->
+            <div class="mt-8">
+                <h4 class="text-lg font-bold text-gray-700 mb-3">사용 예시</h4>
+                <div class="code-block">
+<span class="text-gray-400">// Course에서 Curriculum 직접 접근</span>
+<span class="text-white">Course course = courseRepository.findById(courseNo);</span>
+<span class="text-white">List&lt;Curriculum&gt; curriculums = course.getCurriculums();</span>
+<span class="text-white">int count = course.getCurriculumCount();</span>
+
+<span class="text-gray-400">// 편의 메서드로 관계 설정</span>
+<span class="text-white">Curriculum newCurriculum = Curriculum.builder()</span>
+    <span class="text-white">.title(</span><span class="text-orange-400">"1주차: JPA 기초"</span><span class="text-white">)</span>
+    <span class="text-white">.build();</span>
+<span class="text-white">course.addCurriculum(newCurriculum);</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Course ↔ Enrollment 관계 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-users text-purple-600 mr-3"></i>
+                Course ↔ Enrollment 양방향 관계
+            </h2>
+            
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Course 엔티티 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">Course 엔티티 (Enrollment 추가)</h3>
+                    <div class="code-block">
+<span class="text-yellow-400">@OneToMany</span><span class="text-white">(mappedBy = </span><span class="text-orange-400">"course"</span><span class="text-white">, </span>
+                   <span class="text-white">cascade = CascadeType.ALL, </span>
+                   <span class="text-white">orphanRemoval = </span><span class="text-orange-400">true</span><span class="text-white">)</span>
+<span class="text-blue-400">private</span> <span class="text-white">List&lt;Enrollment&gt; enrollments = </span><span class="text-blue-400">new</span> <span class="text-white">ArrayList&lt;&gt;();</span>
+
+<span class="text-gray-400">// Enrollment 편의 메서드</span>
+<span class="text-blue-400">public void</span> <span class="text-green-400">addEnrollment</span><span class="text-white">(Enrollment enrollment) {</span>
+    <span class="text-white">enrollments.add(enrollment);</span>
+    <span class="text-white">enrollment.setCourse(</span><span class="text-blue-400">this</span><span class="text-white">);</span>
+    <span class="text-white">this.currentStudents++;</span>
+<span class="text-white">}</span>
+
+<span class="text-blue-400">public void</span> <span class="text-green-400">removeEnrollment</span><span class="text-white">(Enrollment enrollment) {</span>
+    <span class="text-white">enrollments.remove(enrollment);</span>
+    <span class="text-white">enrollment.setCourse(</span><span class="text-orange-400">null</span><span class="text-white">);</span>
+    <span class="text-white">if (this.currentStudents > 0) {</span>
+        <span class="text-white">this.currentStudents--;</span>
+    <span class="text-white">}</span>
+<span class="text-white">}</span>
+
+<span class="text-blue-400">public boolean</span> <span class="text-green-400">isEnrolledBy</span><span class="text-white">(User student) {</span>
+    <span class="text-blue-400">return</span> <span class="text-white">enrollments.stream()</span>
+        <span class="text-white">.anyMatch(enrollment -&gt; enrollment.getStudent().equals(student));</span>
+<span class="text-white">}</span>
+                    </div>
+                </div>
+
+                <!-- Enrollment 엔티티 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">Enrollment 엔티티</h3>
+                    <div class="code-block">
+<span class="text-yellow-400">@Entity</span>
+<span class="text-blue-400">public class</span> <span class="text-green-400">Enrollment</span> <span class="text-white">{</span>
+    
+    <span class="text-yellow-400">@ManyToOne</span><span class="text-white">(fetch = FetchType.LAZY)</span>
+    <span class="text-yellow-400">@JoinColumn</span><span class="text-white">(name = </span><span class="text-orange-400">"student_no"</span><span class="text-white">, nullable = </span><span class="text-orange-400">false</span><span class="text-white">)</span>
+    <span class="text-blue-400">private</span> <span class="text-white">User student;</span>
+    
+    <span class="text-yellow-400">@ManyToOne</span><span class="text-white">(fetch = FetchType.LAZY)</span>
+    <span class="text-yellow-400">@JoinColumn</span><span class="text-white">(name = </span><span class="text-orange-400">"course_no"</span><span class="text-white">, nullable = </span><span class="text-orange-400">false</span><span class="text-white">)</span>
+    <span class="text-blue-400">private</span> <span class="text-white">Course course;</span>
+    
+    <span class="text-gray-400">// 양방향 관계를 위한 setter</span>
+    <span class="text-blue-400">public void</span> <span class="text-green-400">setCourse</span><span class="text-white">(Course course) {</span>
+        <span class="text-white">this.course = course;</span>
+    <span class="text-white">}</span>
+    
+    <span class="text-blue-400">public void</span> <span class="text-green-400">setStudent</span><span class="text-white">(User student) {</span>
+        <span class="text-white">this.student = student;</span>
+    <span class="text-white">}</span>
+<span class="text-white">}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- User ↔ Enrollment 관계 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-user-graduate text-indigo-600 mr-3"></i>
+                User ↔ Enrollment 양방향 관계
+            </h2>
+            
+            <div class="code-block">
+<span class="text-yellow-400">@Entity</span>
+<span class="text-blue-400">public class</span> <span class="text-green-400">User</span> <span class="text-white">{</span>
+    
+    <span class="text-gray-400">// 기존 필드들...</span>
+    
+    <span class="text-yellow-400">@OneToMany</span><span class="text-white">(mappedBy = </span><span class="text-orange-400">"student"</span><span class="text-white">, </span>
+                   <span class="text-white">cascade = CascadeType.ALL, </span>
+                   <span class="text-white">orphanRemoval = </span><span class="text-orange-400">true</span><span class="text-white">)</span>
+    <span class="text-blue-400">private</span> <span class="text-white">List&lt;Enrollment&gt; enrollments = </span><span class="text-blue-400">new</span> <span class="text-white">ArrayList&lt;&gt;();</span>
+    
+    <span class="text-gray-400">// 편의 메서드</span>
+    <span class="text-blue-400">public void</span> <span class="text-green-400">addEnrollment</span><span class="text-white">(Enrollment enrollment) {</span>
+        <span class="text-white">enrollments.add(enrollment);</span>
+        <span class="text-white">enrollment.setStudent(</span><span class="text-blue-400">this</span><span class="text-white">);</span>
+    <span class="text-white">}</span>
+    
+    <span class="text-blue-400">public boolean</span> <span class="text-green-400">isEnrolledIn</span><span class="text-white">(Course course) {</span>
+        <span class="text-blue-400">return</span> <span class="text-white">enrollments.stream()</span>
+            <span class="text-white">.anyMatch(enrollment -&gt; enrollment.getCourse().equals(course));</span>
+    <span class="text-white">}</span>
+    
+    <span class="text-blue-400">public</span> <span class="text-white">List&lt;Enrollment&gt; getApprovedEnrollments() {</span>
+        <span class="text-blue-400">return</span> <span class="text-white">enrollments.stream()</span>
+            <span class="text-white">.filter(Enrollment::isApproved)</span>
+            <span class="text-white">.toList();</span>
+    <span class="text-white">}</span>
+<span class="text-white">}</span>
+            </div>
+        </section>
+
+        <!-- Cascade와 Orphan Removal -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-link text-orange-600 mr-3"></i>
+                Cascade와 Orphan Removal
+            </h2>
+            
+            <div class="bg-orange-50 border-l-4 border-orange-400 p-6 rounded-lg mb-6">
+                <h3 class="text-xl font-bold text-orange-800 mb-3">설정된 Cascade 옵션</h3>
+                <ul class="text-orange-700 space-y-2">
+                    <li><i class="fas fa-check text-orange-500 mr-2"></i><span class="highlight">CascadeType.ALL</span>: 모든 연관 엔티티에 대해 부모의 모든 작업 전파</li>
+                    <li><i class="fas fa-check text-orange-500 mr-2"></i><span class="highlight">orphanRemoval = true</span>: 부모에서 제거된 자식 엔티티 자동 삭제</li>
+                </ul>
+            </div>
+
+            <div class="code-block">
+<span class="text-gray-400">// Course 삭제 시 연관된 Curriculum과 Enrollment도 자동 삭제</span>
+<span class="text-white">Course course = courseRepository.findById(courseNo);</span>
+<span class="text-white">courseRepository.delete(course);</span>
+<span class="text-gray-400">// → course.getCurriculums()의 모든 Curriculum 삭제</span>
+<span class="text-gray-400">// → course.getEnrollments()의 모든 Enrollment 삭제</span>
+
+<span class="text-gray-400">// Course에서 Curriculum 제거 시 자동 삭제</span>
+<span class="text-white">course.removeCurriculum(curriculum);</span>
+<span class="text-gray-400">// → curriculum이 DB에서 자동 삭제됨 (고아 객체)</span>
+            </div>
+        </section>
+
+        <!-- 장점과 주의사항 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-lightbulb text-yellow-600 mr-3"></i>
+                장점과 주의사항
+            </h2>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- 장점 -->
+                <div class="bg-green-50 border-l-4 border-green-400 p-6 rounded-lg">
+                    <h3 class="text-xl font-bold text-green-800 mb-4">
+                        <i class="fas fa-thumbs-up mr-2"></i>
+                        장점
+                    </h3>
+                    <ul class="text-green-700 space-y-2">
+                        <li><i class="fas fa-arrow-right text-green-500 mr-2"></i>직접 접근 가능 (팝업 API 불필요)</li>
+                        <li><i class="fas fa-arrow-right text-green-500 mr-2"></i>비즈니스 로직 엔티티에 캡슐화</li>
+                        <li><i class="fas fa-arrow-right text-green-500 mr-2"></i>자동 데이터 관리 (Cascade)</li>
+                        <li><i class="fas fa-arrow-right text-green-500 mr-2"></i>고아 객체 자동 삭제</li>
+                        <li><i class="fas fa-arrow-right text-green-500 mr-2"></i>코드 가독성 향상</li>
+                    </ul>
+                </div>
+
+                <!-- 주의사항 -->
+                <div class="bg-red-50 border-l-4 border-red-400 p-6 rounded-lg">
+                    <h3 class="text-xl font-bold text-red-800 mb-4">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        주의사항
+                    </h3>
+                    <ul class="text-red-700 space-y-2">
+                        <li><i class="fas fa-arrow-right text-red-500 mr-2"></i>양방향 관계 일관성 유지 필요</li>
+                        <li><i class="fas fa-arrow-right text-red-500 mr-2"></i>편의 메서드 사용 필수</li>
+                        <li><i class="fas fa-arrow-right text-red-500 mr-2"></i>무한 루프 주의 (toString, equals)</li>
+                        <li><i class="fas fa-arrow-right text-red-500 mr-2"></i>LazyInitializationException 주의</li>
+                        <li><i class="fas fa-arrow-right text-red-500 mr-2"></i>성능 고려 (N+1 문제)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="gradient-bg text-white py-8">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-lg">
+                <i class="fas fa-exchange-alt mr-2"></i>
+                양방향 관계와 편의 메서드 구현 완료
+            </p>
+            <p class="text-blue-100 mt-2">
+                Course ↔ Curriculum • Course ↔ Enrollment • User ↔ Enrollment • Cascade • Orphan Removal
+            </p>
+        </div>
+    </div>
+</body>
+</html>

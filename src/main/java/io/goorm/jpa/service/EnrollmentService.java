@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -36,6 +37,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class EnrollmentService {
+    
+    // 배치 처리 메시지 상수
+    private static final String BATCH_APPROVE_SUCCESS_MESSAGE = "수강신청 승인 완료";
+    private static final String BATCH_REJECT_SUCCESS_MESSAGE = "수강신청 거절 완료";
 
     private final EnrollmentRepository enrollmentRepository;
     private final EnrollmentQueryRepository enrollmentQueryRepository;
@@ -215,15 +220,11 @@ public class EnrollmentService {
         }
 
         // 비관적 락으로 수강신청 일괄 조회
-        List<Enrollment> enrollments = enrollmentRepository.findPendingByIdsForBatchUpdate(request.getEnrollmentIds());
+        List<Enrollment> enrollments = enrollmentRepository.findByIdsForBatchUpdate(request.getEnrollmentIds());
         
         if (enrollments.isEmpty()) {
             log.warn("처리 가능한 수강신청이 없음: requested={}, found=0", request.getEnrollmentCount());
-            return BatchEnrollmentResponse.failure(
-                request.getAction(), 
-                request.getEnrollmentCount(), 
-                List.of("처리 가능한 수강신청이 없습니다.")
-            );
+            throw new BusinessException(ErrorCode.ENROLLMENT_BATCH_NO_ITEMS);
         }
 
         // 개별 처리 결과 수집
@@ -236,8 +237,7 @@ public class EnrollmentService {
                 results.add(BatchEnrollmentResponse.EnrollmentProcessResult.builder()
                     .enrollmentId(enrollment.getEnrollmentNo())
                     .success(true)
-                    .message(String.format("수강신청 %s 완료", 
-                        request.isApprove() ? "승인" : "거절"))
+                    .message(request.isApprove() ? BATCH_APPROVE_SUCCESS_MESSAGE : BATCH_REJECT_SUCCESS_MESSAGE)
                     .build());
                     
                 log.info("수강신청 처리 완료: enrollmentNo={}, action={}", 
@@ -290,11 +290,7 @@ public class EnrollmentService {
         
         if (enrollments.isEmpty()) {
             log.warn("강의별 처리 가능한 수강신청이 없음: courseNo={}", courseNo);
-            return BatchEnrollmentResponse.failure(
-                action, 
-                0, 
-                List.of("처리 가능한 수강신청이 없습니다.")
-            );
+            throw new BusinessException(ErrorCode.ENROLLMENT_BATCH_NO_ITEMS);
         }
 
         // 수강신청 ID 목록 생성
@@ -316,6 +312,11 @@ public class EnrollmentService {
      * 개별 수강신청 처리
      */
     private void processEnrollment(Enrollment enrollment, BatchEnrollmentRequest.BatchAction action, String reason) {
+        // 대기 상태가 아닌 수강신청은 처리할 수 없음
+        if (enrollment.getStatus() != EnrollmentStatus.PENDING) {
+            throw new BusinessException(ErrorCode.ENROLLMENT_ALREADY_PROCESSED);
+        }
+        
         if (action == BatchEnrollmentRequest.BatchAction.APPROVE) {
             enrollment.approve();
         } else if (action == BatchEnrollmentRequest.BatchAction.REJECT) {

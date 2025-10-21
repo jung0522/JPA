@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/step2-layout}">
+<head>
+    <title>실습 과제</title>
+    <style>
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .assignment-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .assignment-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .difficulty-easy {
+            border-left: 4px solid #10b981;
+        }
+        .difficulty-medium {
+            border-left: 4px solid #f59e0b;
+        }
+        .difficulty-hard {
+            border-left: 4px solid #ef4444;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-6 py-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold mb-2">
+                        <i class="fas fa-clipboard-list mr-3"></i>
+                        실습 과제
+                    </h1>
+                    <p class="text-xl text-blue-100">
+                        @EntityGraph 추가, UI 구현, API 테스트
+                    </p>
+                </div>
+                <a href="/project/step2/overview" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition">
+                    <i class="fas fa-arrow-left mr-2"></i>목록으로
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-12">
+        <!-- 과제 개요 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-info-circle text-blue-600 mr-3"></i>
+                실습 과제 개요
+            </h2>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg">
+                <h3 class="text-xl font-bold text-blue-800 mb-3">Step 2 완료 후 추가 과제</h3>
+                <p class="text-blue-700">Step 2의 핵심 기능 구현이 완료되었습니다. 이제 다음 과제들을 통해 더욱 완성도 높은 애플리케이션을 만들어보세요.</p>
+            </div>
+        </section>
+
+        <!-- @EntityGraph 추가 과제 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-optimize text-orange-600 mr-3"></i>
+                @EntityGraph 추가 과제
+            </h2>
+            
+            <div class="space-y-6">
+                <!-- 과제 1 -->
+                <div class="assignment-card difficulty-easy">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-gray-800">과제 1: CourseRepository.findByInstructor()</h3>
+                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">쉬움</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">CourseRepository의 findByInstructor() 메서드에 @EntityGraph를 추가하여 instructor 정보를 함께 조회하도록 개선하세요.</p>
+                    
+                    <div class="code-block text-sm">
+<span class="text-gray-400">// 현재 코드</span>
+<span class="text-blue-400">List&lt;Course&gt;</span> <span class="text-green-400">findByInstructor</span><span class="text-white">(User instructor);</span>
+
+<span class="text-gray-400">// 개선 후</span>
+<span class="text-yellow-400">@EntityGraph</span><span class="text-white">(attributePaths = {</span><span class="text-orange-400">"instructor"</span><span class="text-white">})</span>
+<span class="text-blue-400">List&lt;Course&gt;</span> <span class="text-green-400">findByInstructor</span><span class="text-white">(User instructor);</span>
+                    </div>
+                </div>
+
+                <!-- 과제 2 -->
+                <div class="assignment-card difficulty-easy">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-gray-800">과제 2: EnrollmentRepository.findByCourseAndStatusForUpdate()</h3>
+                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">쉬움</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">EnrollmentRepository의 findByCourseAndStatusForUpdate() 메서드에 @EntityGraph를 추가하여 student와 course 정보를 함께 조회하도록 개선하세요.</p>
+                    
+                    <div class="code-block text-sm">
+<span class="text-gray-400">// 현재 코드</span>
+<span class="text-yellow-400">@Lock</span><span class="text-white">(LockModeType.PESSIMISTIC_WRITE)</span>
+<span class="text-blue-400">List&lt;Enrollment&gt;</span> <span class="text-green-400">findByCourseAndStatusForUpdate</span><span class="text-white">(Course course, EnrollmentStatus status);</span>
+
+<span class="text-gray-400">// 개선 후</span>
+<span class="text-yellow-400">@Lock</span><span class="text-white">(LockModeType.PESSIMISTIC_WRITE)</span>
+<span class="text-yellow-400">@EntityGraph</span><span class="text-white">(attributePaths = {</span><span class="text-orange-400">"student"</span><span class="text-white">, </span><span class="text-orange-400">"course"</span><span class="text-white">})</span>
+<span class="text-blue-400">List&lt;Enrollment&gt;</span> <span class="text-green-400">findByCourseAndStatusForUpdate</span><span class="text-white">(Course course, EnrollmentStatus status);</span>
+                    </div>
+                </div>
+
+                <!-- 과제 3 -->
+                <div class="assignment-card difficulty-easy">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-gray-800">과제 3: CourseRepository.searchAvailableCourses()</h3>
+                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">쉬움</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">CourseRepository의 searchAvailableCourses() 메서드에 @EntityGraph를 추가하여 instructor 정보를 함께 조회하도록 개선하세요.</p>
+                    
+                    <div class="code-block text-sm">
+<span class="text-gray-400">// 현재 코드</span>
+<span class="text-blue-400">List&lt;Course&gt;</span> <span class="text-green-400">searchAvailableCourses</span><span class="text-white">();</span>
+
+<span class="text-gray-400">// 개선 후</span>
+<span class="text-yellow-400">@EntityGraph</span><span class="text-white">(attributePaths = {</span><span class="text-orange-400">"instructor"</span><span class="text-white">})</span>
+<span class="text-blue-400">List&lt;Course&gt;</span> <span class="text-green-400">searchAvailableCourses</span><span class="text-white">();</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- UI 구현 과제 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-paint-brush text-purple-600 mr-3"></i>
+                UI 구현 과제
+            </h2>
+            
+            <div class="space-y-6">
+                <!-- 과제 4 -->
+                <div class="assignment-card difficulty-medium">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-gray-800">과제 4: 관리자 수강신청 관리 페이지</h3>
+                        <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">보통</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">관리자가 여러 수강신청을 선택하여 일괄 승인/거절할 수 있는 페이지를 구현하세요.</p>
+                    
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-bold text-gray-700">구현 요구사항:</h4>
+                        <ul class="text-gray-600 space-y-2">
+                            <li>• 체크박스로 여러 수강신청 선택</li>
+                            <li>• "일괄 승인" / "일괄 거절" 버튼</li>
+                            <li>• 처리 사유 입력 필드 (선택 사항)</li>
+                            <li>• 배치 처리 결과 모달/알림</li>
+                            <li>• 성공/실패 통계 및 실패 목록 표시</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 과제 5 -->
+                <div class="assignment-card difficulty-medium">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-gray-800">과제 5: 강의별 수강신청 관리</h3>
+                        <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">보통</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">강의 상세 페이지에서 해당 강의의 모든 대기 중인 수강신청을 일괄 처리할 수 있는 기능을 구현하세요.</p>
+                    
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-bold text-gray-700">구현 요구사항:</h4>
+                        <ul class="text-gray-600 space-y-2">
+                            <li>• 강의 상세 페이지에 "전체 승인" / "전체 거절" 버튼 추가</li>
+                            <li>• 해당 강의의 모든 대기 중인 수강신청 일괄 처리</li>
+                            <li>• 처리 사유 입력 필드 (선택 사항)</li>
+                            <li>• 처리 결과 모달/알림</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 과제 6 -->
+                <div class="assignment-card difficulty-hard">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-gray-800">과제 6: 배치 처리 결과 모달</h3>
+                        <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">어려움</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">배치 처리 후 결과를 보여주는 모달을 구현하세요.</p>
+                    
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-bold text-gray-700">구현 요구사항:</h4>
+                        <ul class="text-gray-600 space-y-2">
+                            <li>• 전체 처리 건수, 성공 건수, 실패 건수 표시</li>
+                            <li>• 실패한 수강신청 목록 및 실패 사유 표시</li>
+                            <li>• 성공한 수강신청 목록 표시 (선택 사항)</li>
+                            <li>• 모달 닫기 버튼</li>
+                            <li>• 실패 목록 다운로드 기능 (선택 사항)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- API 테스트 과제 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-code text-green-600 mr-3"></i>
+                API 테스트 과제
+            </h2>
+            
+            <div class="space-y-6">
+                <!-- 과제 7 -->
+                <div class="assignment-card difficulty-easy">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-gray-800">과제 7: Postman 컬렉션 생성</h3>
+                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">쉬움</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">Step 2에서 구현한 모든 API를 테스트할 수 있는 Postman 컬렉션을 생성하세요.</p>
+                    
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-bold text-gray-700">포함할 API:</h4>
+                        <ul class="text-gray-600 space-y-2">
+                            <li>• 강의 통계 조회 API</li>
+                            <li>• 강의 검색 API (텍스트, 고급 검색)</li>
+                            <li>• 수강신청 일괄 처리 API</li>
+                            <li>• 강의별 일괄 처리 API</li>
+                            <li>• 양방향 관계 테스트 API</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 과제 8 -->
+                <div class="assignment-card difficulty-medium">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-gray-800">과제 8: 동시성 테스트</h3>
+                        <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">보통</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">비관적 락이 제대로 작동하는지 동시성 테스트를 수행하세요.</p>
+                    
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-bold text-gray-700">테스트 시나리오:</h4>
+                        <ul class="text-gray-600 space-y-2">
+                            <li>• 동시 수강신청 테스트 (마지막 1자리 강의)</li>
+                            <li>• 동시 강의 수정 테스트</li>
+                            <li>• 동시 수강신청 승인/거절 테스트</li>
+                            <li>• 동시 강의 삭제 테스트</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 성능 테스트 과제 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-tachometer-alt text-red-600 mr-3"></i>
+                성능 테스트 과제
+            </h2>
+            
+            <div class="space-y-6">
+                <!-- 과제 9 -->
+                <div class="assignment-card difficulty-medium">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-gray-800">과제 9: N+1 문제 확인</h3>
+                        <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">보통</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">N+1 문제가 발생하는지 확인하고 해결하세요.</p>
+                    
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-bold text-gray-700">확인 방법:</h4>
+                        <ul class="text-gray-600 space-y-2">
+                            <li>• application-jpa.properties에서 show-sql=true 설정</li>
+                            <li>• Course 목록 조회 후 각 Course의 curriculums 접근</li>
+                            <li>• Enrollment 목록 조회 후 각 Enrollment의 student, course 접근</li>
+                            <li>• N+1 문제 발견 시 @EntityGraph로 해결</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 과제 10 -->
+                <div class="assignment-card difficulty-hard">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-gray-800">과제 10: 쿼리 성능 분석</h3>
+                        <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">어려움</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">실제 실행 계획을 분석하여 쿼리 성능을 개선하세요.</p>
+                    
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-bold text-gray-700">분석 방법:</h4>
+                        <ul class="text-gray-600 space-y-2">
+                            <li>• MySQL EXPLAIN을 사용한 실행 계획 분석</li>
+                            <li>• 인덱스 활용도 확인</li>
+                            <li>• 느린 쿼리 로그 분석</li>
+                            <li>• 필요한 인덱스 추가</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 과제 제출 가이드 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-upload text-indigo-600 mr-3"></i>
+                과제 제출 가이드
+            </h2>
+            
+            <div class="bg-indigo-50 border-l-4 border-indigo-400 p-6 rounded-lg">
+                <h3 class="text-xl font-bold text-indigo-800 mb-4">제출 방법</h3>
+                <ol class="text-indigo-700 space-y-2">
+                    <li><strong>코드 제출:</strong> GitHub에 커밋 후 링크 공유</li>
+                    <li><strong>테스트 결과:</strong> Postman 컬렉션 또는 테스트 스크린샷</li>
+                    <li><strong>성능 분석:</strong> 쿼리 실행 계획 및 개선 결과</li>
+                    <li><strong>문서화:</strong> 구현한 기능에 대한 README 작성</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- 완료 체크리스트 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-check-square text-green-600 mr-3"></i>
+                완료 체크리스트
+            </h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-green-50 border-l-4 border-green-400 p-6 rounded-lg">
+                    <h3 class="text-xl font-bold text-green-800 mb-4">@EntityGraph 과제</h3>
+                    <ul class="text-green-700 space-y-2">
+                        <li><input type="checkbox" class="mr-2"> CourseRepository.findByInstructor()</li>
+                        <li><input type="checkbox" class="mr-2"> EnrollmentRepository.findByCourseAndStatusForUpdate()</li>
+                        <li><input type="checkbox" class="mr-2"> CourseRepository.searchAvailableCourses()</li>
+                    </ul>
+                </div>
+
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg">
+                    <h3 class="text-xl font-bold text-blue-800 mb-4">UI 구현 과제</h3>
+                    <ul class="text-blue-700 space-y-2">
+                        <li><input type="checkbox" class="mr-2"> 관리자 수강신청 관리 페이지</li>
+                        <li><input type="checkbox" class="mr-2"> 강의별 수강신청 관리</li>
+                        <li><input type="checkbox" class="mr-2"> 배치 처리 결과 모달</li>
+                    </ul>
+                </div>
+
+                <div class="bg-purple-50 border-l-4 border-purple-400 p-6 rounded-lg">
+                    <h3 class="text-xl font-bold text-purple-800 mb-4">API 테스트 과제</h3>
+                    <ul class="text-purple-700 space-y-2">
+                        <li><input type="checkbox" class="mr-2"> Postman 컬렉션 생성</li>
+                        <li><input type="checkbox" class="mr-2"> 동시성 테스트</li>
+                    </ul>
+                </div>
+
+                <div class="bg-orange-50 border-l-4 border-orange-400 p-6 rounded-lg">
+                    <h3 class="text-xl font-bold text-orange-800 mb-4">성능 테스트 과제</h3>
+                    <ul class="text-orange-700 space-y-2">
+                        <li><input type="checkbox" class="mr-2"> N+1 문제 확인</li>
+                        <li><input type="checkbox" class="mr-2"> 쿼리 성능 분석</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        </main>
+    </div>
+</body>
+</html>

@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 /**
@@ -126,7 +127,7 @@ public class CourseStatistics {
      */
     public BigDecimal getEnrollmentRatio() {
         if (enrollmentRatio != null) {
-            return enrollmentRatio.setScale(2, BigDecimal.ROUND_HALF_UP);
+            return enrollmentRatio.setScale(2, RoundingMode.HALF_UP);
         }
         return null;
     }
@@ -144,9 +145,9 @@ public class CourseStatistics {
     public BigDecimal getEnrollmentPercentage() {
         if (currentStudents != null && maxStudents != null && maxStudents > 0) {
             return BigDecimal.valueOf(currentStudents)
-                .divide(BigDecimal.valueOf(maxStudents), 4, BigDecimal.ROUND_HALF_UP)
+                .divide(BigDecimal.valueOf(maxStudents), 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100))
-                .setScale(2, BigDecimal.ROUND_HALF_UP);
+                .setScale(2, RoundingMode.HALF_UP);
         }
         return BigDecimal.ZERO;
     }
@@ -157,9 +158,9 @@ public class CourseStatistics {
     public BigDecimal getApprovalRate() {
         if (totalEnrollments != null && totalEnrollments > 0 && approvedEnrollments != null) {
             return BigDecimal.valueOf(approvedEnrollments)
-                .divide(BigDecimal.valueOf(totalEnrollments), 4, BigDecimal.ROUND_HALF_UP)
+                .divide(BigDecimal.valueOf(totalEnrollments), 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100))
-                .setScale(2, BigDecimal.ROUND_HALF_UP);
+                .setScale(2, RoundingMode.HALF_UP);
         }
         return BigDecimal.ZERO;
     }
@@ -170,9 +171,9 @@ public class CourseStatistics {
     public BigDecimal getPendingRate() {
         if (totalEnrollments != null && totalEnrollments > 0 && pendingEnrollments != null) {
             return BigDecimal.valueOf(pendingEnrollments)
-                .divide(BigDecimal.valueOf(totalEnrollments), 4, BigDecimal.ROUND_HALF_UP)
+                .divide(BigDecimal.valueOf(totalEnrollments), 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100))
-                .setScale(2, BigDecimal.ROUND_HALF_UP);
+                .setScale(2, RoundingMode.HALF_UP);
         }
         return BigDecimal.ZERO;
     }
@@ -183,9 +184,9 @@ public class CourseStatistics {
     public BigDecimal getRejectionRate() {
         if (totalEnrollments != null && totalEnrollments > 0 && rejectedEnrollments != null) {
             return BigDecimal.valueOf(rejectedEnrollments)
-                .divide(BigDecimal.valueOf(totalEnrollments), 4, BigDecimal.ROUND_HALF_UP)
+                .divide(BigDecimal.valueOf(totalEnrollments), 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100))
-                .setScale(2, BigDecimal.ROUND_HALF_UP);
+                .setScale(2, RoundingMode.HALF_UP);
         }
         return BigDecimal.ZERO;
     }

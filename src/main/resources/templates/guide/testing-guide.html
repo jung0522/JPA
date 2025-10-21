@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/guide-layout}">
+<head>
+    <title>테스트 가이드</title>
+    <style>
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .test-example {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .warning {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        .info {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Header -->
+        <header class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+            <div class="container mx-auto px-6 py-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-4xl font-bold mb-2">
+                            <i class="fas fa-flask mr-3"></i>
+                            테스트 가이드
+                        </h1>
+                        <p class="text-xl text-blue-100">
+                            JUnit 5, Mockito, Spring Boot Test를 활용한 테스트 작성법
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <div class="bg-white bg-opacity-20 rounded-lg p-4">
+                            <div class="text-sm text-blue-100">테스트 레이어</div>
+                            <div class="text-2xl font-bold">4개</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-6 py-12">
+            <!-- 테스트 기본 개념 -->
+            <section class="mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-book text-blue-600 mr-3"></i>
+                    테스트 기본 개념
+                </h2>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">🧪 테스트의 중요성</h3>
+                        <ul class="space-y-2 text-gray-700">
+                            <li>• <strong>버그 조기 발견</strong>: 개발 단계에서 문제점 파악</li>
+                            <li>• <strong>코드 품질 향상</strong>: 테스트 가능한 코드 작성 유도</li>
+                            <li>• <strong>리팩토링 안정성</strong>: 기능 변경 시 부작용 방지</li>
+                            <li>• <strong>문서화 효과</strong>: 코드의 동작 방식 명확화</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">📊 테스트 피라미드</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-red-500 rounded mr-3"></div>
+                                <span><strong>Unit Tests</strong> (70%) - 개별 메서드/클래스</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-yellow-500 rounded mr-3"></div>
+                                <span><strong>Integration Tests</strong> (20%) - 컴포넌트 간 연동</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-green-500 rounded mr-3"></div>
+                                <span><strong>E2E Tests</strong> (10%) - 전체 시스템</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 테스트 어노테이션 -->
+            <section class="mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-tags text-green-600 mr-3"></i>
+                    Spring Boot 테스트 어노테이션
+                </h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white border border-gray-300">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-6 py-3 border-b border-gray-300 text-left text-sm font-semibold text-gray-700">어노테이션</th>
+                                <th class="px-6 py-3 border-b border-gray-300 text-left text-sm font-semibold text-gray-700">용도</th>
+                                <th class="px-6 py-3 border-b border-gray-300 text-left text-sm font-semibold text-gray-700">테스트 범위</th>
+                                <th class="px-6 py-3 border-b border-gray-300 text-left text-sm font-semibold text-gray-700">예시</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 text-sm font-medium text-blue-600">@DataJpaTest</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">Repository 계층 테스트</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">JPA, 데이터베이스</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">CourseRepositoryTest</td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="px-6 py-4 text-sm font-medium text-green-600">@WebMvcTest</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">Controller 계층 테스트</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">MVC, HTTP</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">CourseApiControllerTest</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 text-sm font-medium text-purple-600">@SpringBootTest</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">통합 테스트</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">전체 애플리케이션</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">EnrollmentIntegrationTest</td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="px-6 py-4 text-sm font-medium text-orange-600">@ExtendWith(MockitoExtension.class)</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">Service 계층 테스트</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">비즈니스 로직</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">CourseServiceTest</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Repository 테스트 -->
+            <section class="mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-database text-blue-600 mr-3"></i>
+                    Repository 테스트 (@DataJpaTest)
+                </h2>
+                
+                <div class="test-example">
+                    <h3 class="text-lg font-bold text-blue-800 mb-3">CourseRepositoryTest 예시</h3>
+                    <div class="code-block">
+<pre><span class="text-blue-400">@DataJpaTest</span>
+<span class="text-blue-400">class</span> <span class="text-yellow-400">CourseRepositoryTest</span> {
+
+    <span class="text-blue-400">@Autowired</span>
+    <span class="text-blue-400">private</span> <span class="text-yellow-400">TestEntityManager</span> entityManager;
+
+    <span class="text-blue-400">@Autowired</span>
+    <span class="text-blue-400">private</span> <span class="text-yellow-400">CourseRepository</span> courseRepository;
+
+    <span class="text-blue-400">@Test</span>
+    <span class="text-blue-400">@DisplayName</span>(<span class="text-orange-400">"강의 ID로 조회 - 성공"</span>)
+    <span class="text-blue-400">void</span> <span class="text-green-400">findById_성공</span>() {
+        <span class="text-gray-400">// given</span>
+        <span class="text-yellow-400">Course</span> course = <span class="text-yellow-400">Course</span>.<span class="text-green-400">builder</span>()
+                .<span class="text-green-400">name</span>(<span class="text-orange-400">"테스트 강의"</span>)
+                .<span class="text-green-400">build</span>();
+        entityManager.<span class="text-green-400">persistAndFlush</span>(course);
+
+        <span class="text-gray-400">// when</span>
+        <span class="text-yellow-400">Optional&lt;Course&gt;</span> found = courseRepository.<span class="text-green-400">findById</span>(course.<span class="text-green-400">getCourseNo</span>());
+
+        <span class="text-gray-400">// then</span>
+        <span class="text-yellow-400">assertThat</span>(found).<span class="text-green-400">isPresent</span>();
+        <span class="text-yellow-400">assertThat</span>(found.<span class="text-green-400">get</span>().<span class="text-green-400">getName</span>()).<span class="text-green-400">isEqualTo</span>(<span class="text-orange-400">"테스트 강의"</span>);
+    }
+}</pre>
+                    </div>
+                </div>
+
+                <div class="info">
+                    <h4 class="font-bold mb-2">💡 Repository 테스트 핵심 포인트</h4>
+                    <ul class="space-y-1">
+                        <li>• <strong>@DataJpaTest</strong>: JPA 관련 컴포넌트만 로드</li>
+                        <li>• <strong>TestEntityManager</strong>: 테스트용 엔티티 관리</li>
+                        <li>• <strong>Given-When-Then</strong> 패턴으로 테스트 구조화</li>
+                        <li>• <strong>@DisplayName</strong>으로 테스트 의도 명확화</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Service 테스트 -->
+            <section class="mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-cogs text-green-600 mr-3"></i>
+                    Service 테스트 (@ExtendWith)
+                </h2>
+                
+                <div class="test-example">
+                    <h3 class="text-lg font-bold text-green-800 mb-3">CourseServiceTest 예시</h3>
+                    <div class="code-block">
+<pre><span class="text-blue-400">@ExtendWith</span>(<span class="text-yellow-400">MockitoExtension</span>.<span class="text-blue-400">class</span>)
+<span class="text-blue-400">class</span> <span class="text-yellow-400">CourseServiceTest</span> {
+
+    <span class="text-blue-400">@Mock</span>
+    <span class="text-blue-400">private</span> <span class="text-yellow-400">CourseRepository</span> courseRepository;
+
+    <span class="text-blue-400">@InjectMocks</span>
+    <span class="text-blue-400">private</span> <span class="text-yellow-400">CourseService</span> courseService;
+
+    <span class="text-blue-400">@Test</span>
+    <span class="text-blue-400">@DisplayName</span>(<span class="text-orange-400">"강의 생성 - 성공"</span>)
+    <span class="text-blue-400">void</span> <span class="text-green-400">createCourse_성공</span>() {
+        <span class="text-gray-400">// given</span>
+        <span class="text-yellow-400">CourseCreateRequest</span> request = <span class="text-yellow-400">CourseCreateRequest</span>.<span class="text-green-400">builder</span>()
+                .<span class="text-green-400">name</span>(<span class="text-orange-400">"새로운 강의"</span>)
+                .<span class="text-green-400">build</span>();
+
+        <span class="text-yellow-400">given</span>(courseRepository.<span class="text-green-400">save</span>(<span class="text-blue-400">any</span>(<span class="text-yellow-400">Course</span>.<span class="text-blue-400">class</span>)))
+                .<span class="text-green-400">willReturn</span>(course);
+
+        <span class="text-gray-400">// when</span>
+        <span class="text-yellow-400">CourseResponse</span> response = courseService.<span class="text-green-400">create</span>(request);
+
+        <span class="text-gray-400">// then</span>
+        <span class="text-yellow-400">assertThat</span>(response.<span class="text-green-400">getName</span>()).<span class="text-green-400">isEqualTo</span>(<span class="text-orange-400">"테스트 강의"</span>);
+        <span class="text-yellow-400">verify</span>(courseRepository).<span class="text-green-400">save</span>(<span class="text-blue-400">any</span>(<span class="text-yellow-400">Course</span>.<span class="text-blue-400">class</span>));
+    }
+}</pre>
+                    </div>
+                </div>
+
+                <div class="info">
+                    <h4 class="font-bold mb-2">💡 Service 테스트 핵심 포인트</h4>
+                    <ul class="space-y-1">
+                        <li>• <strong>@Mock</strong>: 의존성 모킹</li>
+                        <li>• <strong>@InjectMocks</strong>: 테스트 대상에 모킹된 의존성 주입</li>
+                        <li>• <strong>given().willReturn()</strong>: 모킹된 메서드의 반환값 설정</li>
+                        <li>• <strong>verify()</strong>: 메서드 호출 검증</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Controller 테스트 -->
+            <section class="mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-globe text-purple-600 mr-3"></i>
+                    Controller 테스트 (@WebMvcTest)
+                </h2>
+                
+                <div class="test-example">
+                    <h3 class="text-lg font-bold text-purple-800 mb-3">CourseApiControllerTest 예시</h3>
+                    <div class="code-block">
+<pre><span class="text-blue-400">@WebMvcTest</span>(<span class="text-yellow-400">CourseApiController</span>.<span class="text-blue-400">class</span>)
+<span class="text-blue-400">class</span> <span class="text-yellow-400">CourseApiControllerTest</span> {
+
+    <span class="text-blue-400">@Autowired</span>
+    <span class="text-blue-400">private</span> <span class="text-yellow-400">MockMvc</span> mockMvc;
+
+    <span class="text-blue-400">@MockBean</span>
+    <span class="text-blue-400">private</span> <span class="text-yellow-400">CourseService</span> courseService;
+
+    <span class="text-blue-400">@Test</span>
+    <span class="text-blue-400">@DisplayName</span>(<span class="text-orange-400">"강의 생성 API - 성공"</span>)
+    <span class="text-blue-400">void</span> <span class="text-green-400">createCourse_성공</span>() <span class="text-blue-400">throws</span> <span class="text-yellow-400">Exception</span> {
+        <span class="text-gray-400">// given</span>
+        <span class="text-yellow-400">CourseCreateRequest</span> request = <span class="text-yellow-400">CourseCreateRequest</span>.<span class="text-green-400">builder</span>()
+                .<span class="text-green-400">name</span>(<span class="text-orange-400">"새로운 강의"</span>)
+                .<span class="text-green-400">build</span>();
+
+        <span class="text-yellow-400">given</span>(courseService.<span class="text-green-400">create</span>(<span class="text-blue-400">any</span>())).<span class="text-green-400">willReturn</span>(courseResponse);
+
+        <span class="text-gray-400">// when & then</span>
+        mockMvc.<span class="text-green-400">perform</span>(<span class="text-yellow-400">post</span>(<span class="text-orange-400">"/api/courses"</span>)
+                        .<span class="text-green-400">contentType</span>(<span class="text-yellow-400">MediaType</span>.<span class="text-blue-400">APPLICATION_JSON</span>)
+                        .<span class="text-green-400">content</span>(objectMapper.<span class="text-green-400">writeValueAsString</span>(request)))
+                .<span class="text-green-400">andExpect</span>(<span class="text-yellow-400">status</span>().<span class="text-green-400">isCreated</span>())
+                .<span class="text-green-400">andExpect</span>(<span class="text-yellow-400">jsonPath</span>(<span class="text-orange-400">"$.success"</span>).<span class="text-green-400">value</span>(<span class="text-blue-400">true</span>));
+    }
+}</pre>
+                    </div>
+                </div>
+
+                <div class="info">
+                    <h4 class="font-bold mb-2">💡 Controller 테스트 핵심 포인트</h4>
+                    <ul class="space-y-1">
+                        <li>• <strong>@WebMvcTest</strong>: MVC 관련 컴포넌트만 로드</li>
+                        <li>• <strong>MockMvc</strong>: HTTP 요청/응답 시뮬레이션</li>
+                        <li>• <strong>@MockBean</strong>: Spring 컨텍스트의 빈 모킹</li>
+                        <li>• <strong>jsonPath()</strong>: JSON 응답 검증</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 통합 테스트 -->
+            <section class="mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-link text-orange-600 mr-3"></i>
+                    통합 테스트 (@SpringBootTest)
+                </h2>
+                
+                <div class="test-example">
+                    <h3 class="text-lg font-bold text-orange-800 mb-3">EnrollmentIntegrationTest 예시</h3>
+                    <div class="code-block">
+<pre><span class="text-blue-400">@SpringBootTest</span>
+<span class="text-blue-400">@ActiveProfiles</span>(<span class="text-orange-400">"test"</span>)
+<span class="text-blue-400">@Transactional</span>
+<span class="text-blue-400">class</span> <span class="text-yellow-400">EnrollmentIntegrationTest</span> {
+
+    <span class="text-blue-400">@Autowired</span>
+    <span class="text-blue-400">private</span> <span class="text-yellow-400">EnrollmentService</span> enrollmentService;
+
+    <span class="text-blue-400">@Test</span>
+    <span class="text-blue-400">@DisplayName</span>(<span class="text-orange-400">"수강신청 전체 플로우 - 성공"</span>)
+    <span class="text-blue-400">void</span> <span class="text-green-400">enrollmentFullFlow_성공</span>() {
+        <span class="text-gray-400">// given</span>
+        <span class="text-yellow-400">EnrollmentCreateRequest</span> request = <span class="text-yellow-400">EnrollmentCreateRequest</span>.<span class="text-green-400">builder</span>()
+                .<span class="text-green-400">courseNo</span>(course.<span class="text-green-400">getCourseNo</span>())
+                .<span class="text-green-400">build</span>();
+
+        <span class="text-gray-400">// when - 수강신청</span>
+        <span class="text-yellow-400">EnrollmentResponse</span> response = enrollmentService.<span class="text-green-400">enroll</span>(request, student);
+
+        <span class="text-gray-400">// then - 수강신청 확인</span>
+        <span class="text-yellow-400">assertThat</span>(response.<span class="text-green-400">getStatus</span>()).<span class="text-green-400">isEqualTo</span>(<span class="text-yellow-400">EnrollmentStatus</span>.<span class="text-blue-400">PENDING</span>);
+
+        <span class="text-gray-400">// when - 수강신청 승인</span>
+        <span class="text-yellow-400">EnrollmentResponse</span> approved = enrollmentService.<span class="text-green-400">approve</span>(response.<span class="text-green-400">getEnrollmentNo</span>());
+
+        <span class="text-gray-400">// then - 승인 확인</span>
+        <span class="text-yellow-400">assertThat</span>(approved.<span class="text-green-400">getStatus</span>()).<span class="text-green-400">isEqualTo</span>(<span class="text-yellow-400">EnrollmentStatus</span>.<span class="text-blue-400">APPROVED</span>);
+    }
+}</pre>
+                    </div>
+                </div>
+
+                <div class="info">
+                    <h4 class="font-bold mb-2">💡 통합 테스트 핵심 포인트</h4>
+                    <ul class="space-y-1">
+                        <li>• <strong>@SpringBootTest</strong>: 전체 애플리케이션 컨텍스트 로드</li>
+                        <li>• <strong>@Transactional</strong>: 테스트 후 롤백으로 데이터 정리</li>
+                        <li>• <strong>@ActiveProfiles</strong>: 테스트용 프로파일 사용</li>
+                        <li>• <strong>실제 데이터베이스</strong>: H2 인메모리 DB 사용</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 테스트 실행 방법 -->
+            <section class="mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-play text-red-600 mr-3"></i>
+                    테스트 실행 방법
+                </h2>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">🚀 IDE에서 실행</h3>
+                        <ul class="space-y-2 text-gray-700">
+                            <li>• <strong>IntelliJ IDEA</strong>: 클래스명 옆 ▶️ 버튼 클릭</li>
+                            <li>• <strong>Eclipse</strong>: 우클릭 → Run As → JUnit Test</li>
+                            <li>• <strong>VS Code</strong>: 테스트 메서드 위 CodeLens 클릭</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">💻 터미널에서 실행</h3>
+                        <div class="code-block">
+<pre><span class="text-gray-400"># 전체 테스트 실행</span>
+./gradlew test
+
+<span class="text-gray-400"># 특정 테스트 클래스 실행</span>
+./gradlew test --tests CourseRepositoryTest
+
+<span class="text-gray-400"># 특정 테스트 메서드 실행</span>
+./gradlew test --tests CourseRepositoryTest.findById_성공
+
+<span class="text-gray-400"># 테스트 리포트 확인</span>
+open build/reports/tests/test/index.html</pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 테스트 작성 팁 -->
+            <section class="mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-lightbulb text-yellow-600 mr-3"></i>
+                    테스트 작성 팁
+                </h2>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded">
+                            <h4 class="font-bold text-green-800 mb-2">✅ 좋은 테스트</h4>
+                            <ul class="text-green-700 space-y-1 text-sm">
+                                <li>• <strong>명확한 이름</strong>: 테스트 의도가 명확한 메서드명</li>
+                                <li>• <strong>단일 책임</strong>: 하나의 테스트는 하나의 기능만</li>
+                                <li>• <strong>독립성</strong>: 다른 테스트에 의존하지 않음</li>
+                                <li>• <strong>반복 가능</strong>: 언제 실행해도 같은 결과</li>
+                                <li>• <strong>빠른 실행</strong>: 빠르게 실행되어 자주 테스트 가능</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded">
+                            <h4 class="font-bold text-red-800 mb-2">❌ 나쁜 테스트</h4>
+                            <ul class="text-red-700 space-y-1 text-sm">
+                                <li>• <strong>불명확한 이름</strong>: test1, testMethod 등</li>
+                                <li>• <strong>여러 기능</strong>: 하나의 테스트에서 여러 기능 검증</li>
+                                <li>• <strong>의존성</strong>: 다른 테스트의 결과에 의존</li>
+                                <li>• <strong>불안정</strong>: 실행할 때마다 결과가 다름</li>
+                                <li>• <strong>느린 실행</strong>: 실행 시간이 오래 걸림</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+                            <h4 class="font-bold text-blue-800 mb-2">📝 Given-When-Then 패턴</h4>
+                            <div class="text-blue-700 text-sm space-y-1">
+                                <p><strong>Given</strong>: 테스트에 필요한 데이터 준비</p>
+                                <p><strong>When</strong>: 테스트할 기능 실행</p>
+                                <p><strong>Then</strong>: 결과 검증</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-purple-50 border-l-4 border-purple-400 p-4 rounded">
+                            <h4 class="font-bold text-purple-800 mb-2">🎯 테스트 우선순위</h4>
+                            <ol class="text-purple-700 text-sm space-y-1">
+                                <li>1. <strong>핵심 비즈니스 로직</strong></li>
+                                <li>2. <strong>예외 상황</strong></li>
+                                <li>3. <strong>경계값</strong></li>
+                                <li>4. <strong>통합 플로우</strong></li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 다음 단계 학습 제안 -->
+            <section class="mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-arrow-right text-indigo-600 mr-3"></i>
+                    다음 단계 학습 제안
+                </h2>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">🔧 고급 테스트 기법</h3>
+                        <ul class="space-y-2 text-gray-700">
+                            <li>• <strong>Parameterized Tests</strong>: @ParameterizedTest로 다양한 입력값 테스트</li>
+                            <li>• <strong>TestContainers</strong>: 실제 데이터베이스로 통합 테스트</li>
+                            <li>• <strong>Custom Matchers</strong>: AssertJ 커스텀 매처 작성</li>
+                            <li>• <strong>Test Execution Order</strong>: @TestMethodOrder로 테스트 순서 제어</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">⚡ 성능 테스트</h3>
+                        <ul class="space-y-2 text-gray-700">
+                            <li>• <strong>JMeter</strong>: API 성능 테스트</li>
+                            <li>• <strong>Gatling</strong>: 부하 테스트 시나리오 작성</li>
+                            <li>• <strong>Spring Boot Test Slice</strong>: @JsonTest, @JdbcTest 등</li>
+                            <li>• <strong>메모리 사용량 테스트</strong>: JVM 메모리 프로파일링</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">🤖 테스트 자동화</h3>
+                        <ul class="space-y-2 text-gray-700">
+                            <li>• <strong>CI/CD 통합</strong>: GitHub Actions에서 테스트 자동 실행</li>
+                            <li>• <strong>코드 커버리지</strong>: JaCoCo로 테스트 커버리지 측정</li>
+                            <li>• <strong>Mutation Testing</strong>: PIT으로 테스트 품질 검증</li>
+                            <li>• <strong>테스트 리포트</strong>: Allure로 테스트 결과 시각화</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">🏢 실무 테스트 패턴</h3>
+                        <ul class="space-y-2 text-gray-700">
+                            <li>• <strong>BDD</strong>: Cucumber로 Given-When-Then 테스트</li>
+                            <li>• <strong>Contract Testing</strong>: Pact로 서비스 간 계약 테스트</li>
+                            <li>• <strong>API 테스트</strong>: Postman, Newman으로 API 자동화</li>
+                            <li>• <strong>E2E 테스트</strong>: Selenium으로 웹 UI 테스트</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 추천 학습 자료 -->
+            <section class="mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-book-open text-green-600 mr-3"></i>
+                    추천 학습 자료
+                </h2>
+                
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">📚</div>
+                        <h4 class="font-semibold text-gray-800">JUnit 5 공식 문서</h4>
+                        <p class="text-sm text-gray-600">junit.org</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">🌱</div>
+                        <h4 class="font-semibold text-gray-800">Spring Boot Testing</h4>
+                        <p class="text-sm text-gray-600">spring.io/guides/testing</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">🔧</div>
+                        <h4 class="font-semibold text-gray-800">TestContainers</h4>
+                        <p class="text-sm text-gray-600">testcontainers.org</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 요약 -->
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg p-8">
+                <h2 class="text-2xl font-bold mb-4">🎯 핵심 포인트</h2>
+                <ul class="space-y-2 text-lg">
+                    <li>• <strong>Repository</strong>: @DataJpaTest로 데이터 접근 계층 테스트</li>
+                    <li>• <strong>Service</strong>: @ExtendWith(MockitoExtension.class)로 비즈니스 로직 테스트</li>
+                    <li>• <strong>Controller</strong>: @WebMvcTest로 API 계층 테스트</li>
+                    <li>• <strong>Integration</strong>: @SpringBootTest로 전체 플로우 테스트</li>
+                    <li>• <strong>Given-When-Then</strong> 패턴으로 테스트 구조화</li>
+                    <li>• <strong>명확한 테스트 이름</strong>과 <strong>단일 책임</strong> 원칙 준수</li>
+                </ul>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

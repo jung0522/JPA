@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/step2-layout}">
+<head>
+    <title>JPA Step 2: 양방향 관계와 고급 기능</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Header -->
+        <header class="gradient-bg text-white shadow-lg">
+            <div class="container mx-auto px-6 py-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-4xl font-bold mb-2">
+                            <i class="fas fa-database mr-3"></i>
+                            JPA Step 2: 양방향 관계와 고급 기능
+                        </h1>
+                        <p class="text-xl text-blue-100">
+                            양방향 관계, 편의 메서드, 비관적 락, QueryDSL 통계, 배치 처리까지
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <div class="bg-white bg-opacity-20 rounded-lg p-4">
+                            <div class="text-sm text-blue-100">완료된 기능</div>
+                            <div class="text-2xl font-bold">6개</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-12">
+        <!-- Step 1 vs Step 2 비교 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">
+                <i class="fas fa-chart-line text-blue-600 mr-3"></i>
+                Step 1 vs Step 2 비교
+            </h2>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Step 1 -->
+                <div class="bg-red-50 border-l-4 border-red-400 p-6 rounded-lg">
+                    <h3 class="text-xl font-bold text-red-800 mb-4">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Step 1 (기존)
+                    </h3>
+                    <ul class="space-y-2 text-red-700">
+                        <li><i class="fas fa-times text-red-500 mr-2"></i>N:1 + N:1 (단방향)</li>
+                        <li><i class="fas fa-times text-red-500 mr-2"></i>팝업 방식 API</li>
+                        <li><i class="fas fa-times text-red-500 mr-2"></i>Service에 비즈니스 로직 분산</li>
+                        <li><i class="fas fa-times text-red-500 mr-2"></i>수동 데이터 관리</li>
+                        <li><i class="fas fa-times text-red-500 mr-2"></i>통계 기능 없음</li>
+                        <li><i class="fas fa-times text-red-500 mr-2"></i>낙관적 락만</li>
+                    </ul>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="bg-green-50 border-l-4 border-green-400 p-6 rounded-lg">
+                    <h3 class="text-xl font-bold text-green-800 mb-4">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Step 2 (개선)
+                    </h3>
+                    <ul class="space-y-2 text-green-700">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>N:1 + 1:N (양방향)</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>직접 접근 가능</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>엔티티에 비즈니스 로직 캡슐화</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Cascade 자동화</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>QueryDSL 통계</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>낙관적 + 비관적 락</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 주요 기능 카드 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">
+                <i class="fas fa-cogs text-blue-600 mr-3"></i>
+                주요 구현 기능
+            </h2>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 양방향 관계 -->
+                <div class="bg-white rounded-lg shadow-lg p-6 card-hover">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-exchange-alt text-4xl text-blue-600 mb-3"></i>
+                        <h3 class="text-xl font-bold text-gray-800">양방향 관계</h3>
+                    </div>
+                    <ul class="text-gray-600 space-y-2">
+                        <li><i class="fas fa-arrow-right text-blue-500 mr-2"></i>Course ↔ Curriculum</li>
+                        <li><i class="fas fa-arrow-right text-blue-500 mr-2"></i>Course ↔ Enrollment</li>
+                        <li><i class="fas fa-arrow-right text-blue-500 mr-2"></i>User ↔ Enrollment</li>
+                        <li><i class="fas fa-arrow-right text-blue-500 mr-2"></i>편의 메서드 구현</li>
+                    </ul>
+                </div>
+
+                <!-- 비관적 락 -->
+                <div class="bg-white rounded-lg shadow-lg p-6 card-hover">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-lock text-4xl text-red-600 mb-3"></i>
+                        <h3 class="text-xl font-bold text-gray-800">비관적 락</h3>
+                    </div>
+                    <ul class="text-gray-600 space-y-2">
+                        <li><i class="fas fa-arrow-right text-red-500 mr-2"></i>@Lock(PESSIMISTIC_WRITE)</li>
+                        <li><i class="fas fa-arrow-right text-red-500 mr-2"></i>수강신청 동시성 제어</li>
+                        <li><i class="fas fa-arrow-right text-red-500 mr-2"></i>승인/거절 동시성 제어</li>
+                        <li><i class="fas fa-arrow-right text-red-500 mr-2"></i>강의 수정/삭제 동시성 제어</li>
+                    </ul>
+                </div>
+
+                <!-- QueryDSL 통계 -->
+                <div class="bg-white rounded-lg shadow-lg p-6 card-hover">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-chart-bar text-4xl text-green-600 mb-3"></i>
+                        <h3 class="text-xl font-bold text-gray-800">QueryDSL 통계</h3>
+                    </div>
+                    <ul class="text-gray-600 space-y-2">
+                        <li><i class="fas fa-arrow-right text-green-500 mr-2"></i>강의별 상세 통계</li>
+                        <li><i class="fas fa-arrow-right text-green-500 mr-2"></i>강사별 강의 통계</li>
+                        <li><i class="fas fa-arrow-right text-green-500 mr-2"></i>월별 개설 통계</li>
+                        <li><i class="fas fa-arrow-right text-green-500 mr-2"></i>공통 조건 모듈</li>
+                    </ul>
+                </div>
+
+                <!-- 배치 처리 -->
+                <div class="bg-white rounded-lg shadow-lg p-6 card-hover">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-tasks text-4xl text-purple-600 mb-3"></i>
+                        <h3 class="text-xl font-bold text-gray-800">배치 처리</h3>
+                    </div>
+                    <ul class="text-gray-600 space-y-2">
+                        <li><i class="fas fa-arrow-right text-purple-500 mr-2"></i>수강신청 일괄 승인/거절</li>
+                        <li><i class="fas fa-arrow-right text-purple-500 mr-2"></i>강의별 일괄 처리</li>
+                        <li><i class="fas fa-arrow-right text-purple-500 mr-2"></i>처리 결과 추적</li>
+                        <li><i class="fas fa-arrow-right text-purple-500 mr-2"></i>에러 핸들링</li>
+                    </ul>
+                </div>
+
+                <!-- @EntityGraph -->
+                <div class="bg-white rounded-lg shadow-lg p-6 card-hover">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-optimize text-4xl text-orange-600 mb-3"></i>
+                        <h3 class="text-xl font-bold text-gray-800">@EntityGraph</h3>
+                    </div>
+                    <ul class="text-gray-600 space-y-2">
+                        <li><i class="fas fa-arrow-right text-orange-500 mr-2"></i>JPQL Fetch Join 간소화</li>
+                        <li><i class="fas fa-arrow-right text-orange-500 mr-2"></i>코드 가독성 향상</li>
+                        <li><i class="fas fa-arrow-right text-orange-500 mr-2"></i>유지보수성 개선</li>
+                        <li><i class="fas fa-arrow-right text-orange-500 mr-2"></i>N+1 문제 해결</li>
+                    </ul>
+                </div>
+
+                <!-- Cascade & Orphan Removal -->
+                <div class="bg-white rounded-lg shadow-lg p-6 card-hover">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-link text-4xl text-indigo-600 mb-3"></i>
+                        <h3 class="text-xl font-bold text-gray-800">Cascade & Orphan</h3>
+                    </div>
+                    <ul class="text-gray-600 space-y-2">
+                        <li><i class="fas fa-arrow-right text-indigo-500 mr-2"></i>CascadeType.ALL</li>
+                        <li><i class="fas fa-arrow-right text-indigo-500 mr-2"></i>orphanRemoval = true</li>
+                        <li><i class="fas fa-arrow-right text-indigo-500 mr-2"></i>자동 데이터 관리</li>
+                        <li><i class="fas fa-arrow-right text-indigo-500 mr-2"></i>고아 객체 자동 삭제</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 학습 메뉴 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">
+                <i class="fas fa-book text-blue-600 mr-3"></i>
+                학습 메뉴
+            </h2>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 양방향 관계 -->
+                <a href="/project/step2/bidirectional" class="block bg-white rounded-lg shadow-lg p-6 card-hover text-center">
+                    <i class="fas fa-exchange-alt text-5xl text-blue-600 mb-4"></i>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">양방향 관계와 편의 메서드</h3>
+                    <p class="text-gray-600">Course ↔ Curriculum, Course ↔ Enrollment 관계 구현</p>
+                </a>
+
+                <!-- 비관적 락 -->
+                <a href="/project/step2/locking" class="block bg-white rounded-lg shadow-lg p-6 card-hover text-center">
+                    <i class="fas fa-lock text-5xl text-red-600 mb-4"></i>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">비관적 락과 동시성 제어</h3>
+                    <p class="text-gray-600">@Lock, 동시성 제어, 트랜잭션 관리</p>
+                </a>
+
+                <!-- QueryDSL -->
+                <a href="/project/step2/querydsl" class="block bg-white rounded-lg shadow-lg p-6 card-hover text-center">
+                    <i class="fas fa-chart-bar text-5xl text-green-600 mb-4"></i>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">QueryDSL 고급 기능</h3>
+                    <p class="text-gray-600">통계 쿼리, 공통 조건 모듈, 동적 검색</p>
+                </a>
+
+                <!-- 배치 처리 -->
+                <a href="/project/step2/batch" class="block bg-white rounded-lg shadow-lg p-6 card-hover text-center">
+                    <i class="fas fa-tasks text-5xl text-purple-600 mb-4"></i>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">배치 처리와 성능 최적화</h3>
+                    <p class="text-gray-600">일괄 처리, @EntityGraph, N+1 문제 해결</p>
+                </a>
+
+                <!-- 트러블슈팅 -->
+                <a href="/project/step2/troubleshooting" class="block bg-white rounded-lg shadow-lg p-6 card-hover text-center">
+                    <i class="fas fa-bug text-5xl text-yellow-600 mb-4"></i>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">LazyInitializationException</h3>
+                    <p class="text-gray-600">엔티티 반환 오류, 해결 방법, DTO 변환</p>
+                </a>
+
+                <!-- 로깅 전략 -->
+                <a href="/project/step2/logging-strategy" class="block bg-white rounded-lg shadow-lg p-6 card-hover text-center">
+                    <i class="fas fa-chart-line text-5xl text-purple-600 mb-4"></i>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">로깅 전략</h3>
+                    <p class="text-gray-600">Dev/Prod 로깅 모범 사례</p>
+                </a>
+
+                <!-- 실습 과제 -->
+                <a href="/project/step2/assignments" class="block bg-white rounded-lg shadow-lg p-6 card-hover text-center">
+                    <i class="fas fa-clipboard-list text-5xl text-indigo-600 mb-4"></i>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">실습 과제</h3>
+                    <p class="text-gray-600">@EntityGraph 추가, UI 구현, API 테스트</p>
+                </a>
+            </div>
+        </section>
+
+        <!-- API 테스트 가이드 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">
+                <i class="fas fa-code text-blue-600 mr-3"></i>
+                API 테스트 가이드
+            </h2>
+            
+            <div class="bg-gray-900 rounded-lg p-6 text-green-400 font-mono text-sm">
+                <div class="mb-4">
+                    <span class="text-yellow-400"># 수강신청 일괄 승인</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-blue-400">POST</span> <span class="text-white">/api/enrollments/batch</span>
+                </div>
+                <div class="ml-4 mb-4">
+                    <div>{</div>
+                    <div class="ml-4">"enrollmentIds": [1, 2, 3, 4, 5],</div>
+                    <div class="ml-4">"action": "APPROVE",</div>
+                    <div class="ml-4">"reason": "일괄 승인 처리"</div>
+                    <div>}</div>
+                </div>
+                
+                <div class="mb-4">
+                    <span class="text-yellow-400"># 강의별 일괄 거절</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-blue-400">POST</span> <span class="text-white">/api/enrollments/batch/course/1?action=REJECT&reason=정원초과</span>
+                </div>
+                
+                <div class="mb-4">
+                    <span class="text-yellow-400"># 강의 통계 조회</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-blue-400">GET</span> <span class="text-white">/api/courses/statistics</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="gradient-bg text-white py-8">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-lg">
+                <i class="fas fa-graduation-cap mr-2"></i>
+                JPA Step 2: 양방향 관계와 고급 기능 완료
+            </p>
+            <p class="text-blue-100 mt-2">
+                양방향 관계 • 편의 메서드 • 비관적 락 • QueryDSL 통계 • 배치 처리 • @EntityGraph
+            </p>
+        </div>
+    </div>
+</body>
+</html>

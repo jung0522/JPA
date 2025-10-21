@@ -51,12 +51,6 @@ public class ProjectController {
         return "project/step1/querydsl-theory";
     }
 
-    @GetMapping("/step2/changes")
-    public String step2Changes(Model model) {
-        log.info("Step 2 changes page accessed");
-        model.addAttribute("pageTitle", "Step 2 변경사항");
-        return "project/step2/changes";
-    }
 
     @GetMapping("/auth-session")
     public String authSession(Model model) {
