@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>고급 주제 - JPA 양방향 관계</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <style>
+        .code-block {
+            background: #2d3748;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        .highlight {
+            background-color: #fef3c7;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-slate-800 text-white py-6">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl font-bold">고급 주제</h1>
+            <p class="text-slate-300 mt-2">비관적 락, QueryDSL 고급, 배치 처리</p>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex space-x-6">
+                <a href="#locking" class="text-blue-600 hover:text-blue-800 font-medium">비관적 락</a>
+                <a href="#querydsl" class="text-blue-600 hover:text-blue-800 font-medium">QueryDSL 고급</a>
+                <a href="#batch" class="text-blue-600 hover:text-blue-800 font-medium">배치 처리</a>
+                <a href="#entitygraph" class="text-blue-600 hover:text-blue-800 font-medium">@EntityGraph</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        
+        <!-- 비관적 락 -->
+        <section id="locking" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">비관적 락 (Pessimistic Locking)</h2>
+            
+            <div class="bg-red-50 border-l-4 border-red-400 p-6 rounded-lg mb-6">
+                <h3 class="text-lg font-bold text-red-800 mb-3">비관적 락이란?</h3>
+                <p class="text-red-700">
+                    데이터를 읽기 전에 락을 걸어서 다른 트랜잭션이 해당 데이터를 수정하지 못하도록 하는 방식입니다.
+                    동시성 문제를 완전히 방지하지만 성능에 영향을 줄 수 있습니다.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Repository 설정 -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">Repository 설정</h3>
+                    <div class="code-block">
+                        <pre><code class="language-java">@Repository
+public interface CourseRepository extends JpaRepository&lt;Course, Long&gt; {
+    
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM Course c WHERE c.courseNo = :courseNo")
+    Optional&lt;Course&gt; findByIdWithLock(@Param("courseNo") Long courseNo);
+    
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM Course c WHERE c.courseNo = :courseNo " +
+           "AND c.currentStudents &lt; c.maxStudents")
+    Optional&lt;Course&gt; findAvailableByIdWithLock(@Param("courseNo") Long courseNo);
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- Service 사용 -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">Service에서 사용</h3>
+                    <div class="code-block">
+                        <pre><code class="language-java">@Service
+@Transactional
+public class CourseService {
+    
+    public CourseResponse enrollStudent(Long courseNo, Long studentNo) {
+        // 비관적 락으로 강의 조회
+        Course course = courseRepository.findByIdWithLock(courseNo)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
+        
+        // 정원 확인
+        if (course.getCurrentStudents() >= course.getMaxStudents()) {
+            throw new BusinessException(ErrorCode.COURSE_FULL);
+        }
+        
+        // 수강신청 처리
+        User student = userRepository.findById(studentNo)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        
+        Enrollment enrollment = Enrollment.builder()
+                .course(course)
+                .student(student)
+                .build();
+        
+        course.addEnrollment(enrollment);
+        
+        return CourseResponse.from(course);
+    }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <h3 class="text-lg font-bold text-gray-700 mb-4">락 모드 종류</h3>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h4 class="font-bold text-gray-800 mb-2">PESSIMISTIC_READ</h4>
+                        <p class="text-sm text-gray-600">공유 락, 읽기 전용</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h4 class="font-bold text-gray-800 mb-2">PESSIMISTIC_WRITE</h4>
+                        <p class="text-sm text-gray-600">배타 락, 읽기/쓰기</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h4 class="font-bold text-gray-800 mb-2">PESSIMISTIC_FORCE_INCREMENT</h4>
+                        <p class="text-sm text-gray-600">버전 증가와 함께 락</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- QueryDSL 고급 -->
+        <section id="querydsl" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">QueryDSL 고급 기능</h2>
+            
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- 통계 쿼리 -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">통계 쿼리</h3>
+                    <div class="code-block">
+                        <pre><code class="language-java">@Repository
+@RequiredArgsConstructor
+public class CourseQueryRepository {
+    
+    private final JPAQueryFactory queryFactory;
+    private final QCourse course = QCourse.course;
+    private final QEnrollment enrollment = QEnrollment.enrollment;
+    
+    // 강의별 상세 통계
+    public CourseStatistics getCourseStatistics(Long courseNo) {
+        return queryFactory
+                .select(Projections.constructor(CourseStatistics.class,
+                        course.courseNo,
+                        course.name,
+                        course.maxStudents,
+                        course.enrollments.size().as("totalEnrollments"),
+                        course.enrollments.size().as("approvedEnrollments")
+                ))
+                .from(course)
+                .where(course.courseNo.eq(courseNo))
+                .fetchOne();
+    }
+    
+    // 강사별 강의 통계
+    public List&lt;CourseStatistics&gt; getInstructorStatistics() {
+        return queryFactory
+                .select(Projections.constructor(CourseStatistics.class,
+                        course.instructor.userNo,
+                        course.instructor.fullName,
+                        course.courseNo.count().as("totalCourses"),
+                        course.maxStudents.sum().as("totalCapacity"),
+                        course.enrollments.size().sum().as("totalEnrollments")
+                ))
+                .from(course)
+                .where(course.deleted.eq(false))
+                .groupBy(course.instructor.userNo, course.instructor.fullName)
+                .orderBy(course.courseNo.count().desc())
+                .fetch();
+    }
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- 동적 검색 -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">동적 검색</h3>
+                    <div class="code-block">
+                        <pre><code class="language-java">// 공통 조건 모듈
+public class CourseSearchCondition {
+    private String courseName;
+    private String instructorName;
+    private Integer minStudents;
+    private Integer maxStudents;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+}
+
+// 동적 검색 쿼리
+public Page&lt;Course&gt; searchCourses(CourseSearchCondition condition, Pageable pageable) {
+    List&lt;Course&gt; content = queryFactory
+            .selectFrom(course)
+            .leftJoin(course.instructor, user).fetchJoin()
+            .where(
+                    courseNameContains(condition.getCourseName()),
+                    instructorNameContains(condition.getInstructorName()),
+                    minStudentsGoe(condition.getMinStudents()),
+                    maxStudentsLoe(condition.getMaxStudents()),
+                    startDateGoe(condition.getStartDate()),
+                    endDateLoe(condition.getEndDate())
+            )
+            .orderBy(course.createdAt.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+    
+    long total = queryFactory
+            .selectFrom(course)
+            .where(
+                    courseNameContains(condition.getCourseName()),
+                    instructorNameContains(condition.getInstructorName()),
+                    minStudentsGoe(condition.getMinStudents()),
+                    maxStudentsLoe(condition.getMaxStudents()),
+                    startDateGoe(condition.getStartDate()),
+                    endDateLoe(condition.getEndDate())
+            )
+            .fetch()
+            .size();
+    
+    return new PageImpl&lt;&gt;(content, pageable, total);
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <h3 class="text-lg font-bold text-gray-700 mb-4">조건 메서드</h3>
+                <div class="code-block">
+                    <pre><code class="language-java">// BooleanExpression을 활용한 조건 메서드
+private BooleanExpression courseNameContains(String courseName) {
+    return courseName != null ? course.name.containsIgnoreCase(courseName) : null;
+}
+
+private BooleanExpression instructorNameContains(String instructorName) {
+    return instructorName != null ? course.instructor.fullName.containsIgnoreCase(instructorName) : null;
+}
+
+private BooleanExpression minStudentsGoe(Integer minStudents) {
+    return minStudents != null ? course.currentStudents.goe(minStudents) : null;
+}
+
+private BooleanExpression maxStudentsLoe(Integer maxStudents) {
+    return maxStudents != null ? course.currentStudents.loe(maxStudents) : null;
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 배치 처리 -->
+        <section id="batch" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">배치 처리와 성능 최적화</h2>
+            
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- 일괄 승인/거절 -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">수강신청 일괄 처리</h3>
+                    <div class="code-block">
+                        <pre><code class="language-java">@Service
+@Transactional
+public class EnrollmentService {
+    
+    public BatchProcessResult processBatchEnrollments(BatchEnrollmentRequest request) {
+        List&lt;Long&gt; enrollmentIds = request.getEnrollmentIds();
+        BatchAction action = request.getAction();
+        String reason = request.getReason();
+        
+        List&lt;Enrollment&gt; enrollments = enrollmentRepository
+                .findPendingByIdsForBatchUpdate(enrollmentIds);
+        
+        if (enrollments.isEmpty()) {
+            throw new BusinessException(ErrorCode.NO_PENDING_ENROLLMENTS);
+        }
+        
+        List&lt;Enrollment&gt; successList = new ArrayList&lt;&gt;();
+        List&lt;EnrollmentError&gt; errorList = new ArrayList&lt;&gt;();
+        
+        for (Enrollment enrollment : enrollments) {
+            try {
+                if (action == BatchAction.APPROVE) {
+                    enrollment.approve();
+                } else if (action == BatchAction.REJECT) {
+                    enrollment.reject(reason);
+                }
+                successList.add(enrollment);
+            } catch (Exception e) {
+                errorList.add(new EnrollmentError(
+                        enrollment.getEnrollmentNo(),
+                        e.getMessage()
+                ));
+            }
+        }
+        
+        return new BatchProcessResult(successList.size(), errorList);
+    }
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- @EntityGraph -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">@EntityGraph 활용</h3>
+                    <div class="code-block">
+                        <pre><code class="language-java">@Repository
+public interface CourseRepository extends JpaRepository&lt;Course, Long&gt; {
+    
+    @EntityGraph(attributePaths = {"instructor", "enrollments"})
+    @Query("SELECT c FROM Course c WHERE c.courseNo = :courseNo")
+    Optional&lt;Course&gt; findByIdWithDetails(@Param("courseNo") Long courseNo);
+    
+    @EntityGraph(attributePaths = {"instructor"})
+    @Query("SELECT c FROM Course c WHERE c.deleted = false")
+    List&lt;Course&gt; findAllAvailableCourses();
+}
+
+// Service에서 사용
+@Service
+public class CourseService {
+    
+    public CourseResponse getCourseWithDetails(Long courseNo) {
+        Course course = courseRepository.findByIdWithDetails(courseNo)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
+        
+        return CourseResponse.from(course);
+    }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <h3 class="text-lg font-bold text-gray-700 mb-4">N+1 문제 해결</h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-bold text-red-600 mb-2">문제 상황</h4>
+                        <div class="code-block">
+                            <pre><code class="language-java">// N+1 문제 발생
+List&lt;Course&gt; courses = courseRepository.findAll();
+for (Course course : courses) {
+    System.out.println(course.getInstructor().getFullName()); // 추가 쿼리 발생
+}</code></pre>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-green-600 mb-2">해결 방법</h4>
+                        <div class="code-block">
+                            <pre><code class="language-java">// @EntityGraph로 해결
+@EntityGraph(attributePaths = {"instructor"})
+List&lt;Course&gt; courses = courseRepository.findAll();
+
+// 또는 Fetch Join 사용
+@Query("SELECT c FROM Course c JOIN FETCH c.instructor")
+List&lt;Course&gt; findAllWithInstructor();</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- @EntityGraph 상세 -->
+        <section id="entitygraph" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">@EntityGraph 상세</h2>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg mb-6">
+                <h3 class="text-lg font-bold text-blue-800 mb-3">@EntityGraph의 장점</h3>
+                <ul class="text-blue-700 space-y-2">
+                    <li>• <strong>간단한 설정:</strong> 복잡한 JPQL 대신 간단한 어노테이션</li>
+                    <li>• <strong>가독성:</strong> 코드의 의도가 명확하게 드러남</li>
+                    <li>• <strong>유지보수:</strong> 엔티티 구조 변경 시 자동 반영</li>
+                    <li>• <strong>성능:</strong> N+1 문제를 효과적으로 해결</li>
+                </ul>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">기본 사용법</h3>
+                    <div class="code-block">
+                        <pre><code class="language-java">@EntityGraph(attributePaths = {"instructor"})
+@Query("SELECT c FROM Course c WHERE c.deleted = false")
+List&lt;Course&gt; findAvailableCourses();
+
+// 여러 관계를 한 번에
+@EntityGraph(attributePaths = {"instructor", "enrollments", "curriculums"})
+@Query("SELECT c FROM Course c WHERE c.courseNo = :courseNo")
+Optional&lt;Course&gt; findByIdWithAllDetails(@Param("courseNo") Long courseNo);</code></pre>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">고급 사용법</h3>
+                    <div class="code-block">
+                        <pre><code class="language-java">// 중첩 관계도 함께 로딩
+@EntityGraph(attributePaths = {
+    "instructor", 
+    "enrollments.student",
+    "curriculums"
+})
+@Query("SELECT c FROM Course c WHERE c.courseNo = :courseNo")
+Optional&lt;Course&gt; findByIdWithNestedDetails(@Param("courseNo") Long courseNo);
+
+// 조건부 로딩
+@EntityGraph(attributePaths = {"instructor"})
+@Query("SELECT c FROM Course c WHERE c.currentStudents > 0")
+List&lt;Course&gt; findCoursesWithStudents();</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 성능 최적화 팁 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">성능 최적화 팁</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-green-50 border-l-4 border-green-400 p-6 rounded-lg">
+                    <h3 class="text-lg font-bold text-green-800 mb-3">권장사항</h3>
+                    <ul class="text-green-700 space-y-2">
+                        <li>• <strong>지연 로딩:</strong> FetchType.LAZY 기본 사용</li>
+                        <li>• <strong>@EntityGraph:</strong> 필요한 경우에만 사용</li>
+                        <li>• <strong>배치 크기:</strong> default_batch_fetch_size 설정</li>
+                        <li>• <strong>인덱스:</strong> 자주 조회하는 컬럼에 인덱스 생성</li>
+                        <li>• <strong>DTO 변환:</strong> 엔티티 대신 DTO 사용</li>
+                    </ul>
+                </div>
+
+                <div class="bg-red-50 border-l-4 border-red-400 p-6 rounded-lg">
+                    <h3 class="text-lg font-bold text-red-800 mb-3">주의사항</h3>
+                    <ul class="text-red-700 space-y-2">
+                        <li>• <strong>과도한 조인:</strong> 너무 많은 관계를 한 번에 로딩하지 말 것</li>
+                        <li>• <strong>메모리 사용량:</strong> 대량 데이터 처리 시 주의</li>
+                        <li>• <strong>트랜잭션 범위:</strong> 적절한 트랜잭션 범위 유지</li>
+                        <li>• <strong>캐시 고려:</strong> 자주 조회하는 데이터는 캐시 활용</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-white py-6">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2025 JPA 학습 프로젝트</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+

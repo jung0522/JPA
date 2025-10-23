@@ -591,35 +591,72 @@ user.getCourses(); // 빈 리스트 반환 (실제로는 course가 있어야 함
                 <div>
                     <h3 class="text-lg font-semibold text-gray-700 mb-3">Course (관계의 주인 아님)</h3>
                     <pre><code class="language-java">@Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Course {
     @Id
     private Long courseId;
     
-    @OneToMany(mappedBy = "course")
+    @OneToMany(
+        mappedBy = "course",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
+    )
     private List&lt;Curriculum&gt; curriculums = new ArrayList&lt;&gt;();
     
-    // 편의 메서드
+    // 편의 메서드 (중복/재연결 방지)
     public void addCurriculum(Curriculum curriculum) {
-        curriculums.add(curriculum);
-        curriculum.setCourse(this);
+        if (curriculum == null) return;
+        if (!this.curriculums.contains(curriculum)) {
+            this.curriculums.add(curriculum);
+        }
+        if (curriculum.getCourse() != this) {
+            curriculum.assignToCourse(this);
+        }
+    }
+    
+    public void removeCurriculum(Curriculum curriculum) {
+        if (curriculum == null) return;
+        if (this.curriculums.remove(curriculum)) {
+            if (curriculum.getCourse() == this) {
+                curriculum.clearCourse();
+            }
+        }
     }
 }</code></pre>
                 </div>
                 <div>
                     <h3 class="text-lg font-semibold text-gray-700 mb-3">Curriculum (관계의 주인)</h3>
                     <pre><code class="language-java">@Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Curriculum {
     @Id
     private Long curriculumId;
     
-    @ManyToOne
-    @JoinColumn(name = "course_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id", nullable = false)
     private Course course;
     
-    // 편의 메서드
-    public void assignToCourse(Course course) {
-        this.course = course;
-        course.getCurriculums().add(this);
+    // 관계 설정 편의 메서드 (재연결/순환 방지)
+    public void assignToCourse(Course newCourse) {
+        if (newCourse == null) return;
+        if (this.course == newCourse) return;
+        if (this.course != null) {
+            this.course.getCurriculums().remove(this);
+        }
+        this.course = newCourse;
+        if (!newCourse.getCurriculums().contains(this)) {
+            newCourse.getCurriculums().add(this);
+        }
+    }
+    
+    // 역관계 해제 편의 메서드
+    public void clearCourse() {
+        if (this.course == null) return;
+        Course old = this.course;
+        this.course = null;
+        old.getCurriculums().remove(this);
     }
 }</code></pre>
                 </div>
@@ -768,33 +805,7 @@ public class Course {
 }</code></pre>
         </div>
 
-        <!-- Conclusion -->
-        <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-lg p-8 text-white">
-            <h2 class="text-2xl font-bold mb-6">🎯 핵심 포인트</h2>
-            <div class="space-y-4">
-                <div class="bg-white bg-opacity-20 rounded-lg p-4">
-                    <h3 class="font-semibold mb-2">1. MyBatis → JPA 전환의 핵심</h3>
-                    <p>단순 데이터 그릇 → 의미 있는 행위를 가진 도메인 주체로 변화</p>
-                </div>
-                <div class="bg-white bg-opacity-20 rounded-lg p-4">
-                    <h3 class="font-semibold mb-2">2. 비즈니스 메서드</h3>
-                    <p>도메인 설계 철학 (객체지향 원칙) - 도메인 복잡도에 따라 선택적</p>
-                </div>
-                <div class="bg-white bg-opacity-20 rounded-lg p-4">
-                    <h3 class="font-semibold mb-2">3. 편의 메서드</h3>
-                    <p>JPA 양방향 관계의 기술적 필요성 - 양방향에서 필수</p>
-                </div>
-                <div class="bg-white bg-opacity-20 rounded-lg p-4">
-                    <h3 class="font-semibold mb-2">4. 관계의 주인</h3>
-                    <p>외래키를 가진 엔티티가 연관관계 설정 권한을 가짐</p>
-                </div>
-                <div class="bg-white bg-opacity-20 rounded-lg p-4">
-                    <h3 class="font-semibold mb-2">5. 최종 정리</h3>
-                    <p><strong>둘 다 "그냥 메서드"이지만 목적이 다름</strong><br>
-                    편의 메서드 ≠ 비즈니스 메서드 (혼동 주의!)</p>
-                </div>
-            </div>
-        </div>
+        
     </div>
 </body>
 </html>

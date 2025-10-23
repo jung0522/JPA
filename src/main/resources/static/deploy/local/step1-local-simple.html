@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로컬 배포 서버 구축 (심플 버전)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <style>
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        .step-number {
+            background: #334155;
+            color: white;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+        .highlight {
+            background-color: #fef3c7;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <!-- Header -->
+    <header class="bg-slate-800 text-white py-8">
+        <div class="max-w-6xl mx-auto px-6">
+            <h1 class="text-4xl font-bold mb-4">🚀 로컬 배포 서버 구축</h1>
+            <p class="text-slate-300 text-lg">Docker 기반, MariaDB 연동 (심플 버전)</p>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-slate-200">
+        <div class="max-w-6xl mx-auto px-6 py-4">
+            <div class="flex space-x-8">
+                <a href="index.html" class="text-slate-600 hover:text-slate-800 font-medium">개요</a>
+                <a href="step1-local-simple.html" class="text-slate-700 hover:text-slate-900 font-medium border-b-2 border-slate-800">로컬 서버</a>
+                <a href="step2-dockerfile.html" class="text-slate-600 hover:text-slate-800 font-medium">2단계: Dockerfile</a>
+                <a href="step3-compose.html" class="text-slate-600 hover:text-slate-800 font-medium">3단계: Compose</a>
+                <a href="step4-aws.html" class="text-slate-600 hover:text-slate-800 font-medium">4단계: AWS</a>
+                <a href="step5-cicd.html" class="text-slate-600 hover:text-slate-800 font-medium">5단계: CI/CD</a>
+                <a href="../lecture/index.html" class="text-slate-600 hover:text-slate-800 font-medium">← 강의자료</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        
+        <!-- 전제 조건 -->
+        <section class="mb-12">
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg">
+                <h2 class="text-xl font-bold text-blue-800 mb-4">📋 전제 조건</h2>
+                <ul class="text-blue-700 space-y-2">
+                    <li>✅ <strong>MariaDB 컨테이너가 이미 실행 중</strong> (이름: <code>mariadb-container</code>)</li>
+                    <li>✅ Docker가 설치되어 있음</li>
+                    <li>✅ 기본적인 명령어 사용 가능</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 1단계: 네트워크 확인 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">1단계: 네트워크 확인</h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mb-6">
+                <div class="flex items-start mb-4">
+                    <div class="step-number">1</div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800 mb-2">기존 MariaDB 컨테이너 확인</h3>
+                        <p class="text-slate-600 mb-4">MariaDB가 실행 중인지 확인합니다.</p>
+                    </div>
+                </div>
+                
+                <div class="code-block">
+                    <pre><code class="language-bash"># 실행 중인 컨테이너 확인
+docker ps
+
+# mariadb-container가 보여야 함
+# CONTAINER ID   IMAGE      COMMAND                  CREATED        STATUS        PORTS                    NAMES
+# abc123def456   mariadb    "docker-entrypoint.s…"   2 hours ago    Up 2 hours    0.0.0.0:3306->3306/tcp   mariadb-container</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2단계: 배포 서버 컨테이너 생성 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">2단계: 배포 서버 컨테이너 생성</h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mb-6">
+                <div class="flex items-start mb-4">
+                    <div class="step-number">2</div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800 mb-2">Ubuntu 컨테이너 실행</h3>
+                        <p class="text-slate-600 mb-4">배포용 Ubuntu 서버 컨테이너를 생성합니다.</p>
+                    </div>
+                </div>
+                
+                <div class="code-block">
+                    <pre><code class="language-bash"># 배포 서버 컨테이너 생성
+docker run -d \
+  --name deploy-server \
+  --network bridge \
+  -p 2222:22 \
+  -p 8081:8080 \
+  -v deploy-data:/home \
+  ubuntu:22.04 sleep infinity
+
+# 컨테이너 실행 확인
+docker ps</code></pre>
+                </div>
+                
+                <div class="mt-4 p-4 bg-slate-100 rounded-lg">
+                    <h4 class="font-semibold text-slate-700 mb-2">포트 설명</h4>
+                    <ul class="text-slate-600 text-sm space-y-1">
+                        <li>• <strong>2222:22</strong> - SSH 접속용 (호스트 2222 → 컨테이너 22)</li>
+                        <li>• <strong>8081:8080</strong> - 웹 애플리케이션용 (호스트 8081 → 컨테이너 8080)</li>
+                        <li>• <strong>deploy-data:/home</strong> - 데이터 영속성을 위한 볼륨</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3단계: 컨테이너 내부 설정 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">3단계: 컨테이너 내부 설정</h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mb-6">
+                <div class="flex items-start mb-4">
+                    <div class="step-number">3</div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800 mb-2">컨테이너 접속 및 기본 설정</h3>
+                        <p class="text-slate-600 mb-4">컨테이너 내부에 접속하여 필요한 패키지를 설치합니다.</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold text-slate-700 mb-2">1. 컨테이너 접속</h4>
+                        <div class="code-block">
+                            <pre><code class="language-bash"># 컨테이너 내부 접속
+docker exec -it deploy-server bash
+
+# 현재 사용자 확인
+whoami   # root</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-slate-700 mb-2">2. 시스템 업데이트 및 패키지 설치</h4>
+                        <div class="code-block">
+                            <pre><code class="language-bash"># 시스템 업데이트
+apt-get update && apt-get upgrade -y
+
+# 필수 패키지 설치
+apt-get install -y \
+  openssh-server \
+  vim \
+  curl \
+  wget \
+  sudo \
+  netcat-openbsd \
+  iputils-ping</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4단계: SSH 설정 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">4단계: SSH 설정</h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mb-6">
+                <div class="flex items-start mb-4">
+                    <div class="step-number">4</div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800 mb-2">SSH 서버 설정 및 실행</h3>
+                        <p class="text-slate-600 mb-4">SSH 서버를 설정하여 외부에서 접속할 수 있도록 합니다.</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold text-slate-700 mb-2">1. SSH 서버 설정</h4>
+                        <div class="code-block">
+                            <pre><code class="language-bash"># SSH 데몬 준비
+mkdir -p /run/sshd
+ssh-keygen -A
+
+# SSH 데몬 실행
+/usr/sbin/sshd
+
+# 실행 확인
+pgrep -a sshd</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-slate-700 mb-2">2. 사용자 생성 및 비밀번호 설정</h4>
+                        <div class="code-block">
+                            <pre><code class="language-bash"># root 비밀번호 설정
+echo "root:admin1234" | chpasswd
+
+# was 사용자 생성
+useradd -m -s /bin/bash was
+echo "was:1234" | chpasswd
+
+# sudo 권한 추가
+usermod -aG sudo was
+
+# 확인
+id was</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5단계: SSH 접속 테스트 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">5단계: SSH 접속 테스트</h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mb-6">
+                <div class="flex items-start mb-4">
+                    <div class="step-number">5</div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800 mb-2">외부에서 SSH 접속</h3>
+                        <p class="text-slate-600 mb-4">호스트에서 컨테이너로 SSH 접속을 테스트합니다.</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold text-slate-700 mb-2">1. 컨테이너에서 나가기</h4>
+                        <div class="code-block">
+                            <pre><code class="language-bash"># 컨테이너에서 나가기
+exit</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-slate-700 mb-2">2. 호스트에서 SSH 접속</h4>
+                        <div class="code-block">
+                            <pre><code class="language-bash"># was 사용자로 접속
+ssh -p 2222 was@localhost
+# 비밀번호: 1234
+
+# 또는 root로 접속
+ssh -p 2222 root@localhost
+# 비밀번호: admin1234</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-yellow-800 mb-2">⚠️ SSH 보안 경고 해결</h4>
+                        <p class="text-yellow-700 text-sm mb-2">처음 접속 시 다음과 같은 경고가 나타날 수 있습니다:</p>
+                        <div class="code-block">
+                            <pre><code class="language-text">The authenticity of host '[localhost]:2222' can't be established.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes</code></pre>
+                        </div>
+                        <p class="text-yellow-700 text-sm mt-2">그냥 <code>yes</code>를 입력하면 됩니다!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6단계: MariaDB 연결 테스트 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">6단계: MariaDB 연결 테스트</h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mb-6">
+                <div class="flex items-start mb-4">
+                    <div class="step-number">6</div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800 mb-2">네트워크 연결 확인</h3>
+                        <p class="text-slate-600 mb-4">배포 서버에서 MariaDB 컨테이너로 연결할 수 있는지 확인합니다.</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold text-slate-700 mb-2">1. 네트워크 연결 테스트</h4>
+                        <div class="code-block">
+                            <pre><code class="language-bash"># SSH로 배포 서버 접속 후
+ssh -p 2222 was@localhost
+
+# MariaDB 컨테이너 ping 테스트
+ping -c1 mariadb-container
+
+# 결과: PING mariadb-container (172.17.0.2) 56(84) bytes of data.
+#       64 bytes from mariadb-container (172.17.0.2): icmp_seq=1 ttl=64 time=0.123 ms</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-slate-700 mb-2">2. 포트 연결 테스트</h4>
+                        <div class="code-block">
+                            <pre><code class="language-bash"># MariaDB 포트 연결 테스트
+nc -zv mariadb-container 3306
+
+# 성공 시: mariadb-container [172.17.0.2] 3306 (mysql) open
+# 실패 시: nc: connect to mariadb-container port 3306 (tcp) failed: Connection refused</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-slate-700 mb-2">3. JDBC 연결 문자열</h4>
+                        <div class="code-block">
+                            <pre><code class="language-text"># Spring Boot application.yml에서 사용
+spring:
+  datasource:
+    url: jdbc:mariadb://mariadb-container:3306/goorm_jpa
+    username: your_username
+    password: your_password</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7단계: Java 설치 (선택사항) -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">7단계: Java 설치 (선택사항)</h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mb-6">
+                <div class="flex items-start mb-4">
+                    <div class="step-number">7</div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800 mb-2">Java 21 설치</h3>
+                        <p class="text-slate-600 mb-4">JAR 파일을 직접 실행할 수 있도록 Java를 설치합니다.</p>
+                    </div>
+                </div>
+                
+                <div class="code-block">
+                    <pre><code class="language-bash"># SSH로 배포 서버 접속
+ssh -p 2222 was@localhost
+
+# Java 21 설치
+sudo apt-get update
+sudo apt-get install -y openjdk-21-jdk
+
+# Java 버전 확인
+java -version
+
+# JAVA_HOME 설정
+echo 'export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64' >> ~/.bashrc
+echo 'export PATH=$JAVA_HOME/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+
+# 환경변수 확인
+echo $JAVA_HOME</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 완료 확인 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">✅ 완료 확인</h2>
+            
+            <div class="bg-green-50 border-l-4 border-green-400 p-6 rounded-lg mb-6">
+                <h3 class="text-xl font-semibold text-green-800 mb-4">🎉 로컬 배포 서버 구축 완료!</h3>
+                <p class="text-green-700 mb-4">이제 다음 기능들이 모두 준비되었습니다:</p>
+                <ul class="text-green-700 space-y-2 text-sm">
+                    <li>✅ <strong>SSH 접속</strong>: <code>ssh -p 2222 was@localhost</code></li>
+                    <li>✅ <strong>MariaDB 연결</strong>: <code>jdbc:mariadb://mariadb-container:3306/goorm_jpa</code></li>
+                    <li>✅ <strong>Java 환경</strong>: JAR 파일 실행 가능</li>
+                    <li>✅ <strong>데이터 영속성</strong>: <code>deploy-data</code> 볼륨</li>
+                </ul>
+            </div>
+            
+            <div class="bg-slate-100 rounded-lg p-6">
+                <h3 class="text-xl font-semibold text-slate-800 mb-4">다음 단계</h3>
+                <p class="text-slate-600 mb-4">
+                    이제 JAR 파일을 이 서버에 업로드하고 실행할 수 있습니다. 
+                    또는 Dockerfile을 사용하여 컨테이너로 배포할 수도 있습니다.
+                </p>
+                <div class="flex space-x-4">
+                    <a href="step2-dockerfile.html" class="inline-block bg-slate-800 text-white px-6 py-3 rounded hover:bg-slate-700 transition-colors">
+                        Dockerfile 배포 →
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 문제 해결 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">🔧 문제 해결</h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mb-6">
+                <h3 class="text-xl font-semibold text-slate-800 mb-4">자주 발생하는 문제들</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold text-slate-700 mb-2">1. SSH 접속이 안 될 때</h4>
+                        <div class="code-block">
+                            <pre><code class="language-bash"># 컨테이너 내부에서 SSH 재시작
+docker exec -it deploy-server bash
+/usr/sbin/sshd
+
+# 포트 확인
+docker ps | grep deploy-server</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-slate-700 mb-2">2. MariaDB 연결이 안 될 때</h4>
+                        <div class="code-block">
+                            <pre><code class="language-bash"># MariaDB 컨테이너 상태 확인
+docker ps | grep mariadb
+
+# 네트워크 확인
+docker network ls
+docker network inspect bridge</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-slate-700 mb-2">3. 컨테이너 재시작</h4>
+                        <div class="code-block">
+                            <pre><code class="language-bash"># 컨테이너 중지 및 삭제
+docker stop deploy-server
+docker rm deploy-server
+
+# 다시 생성
+docker run -d \
+  --name deploy-server \
+  --network bridge \
+  -p 2222:22 \
+  -p 8081:8080 \
+  -v deploy-data:/home \
+  ubuntu:22.04 sleep infinity</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-white py-6">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <p>&copy; 2025 JPA 학습 프로젝트 - Docker 배포 가이드</p>
+        </div>
+    </footer>
+
+</body>
+</html>

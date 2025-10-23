@@ -3,6 +3,32 @@ services:
   app:
     build: .
     ports:
-      - "8080:8080"
+      - "8083:8082"
     container_name: jpa-app
     restart: unless-stopped
+    networks:
+      - appnet
+    depends_on:
+      - minio
+  minio:
+    image: minio/minio:latest
+    container_name: jpa-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - appnet
+
+volumes:
+  minio_data:
+
+networks:
+  appnet:
+    external: true
