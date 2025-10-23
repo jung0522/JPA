@@ -180,12 +180,15 @@ services:
     build: .
     ports:
       - "8083:8082"
-    container_name: jpa-app
+    container_name: jpa-app-compose
     restart: unless-stopped
     networks:
       - appnet
     depends_on:
       - minio
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_PASSWORD=1234
   minio:
     image: minio/minio:latest
     container_name: jpa-minio
@@ -219,6 +222,7 @@ networks:
                             <li>• <strong>MinIO 콘솔</strong>: 9001 포트</li>
                             <li>• <strong>네트워크</strong>: 기존 appnet 사용</li>
                             <li>• <strong>볼륨</strong>: minio_data로 데이터 영속성</li>
+                            <li>• <strong>프로파일</strong>: prod 프로파일 사용 (MariaDB 연결)</li>
                         </ul>
                     </div>
                 </div>
@@ -251,6 +255,33 @@ docker-compose up -d
 # 또는 로그와 함께 실행
 docker-compose up --build</code></pre>
                         </div>
+                    </div>
+                    
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                        <h4 class="font-semibold text-yellow-800 mb-2">⚠️ 실행 방식 선택</h4>
+                        <div class="space-y-2">
+                            <div>
+                                <strong>백그라운드 실행 (추천):</strong>
+                                <code class="bg-yellow-100 px-2 py-1 rounded">docker-compose up -d</code>
+                                <span class="text-yellow-700 text-sm">- 콘솔이 즉시 돌아옴, 다른 작업 가능</span>
+                            </div>
+                            <div>
+                                <strong>포그라운드 실행:</strong>
+                                <code class="bg-yellow-100 px-2 py-1 rounded">docker-compose up</code>
+                                <span class="text-yellow-700 text-sm">- 콘솔이 계속 실행 상태로 유지됨</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-red-800 mb-2">❌ 주의사항</h4>
+                        <p class="text-red-700 text-sm mb-2">포그라운드 실행 중에는 <strong>Ctrl+C로 강제 종료하지 마세요!</strong></p>
+                        <ul class="text-red-700 text-sm space-y-1">
+                            <li>• 컨테이너가 비정상적으로 중지됨</li>
+                            <li>• 데이터 손실 가능성</li>
+                            <li>• 다음 실행 시 문제 발생 가능</li>
+                        </ul>
+                        <p class="text-red-700 text-sm mt-2"><strong>해결책:</strong> 새 터미널에서 <code>docker-compose down</code>으로 정상 종료</p>
                     </div>
                     
                     <div>

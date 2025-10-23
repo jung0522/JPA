@@ -91,10 +91,53 @@
                 </ul>
             </div>
             
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <h3 class="text-lg font-semibold text-red-800 mb-2">⚠️ 중요: 컨테이너 권한 설정</h3>
+                <p class="text-red-700 text-sm mb-2">컨테이너 내부에서 Docker를 실행하려면 privileged 모드가 필요합니다.</p>
+                <div class="code-block">
+                    <pre><code class="language-bash"># 기존 컨테이너 중지 및 삭제
+docker stop deploy-server
+docker rm deploy-server
+
+# privileged 모드로 다시 생성
+docker run -d --name deploy-server --network appnet --privileged -p 2222:22 -p 8081:8080 -v deploy-data:/home ubuntu:22.04 sleep infinity
+
+</code></pre>
+                </div>
+            </div>
+            
             <div class="space-y-6">
-                <!-- 단계 1: 로컬에서 이미지 빌드 -->
+                <!-- 단계 1: 기존 deploy-server 컨테이너 접속 -->
                 <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
-                    <h3 class="text-xl font-semibold text-slate-800 mb-4">📦 단계 1: 로컬에서 이미지 빌드</h3>
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">🖥️ 단계 1: 기존 deploy-server 컨테이너 접속</h3>
+                    <div class="code-block">
+                        <pre><code class="language-bash"># 컨테이너에 직접 접속 (root 권한)
+docker exec -it deploy-server bash</code></pre>
+                    </div>
+
+                </div>
+                
+                <!-- 단계 2: deploy-server에 Docker 설치 -->
+                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">🔧 단계 2: deploy-server에 Docker 설치</h3>
+                    <div class="code-block">
+                        <pre><code class="language-bash"># deploy-server 컨테이너 내부에서 실행 (root 권한)
+apt update
+apt install -y docker.io
+
+# Docker 데몬 시작 (컨테이너 환경)
+dockerd &
+
+</code></pre>
+                    </div>
+                    <div class="mt-4 p-3 bg-green-50 rounded text-sm">
+                        <strong>✅ 확인:</strong> Docker가 정상적으로 설치되었는지 확인합니다.
+                    </div>
+                </div>
+                
+                <!-- 단계 3: 로컬에서 이미지 빌드 (새 터미널) -->
+                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">📦 단계 3: 로컬에서 이미지 빌드 (새 터미널)</h3>
                     <div class="code-block">
                         <pre><code class="language-bash"># 1. JAR 파일 빌드 (소스코드 변경 시에만)
 ./gradlew build
@@ -110,49 +153,14 @@ docker images jpa-app</code></pre>
                     </div>
                 </div>
                 
-                <!-- 단계 2: 기존 deploy-server 컨테이너 접속 -->
-                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
-                    <h3 class="text-xl font-semibold text-slate-800 mb-4">🖥️ 단계 2: 기존 deploy-server 컨테이너 접속</h3>
-                    <div class="code-block">
-                        <pre><code class="language-bash"># 기존 deploy-server 컨테이너에 접속
-docker exec -it deploy-server bash
-
-# 또는 SSH로 접속 (SSH 서버가 실행 중인 경우)
-ssh -p 2222 was@localhost</code></pre>
-                    </div>
-                    <div class="mt-4 p-3 bg-green-50 rounded text-sm">
-                        <strong>✅ 기존 환경 활용:</strong> 이미 Java가 설치되어 있고 JAR 파일도 있는 상태입니다.
-                    </div>
-                </div>
-                
-                <!-- 단계 3: deploy-server에 Docker 설치 -->
-                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
-                    <h3 class="text-xl font-semibold text-slate-800 mb-4">🔧 단계 3: deploy-server에 Docker 설치</h3>
-                    <div class="code-block">
-                        <pre><code class="language-bash"># deploy-server 컨테이너 내부에서 실행
-apt update
-apt install -y docker.io
-
-# Docker 서비스 시작
-service docker start
-
-# Docker 버전 확인
-docker --version
-
-# Docker 그룹에 사용자 추가 (필요한 경우)
-usermod -aG docker was</code></pre>
-                    </div>
-                    <div class="mt-4 p-3 bg-green-50 rounded text-sm">
-                        <strong>✅ 확인:</strong> Docker가 정상적으로 설치되었는지 확인합니다.
-                    </div>
-                </div>
-                
                 <!-- 단계 4: 이미지 전송 -->
                 <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
-                    <h3 class="text-xl font-semibold text-slate-800 mb-4">📤 단계 4: 이미지 전송</h3>
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">📤 단계 4: 이미지 전송 (새 터미널)</h3>
+                    
                     <div class="code-block">
-                        <pre><code class="language-bash"># 다른 터미널에서 실행 (로컬 호스트에서)
-docker save jpa-app | docker exec -i deploy-server docker load</code></pre>
+                        <pre><code class="language-bash"># 새 터미널에서 실행 (로컬 호스트에서)
+docker save jpa-app | docker exec -i deploy-server docker load
+</code></pre>
                     </div>
                     <div class="mt-4 p-3 bg-purple-50 rounded text-sm">
                         <strong>🔄 과정:</strong> 로컬 이미지를 파일로 내보내서 deploy-server로 전송합니다.
@@ -161,16 +169,23 @@ docker save jpa-app | docker exec -i deploy-server docker load</code></pre>
                 
                 <!-- 단계 5: deploy-server에서 앱 실행 -->
                 <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
-                    <h3 class="text-xl font-semibold text-slate-800 mb-4">🚀 단계 5: deploy-server에서 앱 실행</h3>
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">🚀 단계 5: deploy-server에서 앱 실행 (새 터미널)</h3>
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                        <p class="text-yellow-800 text-sm font-semibold">⚠️ 중요: 새 터미널에서 실행하세요!</p>
+                        <p class="text-yellow-700 text-sm">Docker 데몬이 실행 중인 터미널은 그대로 두고, 새 터미널을 열어서 실행하세요.</p>
+                    </div>
                     <div class="code-block">
-                        <pre><code class="language-bash"># deploy-server 컨테이너 내부에서 실행
-docker run -d -p 8088:8082 --name jpa-app-container jpa-app</code></pre>
+                        <pre><code class="language-bash"># deploy-server 컨테이너에 접속
+docker exec -it deploy-server bash
+
+# 앱 실행 (외부 8081 → 앱 8082)
+docker run -d -p 8081:8082 -e DB_PASSWORD=1234 --name jpa-app-container localhost/jpa-app:latest</code></pre>
                     </div>
                     <div class="mt-4 p-3 bg-green-50 rounded text-sm">
                         <strong>✅ 확인:</strong> 
                         <ul class="mt-2 space-y-1">
-                            <li>• 기존 앱: <code>http://localhost:8081</code></li>
-                            <li>• 새 앱: <code>http://localhost:8088</code></li>
+                            <li>• 새 앱: <code>http://localhost:8081</code> (외부 접속)</li>
+                            <li>• 포트 매핑: 8081 (외부) → 8082 (컨테이너 내부)</li>
                         </ul>
                     </div>
                 </div>
@@ -221,13 +236,17 @@ docker images jpa-app</code></pre>
                     <h3 class="text-xl font-semibold text-slate-800 mb-4">🚀 단계 3: 컨테이너 실행</h3>
                     <div class="code-block">
                         <pre><code class="language-bash"># 컨테이너 실행 (포트 8082)
-docker run -p 8082:8082 jpa-app
+docker run -p 8082:8082 -e DB_PASSWORD=1234 jpa-app
 
 # 또는 백그라운드 실행
-docker run -d -p 8082:8082 --name jpa-container jpa-app</code></pre>
+docker run -d -p 8082:8082 -e DB_PASSWORD=1234 --name jpa-container jpa-app</code></pre>
                     </div>
                     <div class="mt-4 p-3 bg-green-50 rounded text-sm">
                         <strong>✅ 확인:</strong> <code>http://localhost:8082</code>에서 앱이 실행되는지 확인합니다.
+                    </div>
+                    <div class="mt-4 p-3 bg-blue-50 rounded text-sm">
+                        <strong>📋 프로파일 설정:</strong> 현재 <code>prod</code> 프로파일이 활성화되어 MariaDB에 연결됩니다. 
+                        <code>DB_PASSWORD=1234</code> 환경변수가 필요합니다.
                     </div>
                 </div>
                 
@@ -300,8 +319,9 @@ docker exec jpa-container netstat -tulpn</code></pre>
                                     <li>• <strong>포트 충돌</strong>: 8082 포트가 이미 사용 중</li>
                                     <li>• <strong>이미지 문제</strong>: JAR 파일이 없거나 잘못된 경로</li>
                                     <li>• <strong>Java 실행 오류</strong>: Java 버전 불일치 또는 메모리 부족</li>
+                                    <li>• <strong>데이터베이스 연결</strong>: MariaDB 컨테이너가 실행되지 않음</li>
+                                    <li>• <strong>환경변수</strong>: <code>DB_PASSWORD</code> 환경변수가 설정되지 않음</li>
                                     <li>• <strong>네트워크 문제</strong>: 방화벽이나 Docker 네트워크 설정</li>
-                                    <li>• <strong>환경변수</strong>: 필요한 환경변수가 설정되지 않음</li>
                                 </ul>
                             </div>
                         </div>
@@ -396,7 +416,7 @@ docker rmi jpa-app</code></pre>
                             <li>• 실제 AWS EC2 배포 과정 이해</li>
                             <li>• 이미지 전송 및 배포 과정 학습</li>
                             <li>• 서버 환경에서의 Docker 사용법</li>
-                            <li>• 포트 매핑 및 네트워크 설정</li>
+                            <li>• 포트 매핑: 8081 (외부) → 8082 (앱)</li>
                         </ul>
                     </div>
                     <div>
@@ -405,13 +425,40 @@ docker rmi jpa-app</code></pre>
                             <li>• Dockerfile 기본 사용법 학습</li>
                             <li>• 컨테이너 생성 및 관리</li>
                             <li>• 로컬 개발 환경 구축</li>
-                            <li>• Docker 명령어 숙련도 향상</li>
+                            <li>• 포트 매핑: 8082 (직접 접속)</li>
                         </ul>
                     </div>
                 </div>
             </div>
         </section>
 
+        <!-- Podman 호환성 섹션 -->
+        <section class="py-8">
+            <div class="max-w-4xl mx-auto px-6">
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-lg">
+                    <h3 class="text-lg font-bold text-yellow-800 mb-4">🔧 Podman 사용자 참고사항</h3>
+                    <p class="text-yellow-700 mb-4">
+                        Podman을 사용하는 경우, Docker와 tar 형식 호환성 문제가 발생할 수 있습니다. 
+                        다음 방법을 사용하여 이미지를 전송하세요:
+                    </p>
+                    <div class="code-block">
+                        <pre><code class="language-bash"># Docker 호환 형식으로 저장
+podman save jpa-app --format docker-archive > jpa-app-docker.tar
+
+# 컨테이너로 복사
+podman cp jpa-app-docker.tar deploy-server:/tmp/
+
+# 컨테이너 내부에서 로드
+podman exec -it deploy-server bash
+docker load < /tmp/jpa-app-docker.tar</code></pre>
+                    </div>
+                    <div class="mt-4 p-3 bg-yellow-100 rounded text-sm">
+                        <strong>💡 팁:</strong> 
+                        <code>--format docker-archive</code> 옵션을 사용하면 Docker와 호환되는 tar 파일이 생성됩니다.
+                    </div>
+                </div>
+            </div>
+        </section>
 
     </main>
 
