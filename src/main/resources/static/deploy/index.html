@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker 배포 가이드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <style>
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        .step-number {
+            background: #334155;
+            color: white;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+        .highlight {
+            background-color: #fef3c7;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <!-- Header -->
+    <header class="bg-slate-800 text-white py-8">
+        <div class="max-w-6xl mx-auto px-6">
+            <h1 class="text-4xl font-bold mb-4">Docker 배포 가이드</h1>
+            <p class="text-slate-300 text-lg">로컬 환경부터 AWS 클라우드까지 단계별 배포 학습</p>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-slate-200">
+        <div class="max-w-6xl mx-auto px-6 py-4">
+            <div class="flex space-x-8">
+                <a href="index.html" class="text-slate-700 hover:text-slate-900 font-medium border-b-2 border-slate-800">개요</a>
+                <a href="network-basics.html" class="text-slate-600 hover:text-slate-800 font-medium">네트워크 개론</a>
+                <a href="local.html" class="text-slate-600 hover:text-slate-800 font-medium">로컬 배포</a>
+                <a href="aws.html" class="text-slate-600 hover:text-slate-800 font-medium">AWS 배포</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        
+        <!-- 학습 목표 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6">학습 목표</h2>
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg">
+                <p class="text-blue-800 text-lg">
+                    <strong>로컬 서버 환경부터 AWS 클라우드까지</strong> 단계별로 Docker 배포를 학습하여 
+                    실무에서 사용하는 컨테이너 기반 배포 방식을 완전히 이해합니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- 네트워크 개론 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">네트워크 개론</h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mb-8">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">🌐</span>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-slate-800 mb-2">네트워크 아키텍처 이해</h3>
+                    <p class="text-slate-600">서버 구성부터 클라우드 스케일링까지</p>
+                </div>
+                
+                <div class="grid md:grid-cols-4 gap-4 mb-6">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <span class="text-lg font-bold text-blue-600">1</span>
+                        </div>
+                        <p class="text-sm font-medium text-slate-700">기본 서버</p>
+                        <p class="text-xs text-slate-500">웹서버 + WAS + DB</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <span class="text-lg font-bold text-green-600">2</span>
+                        </div>
+                        <p class="text-sm font-medium text-slate-700">멀티 서버</p>
+                        <p class="text-xs text-slate-500">로드밸런서 + 클러스터</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <span class="text-lg font-bold text-orange-600">3</span>
+                        </div>
+                        <p class="text-sm font-medium text-slate-700">AWS 구성</p>
+                        <p class="text-xs text-slate-500">EC2 + RDS + S3</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <span class="text-lg font-bold text-purple-600">4</span>
+                        </div>
+                        <p class="text-sm font-medium text-slate-700">스케일링</p>
+                        <p class="text-xs text-slate-500">Auto Scaling + Multi-AZ</p>
+                    </div>
+                </div>
+                
+                <a href="network-basics.html" class="w-full bg-purple-600 text-white px-6 py-3 rounded hover:bg-purple-700 transition-colors text-center block">
+                    네트워크 개론 학습 →
+                </a>
+            </div>
+        </section>
+
+        <!-- 배포 환경 선택 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">배포 환경 선택</h2>
+            
+            <div class="grid md:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white rounded-lg shadow-md p-8 border border-slate-200">
+                    <div class="text-center mb-6">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-2xl">🏠</span>
+                        </div>
+                        <h3 class="text-2xl font-semibold text-slate-800 mb-2">로컬 배포</h3>
+                        <p class="text-slate-600">개발 및 학습 환경</p>
+                    </div>
+                    
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-400 rounded-full mr-3"></span>
+                            <span class="text-slate-600">JAR 파일 직접 배포</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-400 rounded-full mr-3"></span>
+                            <span class="text-slate-600">Dockerfile 컨테이너화</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-400 rounded-full mr-3"></span>
+                            <span class="text-slate-600">Docker Compose 멀티 컨테이너</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-400 rounded-full mr-3"></span>
+                            <span class="text-slate-600">MinIO + Nginx 구성</span>
+                        </div>
+                    </div>
+                    
+                    <a href="local.html" class="w-full bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition-colors text-center block">
+                        로컬 배포 시작 →
+                    </a>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-8 border border-slate-200">
+                    <div class="text-center mb-6">
+                        <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-2xl">☁️</span>
+                        </div>
+                        <h3 class="text-2xl font-semibold text-slate-800 mb-2">AWS 배포</h3>
+                        <p class="text-slate-600">클라우드 프로덕션 환경</p>
+                    </div>
+                    
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center">
+                            <span class="w-2 h-2 bg-orange-400 rounded-full mr-3"></span>
+                            <span class="text-slate-600">EC2 + RDS + S3 구성</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-2 h-2 bg-orange-400 rounded-full mr-3"></span>
+                            <span class="text-slate-600">GitHub Actions CI/CD</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-2 h-2 bg-orange-400 rounded-full mr-3"></span>
+                            <span class="text-slate-600">로드 밸런서 + Auto Scaling</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-2 h-2 bg-orange-400 rounded-full mr-3"></span>
+                            <span class="text-slate-600">모니터링 + 로깅</span>
+                        </div>
+                    </div>
+                    
+                    <a href="aws.html" class="w-full bg-orange-600 text-white px-6 py-3 rounded hover:bg-orange-700 transition-colors text-center block">
+                        AWS 배포 시작 →
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 학습 로드맵 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">학습 로드맵</h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold">0</div>
+                        <span class="text-lg font-semibold text-slate-800">서버 준비</span>
+                    </div>
+                    <div class="w-16 h-0.5 bg-slate-300"></div>
+                    <div class="flex items-center space-x-4">
+                        <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
+                        <span class="text-lg font-semibold text-slate-800">JAR 배포</span>
+                    </div>
+                    <div class="w-16 h-0.5 bg-slate-300"></div>
+                    <div class="flex items-center space-x-4">
+                        <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">2</div>
+                        <span class="text-lg font-semibold text-slate-800">Dockerfile</span>
+                    </div>
+                    <div class="w-16 h-0.5 bg-slate-300"></div>
+                    <div class="flex items-center space-x-4">
+                        <div class="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">3</div>
+                        <span class="text-lg font-semibold text-slate-800">Compose</span>
+                    </div>
+                </div>
+                <p class="text-slate-600 text-center">
+                    각 단계는 이전 단계의 지식을 바탕으로 점진적으로 복잡성을 증가시킵니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- 핵심 개념 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">핵심 개념</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">🐳 Docker</h3>
+                    <ul class="text-slate-600 space-y-2">
+                        <li>• <strong>컨테이너</strong>: 애플리케이션과 의존성을 패키징</li>
+                        <li>• <strong>이미지</strong>: 컨테이너의 템플릿</li>
+                        <li>• <strong>네트워크</strong>: 컨테이너 간 통신</li>
+                        <li>• <strong>볼륨</strong>: 데이터 영속성 보장</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">☁️ AWS</h3>
+                    <ul class="text-slate-600 space-y-2">
+                        <li>• <strong>EC2</strong>: 가상 서버 (로컬 Ubuntu 대응)</li>
+                        <li>• <strong>RDS</strong>: 관리형 데이터베이스 (로컬 MariaDB 대응)</li>
+                        <li>• <strong>S3</strong>: 객체 저장소 (로컬 MinIO 대응)</li>
+                        <li>• <strong>ALB</strong>: 로드 밸런서 (로컬 Nginx 대응)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 사전 준비사항 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">사전 준비사항</h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800 mb-4">로컬 환경</h3>
+                        <ul class="text-slate-600 space-y-2">
+                            <li>• Docker Desktop 설치</li>
+                            <li>• IntelliJ IDEA (또는 다른 IDE)</li>
+                            <li>• FileZilla (SFTP 클라이언트)</li>
+                            <li>• 웹브라우저</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800 mb-4">AWS 환경</h3>
+                        <ul class="text-slate-600 space-y-2">
+                            <li>• AWS 계정 생성</li>
+                            <li>• GitHub 계정 생성</li>
+                            <li>• AWS CLI 설치</li>
+                            <li>• 도메인 (선택사항)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-white py-6">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <p>&copy; 2025 JPA 학습 프로젝트 - Docker 배포 가이드</p>
+        </div>
+    </footer>
+
+</body>
+</html>

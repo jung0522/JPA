@@ -6,9 +6,9 @@ import lombok.*;
 
 /**
  * 커리큘럼 엔티티
- * - ManyToOne 단방향 (Curriculum → Course)
+ * - ManyToOne 양방향 (Curriculum ↔ Course)
  * - Step 1: JPQL 사용
- * - Step 2: 양방향 + 편의 메소드로 개선 예정
+ * - Step 2: 양방향 + 편의 메소드로 개선 완료
  */
 @Entity
 @Getter
@@ -61,5 +61,15 @@ public class Curriculum extends BaseEntity {
         this.description = description;
         this.materials = materials;
         this.duration = duration;
+    }
+
+    // ===== Step 2: 양방향 관계를 위한 setter 추가 =====
+    
+    /**
+     * Course 설정 (양방향 관계용)
+     * - Course.addCurriculum()에서 호출됨
+     */
+    public void setCourse(Course course) {
+        this.course = course;
     }
 }

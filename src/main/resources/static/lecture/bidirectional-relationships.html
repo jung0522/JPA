@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JPA 양방향 관계</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <style>
+        .code-block {
+            background: #2d3748;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        .highlight {
+            background-color: #fef3c7;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-slate-800 text-white py-6">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl font-bold">JPA 양방향 관계</h1>
+            <p class="text-slate-300 mt-2">편의 메서드가 필요한 복잡한 관계</p>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex space-x-6">
+                <a href="#what-is" class="text-blue-600 hover:text-blue-800 font-medium">양방향이란?</a>
+                <a href="#mapping" class="text-blue-600 hover:text-blue-800 font-medium">매핑 설정</a>
+                <a href="#owner" class="text-blue-600 hover:text-blue-800 font-medium">관계의 주인</a>
+                <a href="#problems" class="text-blue-600 hover:text-blue-800 font-medium">문제점</a>
+                <a href="#next" class="text-blue-600 hover:text-blue-800 font-medium">다음 단계</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        
+        <!-- 양방향이란? -->
+        <section id="what-is" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">양방향 관계란?</h2>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg mb-6">
+                <h3 class="text-lg font-bold text-blue-800 mb-3">정의</h3>
+                <p class="text-blue-700 mb-4">
+                    양방향 관계는 두 엔티티가 서로를 참조할 수 있는 관계입니다.
+                    한쪽에서 다른 쪽으로, 다른 쪽에서도 한쪽으로 접근이 가능합니다.
+                </p>
+                <p class="text-blue-700">
+                    <strong>핵심:</strong> 양쪽에서 서로를 참조할 수 있음
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">양방향 관계 예시</h3>
+                    <div class="code-block">
+                        <pre><code class="language-java">// Course ↔ Instructor (양방향)
+@Entity
+public class Course {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long courseNo;
+    
+    private String name;
+    private String description;
+    
+    // Course → Instructor
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "instructor_no")
+    private Instructor instructor;
+    
+    // Course ← Instructor (양방향)
+    @OneToMany(mappedBy = "instructor")
+    private List&lt;Course&gt; courses = new ArrayList&lt;&gt;();
+}
+
+@Entity
+public class Instructor {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long instructorNo;
+    
+    private String name;
+    private String email;
+    
+    // Instructor ← Course (양방향)
+    @OneToMany(mappedBy = "instructor")
+    private List&lt;Course&gt; courses = new ArrayList&lt;&gt;();
+}</code></pre>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">관계 방향</h3>
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                        <div class="text-center">
+                            <div class="text-lg font-bold mb-2">Course</div>
+                            <div class="flex justify-center space-x-4">
+                                <div class="text-center">
+                                    <div class="text-2xl">↗</div>
+                                    <div class="text-sm text-gray-600">@ManyToOne</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-2xl">↖</div>
+                                    <div class="text-sm text-gray-600">@OneToMany</div>
+                                </div>
+                            </div>
+                            <div class="text-lg font-bold">Instructor</div>
+                        </div>
+                        <div class="mt-4 text-sm text-gray-600">
+                            <p>• Course → Instructor: 가능</p>
+                            <p>• Instructor → Course: 가능</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 매핑 설정 -->
+        <section id="mapping" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">양방향 관계 매핑 설정</h2>
+            
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">관계의 주인 (Owner)</h3>
+                    <div class="code-block">
+                        <pre><code class="language-java">@Entity
+public class Course {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long courseNo;
+    
+    private String name;
+    private String description;
+    
+    // 관계의 주인: 외래키 소유
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "instructor_no")
+    private Instructor instructor;
+    
+    // getter, setter
+    public Instructor getInstructor() {
+        return instructor;
+    }
+    
+    public void setInstructor(Instructor instructor) {
+        this.instructor = instructor;
+    }
+}</code></pre>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">관계의 주인이 아닌 쪽</h3>
+                    <div class="code-block">
+                        <pre><code class="language-java">@Entity
+public class Instructor {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long instructorNo;
+    
+    private String name;
+    private String email;
+    
+    // 관계의 주인이 아님: mappedBy 사용
+    @OneToMany(mappedBy = "instructor")
+    private List&lt;Course&gt; courses = new ArrayList&lt;&gt;();
+    
+    // getter, setter
+    public List&lt;Course&gt; getCourses() {
+        return courses;
+    }
+    
+    public void setCourses(List&lt;Course&gt; courses) {
+        this.courses = courses;
+    }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <h3 class="text-lg font-bold text-gray-700 mb-4">매핑 설정 핵심 포인트</h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-green-50 border-l-4 border-green-400 p-6 rounded-lg">
+                        <h4 class="font-bold text-green-800 mb-3">관계의 주인</h4>
+                        <ul class="text-green-700 space-y-1">
+                            <li>• 외래키를 소유</li>
+                            <li>• @JoinColumn 사용</li>
+                            <li>• 데이터베이스에 반영됨</li>
+                            <li>• 관계 변경 권한</li>
+                        </ul>
+                    </div>
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg">
+                        <h4 class="font-bold text-blue-800 mb-3">관계의 주인이 아닌 쪽</h4>
+                        <ul class="text-blue-700 space-y-1">
+                            <li>• mappedBy 사용</li>
+                            <li>• 읽기 전용</li>
+                            <li>• 데이터베이스에 반영 안됨</li>
+                            <li>• 관계 변경 불가</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 관계의 주인 -->
+        <section id="owner" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">관계의 주인 (Owner) 개념</h2>
+            
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-lg mb-6">
+                <h3 class="text-lg font-bold text-yellow-800 mb-3">왜 관계의 주인이 필요한가?</h3>
+                <p class="text-yellow-700 mb-4">
+                    양방향 관계에서 양쪽 엔티티가 모두 관계를 변경할 수 있다면, 
+                    데이터 일관성 문제가 발생할 수 있습니다.
+                </p>
+                <p class="text-yellow-700">
+                    <strong>해결책:</strong> 한쪽만 관계의 주인으로 지정하여 데이터 변경 권한을 제한
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">관계의 주인 결정 기준</h3>
+                    <div class="code-block">
+                        <pre><code class="language-java">// 외래키를 가진 쪽이 관계의 주인
+@Entity
+public class Course {
+    // Course 테이블에 instructor_no 컬럼이 있음
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "instructor_no")  // 외래키 소유
+    private Instructor instructor;       // 관계의 주인!
+}
+
+@Entity
+public class Instructor {
+    // Instructor 테이블에는 course_no 컬럼이 없음
+    @OneToMany(mappedBy = "instructor")  // mappedBy 사용
+    private List&lt;Course&gt; courses;        // 관계의 주인이 아님
+}</code></pre>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">실제 데이터베이스</h3>
+                    <div class="code-block">
+                        <pre><code class="language-sql">-- Course 테이블
+CREATE TABLE course (
+    course_no BIGINT PRIMARY KEY,
+    name VARCHAR(255),
+    description TEXT,
+    instructor_no BIGINT,  -- 외래키
+    FOREIGN KEY (instructor_no) REFERENCES instructor(instructor_no)
+);
+
+-- Instructor 테이블
+CREATE TABLE instructor (
+    instructor_no BIGINT PRIMARY KEY,
+    name VARCHAR(255),
+    email VARCHAR(255)
+    -- course_no 컬럼 없음
+);</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <h3 class="text-lg font-bold text-gray-700 mb-4">관계의 주인 규칙</h3>
+                <div class="bg-gray-50 border-l-4 border-gray-400 p-6 rounded-lg">
+                    <ul class="text-gray-700 space-y-2">
+                        <li>• <strong>외래키 소유:</strong> 실제 외래키를 가진 쪽이 관계의 주인</li>
+                        <li>• <strong>@JoinColumn:</strong> 관계의 주인은 @JoinColumn 사용</li>
+                        <li>• <strong>mappedBy:</strong> 관계의 주인이 아닌 쪽은 mappedBy 사용</li>
+                        <li>• <strong>데이터 변경:</strong> 관계의 주인만 데이터베이스에 반영</li>
+                        <li>• <strong>일관성:</strong> 양쪽 엔티티의 컬렉션은 자동으로 동기화</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 문제점 -->
+        <section id="problems" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">양방향 관계의 문제점</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">동기화 문제</h3>
+                    <div class="bg-red-50 border-l-4 border-red-400 p-6 rounded-lg">
+                        <h4 class="font-bold text-red-800 mb-3">문제 상황</h4>
+                        <div class="code-block">
+                            <pre><code class="language-java">// 잘못된 사용법
+Course course = new Course();
+course.setName("JPA 강의");
+
+Instructor instructor = new Instructor();
+instructor.setName("김강사");
+
+// 한쪽만 설정 (동기화 안됨)
+course.setInstructor(instructor);
+
+// instructor.getCourses()에는 course가 없음!
+System.out.println(instructor.getCourses().size()); // 0
+
+// 또는
+instructor.getCourses().add(course);
+// course.getInstructor()는 null!
+System.out.println(course.getInstructor()); // null</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">실수 가능성</h3>
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-lg">
+                        <h4 class="font-bold text-yellow-800 mb-3">자주 발생하는 실수</h4>
+                        <ul class="text-yellow-700 space-y-2">
+                            <li>• 한쪽만 관계 설정</li>
+                            <li>• 순서를 바꿔서 설정</li>
+                            <li>• null 체크를 깜빡</li>
+                            <li>• 관계의 주인을 잘못 설정</li>
+                            <li>• 컬렉션 초기화를 깜빡</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <h3 class="text-lg font-bold text-gray-700 mb-4">문제점 정리</h3>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="bg-red-50 border-l-4 border-red-400 p-6 rounded-lg">
+                        <h4 class="font-bold text-red-800 mb-3">동기화 문제</h4>
+                        <ul class="text-red-700 space-y-1">
+                            <li>• 양쪽 컬렉션 불일치</li>
+                            <li>• 데이터 일관성 문제</li>
+                            <li>• 예상치 못한 결과</li>
+                        </ul>
+                    </div>
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-lg">
+                        <h4 class="font-bold text-yellow-800 mb-3">실수 가능성</h4>
+                        <ul class="text-yellow-700 space-y-1">
+                            <li>• 복잡한 설정 과정</li>
+                            <li>• 순서 의존성</li>
+                            <li>• null 체크 필요</li>
+                        </ul>
+                    </div>
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg">
+                        <h4 class="font-bold text-blue-800 mb-3">코드 복잡성</h4>
+                        <ul class="text-blue-700 space-y-1">
+                            <li>• 반복적인 코드</li>
+                            <li>• 유지보수 어려움</li>
+                            <li>• 가독성 저하</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 다음 단계 -->
+        <section id="next" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">다음 단계: 편의 메서드로 해결</h2>
+            
+            <div class="bg-slate-50 border-l-4 border-slate-400 p-6 rounded-lg">
+                <h3 class="text-lg font-bold text-slate-800 mb-3">편의 메서드의 필요성</h3>
+                <p class="text-slate-700 mb-4">
+                    양방향 관계의 문제점을 해결하기 위해 편의 메서드가 필요합니다.
+                </p>
+                <ul class="text-slate-700 space-y-2">
+                    <li>• <strong>동기화 자동화:</strong> 양쪽 컬렉션을 자동으로 동기화</li>
+                    <li>• <strong>실수 방지:</strong> 복잡한 설정 과정을 메서드로 추상화</li>
+                    <li>• <strong>코드 간소화:</strong> 반복적인 코드를 줄임</li>
+                    <li>• <strong>일관성 보장:</strong> 항상 올바른 방식으로 관계 설정</li>
+                    <li>• <strong>유지보수성:</strong> 로직 변경 시 한 곳만 수정</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-white py-6">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2025 JPA 학습 프로젝트</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+

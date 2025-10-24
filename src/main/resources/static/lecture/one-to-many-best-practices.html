@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JPA 1:N 관계 설계 가이드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <!-- Header -->
+        <div class="bg-white shadow-sm border-b border-gray-200">
+            <div class="max-w-6xl mx-auto px-6 py-4">
+                <h1 class="text-3xl font-bold text-gray-800">1:N 가이드</h1>
+                <p class="text-gray-600 mt-2">@OneToMany의 올바른 N:M 관계에서의 사용 방법</p>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="max-w-6xl mx-auto px-6 py-8">
+            
+            <!-- 핵심 원칙 -->
+            <div class="bg-red-50 border-l-4 border-red-400 p-6 mb-8">
+                <h2 class="text-2xl font-bold text-red-800 mb-4">🚨 핵심 원칙</h2>
+                <div class="bg-white p-4 rounded-lg border border-red-200">
+                    <p class="text-lg text-red-700 font-semibold">
+                        <strong>"단독 `1:N` 단방향은 쓰지 말고, N:M 관계는 `1:N + N:1`로 구성하는 것이 가장 안전하고 권장된다."</strong>
+                    </p>
+                </div>
+            </div>
+
+
+            <!-- N:M 관계 해결 방법 -->
+            <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">✅ N:M 관계의 올바른 해결 방법</h2>
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <h3 class="text-lg font-semibold text-blue-800 mb-2">🎯 핵심: N:M을 1:N + N:1로 구성</h3>
+                    <p class="text-blue-700 mb-3">
+                        N:M 관계는 중간 엔티티를 만들어서 <strong>1:N + N:1</strong> 구조로 풀어야 합니다.
+                        이렇게 하면 각 엔티티의 책임이 명확해지고, 추가 정보도 저장할 수 있습니다.
+                    </p>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- 우리 프로젝트 예시 -->
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold text-purple-800 mb-2">📚 우리 프로젝트 예시: 수강신청 시스템</h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="font-semibold text-purple-700 mb-2">User.java</h4>
+                                <pre><code class="language-java">@Entity
+public class User {
+    @Id @GeneratedValue
+    private Long userNo;
+    
+    private String name;
+    private String email;
+    
+    @OneToMany(mappedBy = "user")  // ✅ 1:N 관계
+    private List&lt;Enrollment&gt; enrollments;
+}</code></pre>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-semibold text-purple-700 mb-2">Enrollment.java (중간 엔티티)</h4>
+                                <pre><code class="language-java">@Entity
+public class Enrollment {
+    @Id @GeneratedValue
+    private Long enrollmentNo;
+    
+    @ManyToOne  // ✅ User와의 N:1 관계
+    @JoinColumn(name = "user_no")
+    private User user;
+    
+    @ManyToOne  // ✅ Course와의 N:1 관계  
+    @JoinColumn(name = "course_no")
+    private Course course;
+    
+    private EnrollmentStatus status;
+    private LocalDateTime enrolledAt;
+    private BigDecimal fee;
+    
+    // 비즈니스 메서드
+    public void approve() {
+        this.status = EnrollmentStatus.APPROVED;
+    }
+}</code></pre>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-semibold text-purple-700 mb-2">Course.java</h4>
+                                <pre><code class="language-java">@Entity
+public class Course {
+    @Id @GeneratedValue
+    private Long courseNo;
+    
+    private String name;
+    private String description;
+    
+    @OneToMany(mappedBy = "course")  // ✅ 1:N 관계
+    private List&lt;Enrollment&gt; enrollments;
+}</code></pre>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 p-3 bg-white rounded border">
+                            <p class="text-purple-700 text-sm">
+                                <strong>결과:</strong> <code>User 1:N Enrollment N:1 Course</code> 구조로, 
+                                각 엔티티의 책임이 명확하고 추가 정보(신청일시, 승인상태, 수강료)도 저장 가능합니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 양방향 관계 고려사항 -->
+            <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">🤔 양방향 관계는 필요한가?</h2>
+                
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                    <h3 class="text-lg font-semibold text-yellow-800 mb-2">💡 판단 기준</h3>
+                    <p class="text-yellow-700 mb-3">
+                        N:M 관계를 1:N + N:1로 구성할 때, 양방향 관계는 <strong>강한 결합이 아닌 경우</strong>에는 
+                        필요하지 않을 수 있습니다. 오히려 복잡성만 증가시킬 수 있습니다.
+                    </p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-800 mb-2">❌ 양방향이 불필요한 경우:</h4>
+                        <ul class="text-gray-700 text-sm space-y-1">
+                            <li>• 단순한 참조 관계</li>
+                            <li>• 강한 결합이 아닌 경우</li>
+                            <li>• 복잡성만 증가하는 경우</li>
+                            <li>• 단방향으로도 충분한 경우</li>
+                        </ul>
+                        
+                        <div class="mt-3 p-3 bg-white rounded border">
+                            <pre class="text-xs"><code class="language-java">// 단방향으로도 충분
+@ManyToOne
+private User user;  // Enrollment에서 User 참조
+
+// User에서 Enrollment 목록이 필요하면
+List&lt;Enrollment&gt; enrollments = 
+    enrollmentRepository.findByUser(user);</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-green-800 mb-2">✅ 양방향이 필요한 경우:</h4>
+                        <ul class="text-green-700 text-sm space-y-1">
+                            <li>• Aggregate 내부 관계</li>
+                            <li>• 강한 결합 관계</li>
+                            <li>• 자주 양방향 탐색이 필요한 경우</li>
+                            <li>• 생명주기를 함께 관리하는 경우</li>
+                        </ul>
+                        
+                        <div class="mt-3 p-3 bg-white rounded border">
+                            <pre class="text-xs"><code class="language-java">// 양방향이 필요한 경우
+@OneToMany(mappedBy = "course")
+private List&lt;Curriculum&gt; curriculums;  // Course와 Curriculum은 강한 결합</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 최종 정리 -->
+            <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">📊 최종 정리</h2>
+                
+                <div class="space-y-4">
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold text-red-800 mb-2">❌ 피해야 할 것</h3>
+                        <ul class="text-red-700 space-y-1">
+                            <li>• 단독 <code>@OneToMany</code> 사용</li>
+                            <li>• 불필요한 양방향 관계 설정</li>
+                            <li>• 복잡성만 증가시키는 설계</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold text-green-800 mb-2">✅ 권장하는 것</h3>
+                        <ul class="text-green-700 space-y-1">
+                            <li>• 단순 참조는 <code>@ManyToOne</code> 사용</li>
+                            <li>• N:M 관계는 중간 엔티티로 <code>1:N + N:1</code> 구성</li>
+                            <li>• 필요한 경우에만 양방향 관계 설정</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p class="text-blue-800 font-semibold">
+                        💡 핵심은 <strong>단순함과 명확성</strong>입니다. 
+                        복잡한 양방향 관계보다는 필요한 만큼만 설정하는 것이 좋습니다.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

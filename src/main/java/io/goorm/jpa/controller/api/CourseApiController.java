@@ -32,7 +32,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/courses")
 @RequiredArgsConstructor
-@Tag(name = "Course", description = "강의 API")
+@Tag(name = "Course", description = "강의 관리 API")
 public class CourseApiController {
 
     private final CourseService courseService;
@@ -49,7 +49,7 @@ public class CourseApiController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "강의 검색")
+    @Operation(summary = "강의 검색 (개선)", description = "고급 검색 기능 - 다중 조건, 정렬 옵션 지원")
     public ApiResponse<PageResponse<CourseResponse>> searchCourses(
             @RequestParam(required = false) String searchField,
             @RequestParam(required = false) String keyword,
@@ -89,9 +89,15 @@ public class CourseApiController {
 
     // ===== Step 1: 팝업용 API 엔드포인트 =====
 
+    @GetMapping("/{courseNo}/curriculums")
+    @Operation(summary = "강의 커리큘럼 목록 조회 (팝업용)", description = "강의별 커리큘럼 목록 - API only")
+    public ApiResponse<List<CurriculumResponse>> getCurriculums(@PathVariable Long courseNo) {
+        List<CurriculumResponse> curriculums = courseService.getCurriculums(courseNo);
+        return ApiResponse.success(curriculums);
+    }
 
     @GetMapping("/{courseNo}/students")
-    @Operation(summary = "강의 수강생 목록 조회")
+    @Operation(summary = "강의 수강생 목록 조회 (팝업용)", description = "강의별 수강생 목록 - API only")
     public ApiResponse<List<UserResponse>> getEnrolledStudents(@PathVariable Long courseNo) {
         List<UserResponse> students = courseService.getEnrolledStudents(courseNo);
         return ApiResponse.success(students);

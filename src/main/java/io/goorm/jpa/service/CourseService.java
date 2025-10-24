@@ -6,6 +6,7 @@ import io.goorm.jpa.dto.course.CourseUpdateRequest;
 import io.goorm.jpa.dto.course.CourseSearchCondition;
 import io.goorm.jpa.dto.curriculum.CurriculumResponse;
 import io.goorm.jpa.dto.user.UserResponse;
+import io.goorm.jpa.dto.dashboard.CourseStatistics;
 import io.goorm.jpa.entity.Course;
 import io.goorm.jpa.entity.User;
 import io.goorm.jpa.exception.BusinessException;
@@ -14,6 +15,7 @@ import io.goorm.jpa.repository.CourseRepository;
 import io.goorm.jpa.repository.UserRepository;
 import io.goorm.jpa.repository.CurriculumRepository;
 import io.goorm.jpa.repository.EnrollmentRepository;
+import io.goorm.jpa.repository.querydsl.CourseQueryRepository;
 import io.goorm.jpa.enums.EnrollmentStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +42,7 @@ public class CourseService {
     private final UserRepository userRepository;
     private final CurriculumRepository curriculumRepository;
     private final EnrollmentRepository enrollmentRepository;
+    private final CourseQueryRepository courseQueryRepository;
 
     /**
      * 강의 생성 (강사만)
@@ -96,18 +99,22 @@ public class CourseService {
     }
 
     /**
-     * 강의 수정 (강사 본인만)
+     * 강의 수정 (강사 본인만) - Step 2: 비관적 락 적용
      */
     @Transactional
     public CourseResponse update(Long courseNo, CourseUpdateRequest request) {
-        Course course = courseRepository.findById(courseNo)
-                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
+        User currentUser = getCurrentUser();
+
+        // Step 2: 비관적 락으로 동시성 제어
+        Course course = courseRepository.findByIdAndInstructorForUpdate(courseNo, currentUser);
+        
+        if (course == null) {
+            throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
+        }
 
         if (course.getDeleted()) {
             throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
         }
-
-        User currentUser = getCurrentUser();
 
         // 강사 본인 또는 관리자만 수정 가능
         if (!course.isInstructor(currentUser) && !currentUser.isAdmin()) {
@@ -121,14 +128,31 @@ public class CourseService {
     }
 
     /**
-     * 강의 삭제 (Step 2에서 구현 - Cascade 필요)
-     * Step 1에서는 구현하지 않음
+     * 강의 삭제 - Step 2: Cascade + 비관적 락 구현
      */
     @Transactional
     public void delete(Long courseNo) {
-        // Step 1: 양방향 없이 삭제는 위험 (주차/차시 고아 데이터)
-        // Step 2에서 Cascade로 구현
-        throw new BusinessException(ErrorCode.COURSE_FORBIDDEN);
+        User currentUser = getCurrentUser();
+
+        // Step 2: 비관적 락으로 동시성 제어
+        Course course = courseRepository.findByIdAndInstructorForDelete(courseNo, currentUser);
+        
+        if (course == null) {
+            throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
+        }
+
+        if (course.getDeleted()) {
+            throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
+        }
+
+        // 강사 본인 또는 관리자만 삭제 가능
+        if (!course.isInstructor(currentUser) && !currentUser.isAdmin()) {
+            throw new BusinessException(ErrorCode.COURSE_FORBIDDEN);
+        }
+
+        // Step 2: Cascade.ALL + orphanRemoval로 연관 데이터 자동 삭제
+        course.delete();
+        log.info("Course deleted: courseNo={}, instructor={}", courseNo, currentUser.getUsername());
     }
 
     /**
@@ -244,7 +268,7 @@ public class CourseService {
         Course course = courseRepository.findById(courseNo)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
         
-        return curriculumRepository.findByCourseNoOrderByWeekNumber(courseNo)
+        return curriculumRepository.findByCourseCourseNoOrderByWeekNumber(courseNo)
                 .stream()
                 .map(CurriculumResponse::from)
                 .toList();
@@ -261,6 +285,79 @@ public class CourseService {
                 .stream()
                 .map(enrollment -> UserResponse.from(enrollment.getStudent()))
                 .toList();
+    }
+
+    // ===== Step 2-3: QueryDSL 통계 기능 =====
+
+    /**
+     * 강의 전체 통계
+     */
+    public CourseStatistics getCourseStatistics() {
+        return courseQueryRepository.getCourseStatistics();
+    }
+
+    /**
+     * 강의별 상세 통계
+     */
+    public List<CourseStatistics> getCourseDetailedStatistics() {
+        return courseQueryRepository.getCourseDetailedStatistics();
+    }
+
+    /**
+     * 강사별 강의 통계
+     */
+    public List<CourseStatistics> getInstructorStatistics() {
+        return courseQueryRepository.getInstructorStatistics();
+    }
+
+    /**
+     * 월별 강의 개설 통계
+     */
+    public List<CourseStatistics> getMonthlyCourseStatistics() {
+        return courseQueryRepository.getMonthlyCourseStatistics();
+    }
+
+    /**
+     * 강의별 커리큘럼 통계
+     */
+    public List<CourseStatistics> getCourseCurriculumStatistics() {
+        return courseQueryRepository.getCourseCurriculumStatistics();
+    }
+
+    /**
+     * 인기 강의 TOP N
+     */
+    public List<CourseResponse> getPopularCourses(int limit) {
+        return courseQueryRepository.findPopularCourses(limit)
+                .stream()
+                .map(CourseResponse::from)
+                .toList();
+    }
+
+    /**
+     * 수강 가능한 강의 목록
+     */
+    public List<CourseResponse> getAvailableCourses() {
+        return courseQueryRepository.findAvailableCourses()
+                .stream()
+                .map(CourseResponse::from)
+                .toList();
+    }
+
+    /**
+     * 강의 텍스트 검색 (QueryDSL)
+     */
+    public Page<CourseResponse> searchCoursesByText(String searchText, Pageable pageable) {
+        return courseQueryRepository.searchCoursesByText(searchText, pageable)
+                .map(CourseResponse::from);
+    }
+
+    /**
+     * 강의 고급 검색 (QueryDSL + 공통 조건 모듈)
+     */
+    public Page<CourseResponse> searchCoursesAdvanced(CourseSearchCondition condition, Pageable pageable) {
+        return courseQueryRepository.searchCourses(condition, pageable)
+                .map(CourseResponse::from);
     }
 
     /**

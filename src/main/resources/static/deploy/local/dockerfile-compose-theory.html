@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dockerfile + Docker Compose 통합 이론</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <style>
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        .step-number {
+            background: #334155;
+            color: white;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+        .highlight {
+            background-color: #fef3c7;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+        }
+        .comparison-table {
+            background: white;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+        .comparison-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #334155;
+        }
+        .comparison-table td {
+            border-bottom: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <!-- Header -->
+    <header class="bg-slate-800 text-white py-8">
+        <div class="max-w-6xl mx-auto px-6">
+            <h1 class="text-4xl font-bold mb-4">Dockerfile + Docker Compose 통합 이론</h1>
+            <p class="text-slate-300 text-lg">컨테이너 환경 구축의 핵심 개념을 한 번에 이해하기</p>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-slate-200">
+        <div class="max-w-6xl mx-auto px-6 py-4">
+            <div class="flex space-x-8">
+                <a href="index.html" class="text-slate-600 hover:text-slate-800 font-medium">개요</a>
+                <a href="local.html" class="text-slate-700 hover:text-slate-900 font-medium border-b-2 border-slate-800">로컬 배포</a>
+                <a href="aws.html" class="text-slate-600 hover:text-slate-800 font-medium">AWS 배포</a>
+            </div>
+            <div class="flex space-x-6 mt-4 pt-4 border-t border-slate-200">
+                <a href="step0-server-setup.html" class="text-slate-600 hover:text-slate-800 font-medium">서버 준비</a>
+                <a href="step0-jar-deploy.html" class="text-slate-600 hover:text-slate-800 font-medium">JAR 배포</a>
+                <a href="dockerfile-compose-theory.html" class="text-slate-700 hover:text-slate-900 font-medium border-b-2 border-slate-800">Docker 이론</a>
+                <a href="step1-dockerfile-deploy.html" class="text-slate-600 hover:text-slate-800 font-medium">Dockerfile 배포</a>
+                <a href="step2-compose-deploy.html" class="text-slate-600 hover:text-slate-800 font-medium">Compose 배포</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        
+        <!-- 핵심 개념 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6">🎯 핵심 개념</h2>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg mb-8">
+                <p class="text-blue-800 text-lg font-semibold mb-2">
+                    💡 둘 다 결국 <strong>"도커 컨테이너를 실행하기 위한 설정 파일"</strong>입니다!
+                </p>
+                <p class="text-blue-700">
+                    하지만 <strong>목적이 다릅니다</strong> - Dockerfile은 "개별 컨테이너 정의서", Compose는 "전체 시스템 구성도"
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                    <div class="text-center mb-4">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-2xl">📝</span>
+                        </div>
+                        <h3 class="text-2xl font-semibold text-slate-800 mb-2">Dockerfile</h3>
+                        <p class="text-slate-600">"하나의 앱을 이미지로 만드는 설계서"</p>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center">
+                            <span class="w-2 h-2 bg-green-400 rounded-full mr-3"></span>
+                            <span class="text-slate-600"><strong>개발자가 만든 애플리케이션</strong>을 도커 이미지로 변환</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-2 h-2 bg-green-400 rounded-full mr-3"></span>
+                            <span class="text-slate-600">소스코드 → 이미지 → 컨테이너 변환 절차 정의</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-2 h-2 bg-green-400 rounded-full mr-3"></span>
+                            <span class="text-slate-600">실행 명령: <code class="bg-slate-100 px-2 py-1 rounded">docker build</code></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                    <div class="text-center mb-4">
+                        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-2xl">🎼</span>
+                        </div>
+                        <h3 class="text-2xl font-semibold text-slate-800 mb-2">Docker Compose</h3>
+                        <p class="text-slate-600">"여러 이미지를 연결해서 완전한 서비스 환경을 구성하는 설계서"</p>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center">
+                            <span class="w-2 h-2 bg-purple-400 rounded-full mr-3"></span>
+                            <span class="text-slate-600"><strong>앱 + DB + Redis + 기타 서비스</strong>를 한 번에 실행</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-2 h-2 bg-purple-400 rounded-full mr-3"></span>
+                            <span class="text-slate-600">서비스 간 연결, 의존관계, 네트워크 구성</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-2 h-2 bg-purple-400 rounded-full mr-3"></span>
+                            <span class="text-slate-600">실행 명령: <code class="bg-slate-100 px-2 py-1 rounded">docker compose up</code></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 개발자 관점에서의 목적 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6">💼 개발자 관점에서의 목적</h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mb-6">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm comparison-table">
+                        <thead>
+                            <tr>
+                                <th class="text-left py-4 px-6 font-semibold">구분</th>
+                                <th class="text-left py-4 px-6 font-semibold">Dockerfile</th>
+                                <th class="text-left py-4 px-6 font-semibold">docker-compose.yml</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-600">
+                            <tr>
+                                <td class="py-4 px-6 font-medium">역할</td>
+                                <td class="py-4 px-6">하나의 애플리케이션(컨테이너)을 <strong>이미지로 빌드</strong>하기 위한 <strong>설계서</strong></td>
+                                <td class="py-4 px-6">여러 개의 컨테이너(DB, Redis, 앱 등)를 <strong>한 번에 실행/관리</strong>하기 위한 <strong>오케스트레이션 파일</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 px-6 font-medium">대상 단위</td>
+                                <td class="py-4 px-6">단일 컨테이너 (예: <code class="bg-slate-100 px-1 rounded">app</code>)</td>
+                                <td class="py-4 px-6">다중 컨테이너 (예: <code class="bg-slate-100 px-1 rounded">app</code>, <code class="bg-slate-100 px-1 rounded">db</code>, <code class="bg-slate-100 px-1 rounded">redis</code>, <code class="bg-slate-100 px-1 rounded">mailhog</code> 등)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 px-6 font-medium">파일 목적</td>
+                                <td class="py-4 px-6">애플리케이션의 <strong>이미지 생성 절차 정의</strong></td>
+                                <td class="py-4 px-6">여러 이미지를 <strong>조합하여 서비스 전체 구성</strong> 정의</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 px-6 font-medium">명령 실행 위치</td>
+                                <td class="py-4 px-6"><code class="bg-slate-100 px-1 rounded">docker build</code> 명령으로 이미지 생성</td>
+                                <td class="py-4 px-6"><code class="bg-slate-100 px-1 rounded">docker compose up</code> 명령으로 여러 컨테이너 실행</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 px-6 font-medium">의존 관계</td>
+                                <td class="py-4 px-6">없음 (단일)</td>
+                                <td class="py-4 px-6">있음 (예: app → db → redis)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 px-6 font-medium">예시 파일 위치</td>
+                                <td class="py-4 px-6">프로젝트 루트에 <code class="bg-slate-100 px-1 rounded">Dockerfile</code></td>
+                                <td class="py-4 px-6">같은 위치 혹은 상위 폴더에 <code class="bg-slate-100 px-1 rounded">docker-compose.yml</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded-lg">
+                <h4 class="text-lg font-semibold text-green-800 mb-2">🎯 결론 정리</h4>
+                <div class="grid md:grid-cols-2 gap-4 text-green-700">
+                    <div>
+                        <p class="font-semibold mb-1">🔹 Dockerfile</p>
+                        <p class="text-sm">"하나의 앱을 이미지로 만드는 설계서"</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold mb-1">🔹 docker-compose.yml</p>
+                        <p class="text-sm">"여러 이미지를 연결해서 완전한 서비스 환경을 구성하는 설계서"</p>
+                    </div>
+                </div>
+                <p class="text-green-700 text-sm mt-3">
+                    즉, <strong>Dockerfile은 "개별 컨테이너의 정의서"</strong>, 
+                    <strong>docker-compose는 "전체 시스템 구성도"</strong>라고 보면 됩니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- 실제 개발 시나리오 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6">🚀 실제 개발 시나리오</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">📝 Dockerfile 사용 시나리오</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-start">
+                            <span class="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-bold mr-3 mt-0.5">1</span>
+                            <div>
+                                <p class="font-semibold text-slate-700">개발자가 Spring Boot 앱을 만듦</p>
+                                <p class="text-slate-600 text-sm">소스코드 작성 완료</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-bold mr-3 mt-0.5">2</span>
+                            <div>
+                                <p class="font-semibold text-slate-700">Dockerfile 작성</p>
+                                <p class="text-slate-600 text-sm">앱을 컨테이너 이미지로 만드는 방법 정의</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-bold mr-3 mt-0.5">3</span>
+                            <div>
+                                <p class="font-semibold text-slate-700">docker build 실행</p>
+                                <p class="text-slate-600 text-sm">소스코드 → 이미지 변환</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-bold mr-3 mt-0.5">4</span>
+                            <div>
+                                <p class="font-semibold text-slate-700">docker run 실행</p>
+                                <p class="text-slate-600 text-sm">이미지 → 컨테이너 실행</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-green-50 rounded">
+                        <p class="text-green-800 text-sm font-semibold">결과: 앱 하나만 실행됨</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">🎼 Docker Compose 사용 시나리오</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-start">
+                            <span class="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold mr-3 mt-0.5">1</span>
+                            <div>
+                                <p class="font-semibold text-slate-700">앱 + DB + Redis가 필요</p>
+                                <p class="text-slate-600 text-sm">실제 서비스 환경 구성</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold mr-3 mt-0.5">2</span>
+                            <div>
+                                <p class="font-semibold text-slate-700">docker-compose.yml 작성</p>
+                                <p class="text-slate-600 text-sm">여러 서비스를 한 번에 정의</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold mr-3 mt-0.5">3</span>
+                            <div>
+                                <p class="font-semibold text-slate-700">docker compose up 실행</p>
+                                <p class="text-slate-600 text-sm">모든 서비스가 자동으로 실행</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold mr-3 mt-0.5">4</span>
+                            <div>
+                                <p class="font-semibold text-slate-700">서비스 간 자동 연결</p>
+                                <p class="text-slate-600 text-sm">앱이 DB, Redis에 자동 연결</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-purple-50 rounded">
+                        <p class="text-purple-800 text-sm font-semibold">결과: 완전한 서비스 환경 구성</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-lg">
+                <h4 class="text-lg font-semibold text-blue-800 mb-2">💡 핵심 차이점</h4>
+                <div class="grid md:grid-cols-2 gap-4 text-blue-700">
+                    <div>
+                        <p class="font-semibold mb-2">Dockerfile</p>
+                        <ul class="text-sm space-y-1">
+                            <li>• <strong>개발자가 만든 앱</strong>을 이미지로 변환</li>
+                            <li>• <strong>단일 컨테이너</strong>만 관리</li>
+                            <li>• <strong>빌드 과정</strong>에 집중</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <p class="font-semibold mb-2">Docker Compose</p>
+                        <ul class="text-sm space-y-1">
+                            <li>• <strong>여러 서비스</strong>를 조합하여 실행</li>
+                            <li>• <strong>서비스 간 연결</strong>과 의존관계 관리</li>
+                            <li>• <strong>실행 환경</strong>에 집중</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 실제 예시 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6">💻 실제 예시 (우리 프로젝트)</h2>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-lg mb-6">
+                <h4 class="text-lg font-semibold text-blue-800 mb-2">🎯 우리 JPA 프로젝트의 실제 파일들</h4>
+                <p class="text-blue-700 text-sm">
+                    아래는 현재 우리 프로젝트에 있는 실제 Dockerfile과 docker-compose.yml 파일입니다.
+                    이 파일들을 보면서 Docker의 개념을 이해해보세요!
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">📝 우리 프로젝트의 Dockerfile</h3>
+                    <div class="code-block">
+                        <pre><code class="language-dockerfile"># Dockerfile (실제 파일)
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY build/libs/jpa-0.0.1-SNAPSHOT.jar app.jar
+ENTRYPOINT ["java","-jar","app.jar"]</code></pre>
+                    </div>
+                    <div class="mt-4 space-y-2 text-sm">
+                        <div class="flex items-start">
+                            <span class="w-2 h-2 bg-green-400 rounded-full mr-2 mt-2"></span>
+                            <span class="text-slate-600"><strong>FROM eclipse-temurin:21-jre</strong>: Java 21 런타임 환경 사용</span>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="w-2 h-2 bg-green-400 rounded-full mr-2 mt-2"></span>
+                            <span class="text-slate-600"><strong>WORKDIR /app</strong>: 컨테이너 내 작업 디렉토리 설정</span>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="w-2 h-2 bg-green-400 rounded-full mr-2 mt-2"></span>
+                            <span class="text-slate-600"><strong>COPY build/libs/jpa-0.0.1-SNAPSHOT.jar app.jar</strong>: JAR 파일을 컨테이너로 복사</span>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="w-2 h-2 bg-green-400 rounded-full mr-2 mt-2"></span>
+                            <span class="text-slate-600"><strong>ENTRYPOINT</strong>: 컨테이너 실행 시 Java 애플리케이션 시작</span>
+                        </div>
+                    </div>
+                    <p class="text-slate-600 text-sm mt-4 p-3 bg-slate-50 rounded">
+                        👉 <strong>하나의 Spring Boot 앱 컨테이너</strong>를 만드는 레시피입니다!
+                    </p>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">🎼 우리 프로젝트의 docker-compose.yml</h3>
+                    <div class="code-block">
+                        <pre><code class="language-yaml"># docker-compose.yml (실제 파일)
+version: "3.9"
+services:
+  app:
+    build: .
+    ports:
+      - "8083:8082"
+    container_name: jpa-app
+    restart: unless-stopped
+    networks:
+      - appnet
+    depends_on:
+      - minio
+  minio:
+    image: minio/minio:latest
+    container_name: jpa-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - appnet
+
+volumes:
+  minio_data:
+
+networks:
+  appnet:
+    external: true</code></pre>
+                    </div>
+                    <div class="mt-4 space-y-2 text-sm">
+                        <div class="flex items-start">
+                            <span class="w-2 h-2 bg-purple-400 rounded-full mr-2 mt-2"></span>
+                            <span class="text-slate-600"><strong>version: "3.9"</strong>: Docker Compose 파일 형식 버전</span>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="w-2 h-2 bg-purple-400 rounded-full mr-2 mt-2"></span>
+                            <span class="text-slate-600"><strong>app 서비스</strong>: Spring Boot 애플리케이션 (포트 8083)</span>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="w-2 h-2 bg-purple-400 rounded-full mr-2 mt-2"></span>
+                            <span class="text-slate-600"><strong>minio 서비스</strong>: S3 대용 파일 저장소 (포트 9000, 9001)</span>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="w-2 h-2 bg-purple-400 rounded-full mr-2 mt-2"></span>
+                            <span class="text-slate-600"><strong>networks: appnet</strong>: 기존 appnet 네트워크 사용</span>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="w-2 h-2 bg-purple-400 rounded-full mr-2 mt-2"></span>
+                            <span class="text-slate-600"><strong>depends_on: minio</strong>: 앱이 MinIO 시작 후 실행</span>
+                        </div>
+                    </div>
+                    <p class="text-slate-600 text-sm mt-4 p-3 bg-slate-50 rounded">
+                        👉 <strong>우리 앱을 실행하는 환경</strong>을 정의하는 오케스트라 지휘서입니다!
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Docker Compose 문법 가이드 -->
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200 mt-6">
+                <h3 class="text-xl font-semibold text-blue-800 mb-4">📋 Docker Compose 기본 문법</h3>
+                
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
+                    <!-- 기본 구조 -->
+                    <div class="bg-white rounded-lg p-4 border border-blue-200">
+                        <h4 class="font-semibold text-slate-800 mb-3">1️⃣ 기본 구조</h4>
+                        <div class="code-block">
+                            <pre><code class="language-yaml">version: "3.9"  # 고정 (최신 버전)
+services:        # 서비스 정의 시작
+  서비스명:
+    # 서비스 설정들...
+volumes:         # 볼륨 정의
+networks:        # 네트워크 정의</code></pre>
+                        </div>
+                    </div>
+                    
+                    <!-- 서비스 타입 -->
+                    <div class="bg-white rounded-lg p-4 border border-blue-200">
+                        <h4 class="font-semibold text-slate-800 mb-3">2️⃣ 서비스 타입별 설정</h4>
+                        <div class="space-y-3 text-sm">
+                            <div class="p-2 bg-green-50 rounded">
+                                <strong>📦 직접 빌드 (우리 앱)</strong><br>
+                                <code>build: .</code> - Dockerfile 사용
+                            </div>
+                            <div class="p-2 bg-yellow-50 rounded">
+                                <strong>🐳 이미지 사용 (DB, Redis 등)</strong><br>
+                                <code>image: redis:7-alpine</code> - Docker Hub 이미지
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 상세 문법 예시 -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-slate-800 mb-3">3️⃣ 주요 설정 옵션</h4>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-white rounded-lg p-4 border border-slate-200">
+                            <h5 class="font-medium text-slate-700 mb-2">🏗️ 빌드 & 이미지</h5>
+                            <div class="text-sm space-y-1 text-slate-600">
+                                <div><code>build: .</code> - 현재 디렉토리 Dockerfile 사용</div>
+                                <div><code>image: redis:7-alpine</code> - Docker Hub 이미지</div>
+                                <div><code>container_name: my-app</code> - 컨테이너 이름</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg p-4 border border-slate-200">
+                            <h5 class="font-medium text-slate-700 mb-2">🌐 네트워크 & 포트</h5>
+                            <div class="text-sm space-y-1 text-slate-600">
+                                <div><code>ports: ["8082:8082"]</code> - 포트 매핑</div>
+                                <div><code>networks: [appnet]</code> - 네트워크 연결</div>
+                                <div><code>depends_on: [db]</code> - 의존성 설정</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg p-4 border border-slate-200">
+                            <h5 class="font-medium text-slate-700 mb-2">💾 데이터 & 환경</h5>
+                            <div class="text-sm space-y-1 text-slate-600">
+                                <div><code>volumes: [db_data:/data]</code> - 볼륨 마운트</div>
+                                <div><code>environment: [KEY=value]</code> - 환경변수</div>
+                                <div><code>restart: unless-stopped</code> - 재시작 정책</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg p-4 border border-slate-200">
+                            <h5 class="font-medium text-slate-700 mb-2">⚙️ 실행 & 명령</h5>
+                            <div class="text-sm space-y-1 text-slate-600">
+                                <div><code>command: server /data</code> - 실행 명령어</div>
+                                <div><code>working_dir: /app</code> - 작업 디렉토리</div>
+                                <div><code>user: "1000:1000"</code> - 사용자 지정</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-3 bg-yellow-50 border border-yellow-200 rounded">
+                    <p class="text-sm text-yellow-800">
+                        <strong>💡 핵심 포인트:</strong> 
+                        <code>version: "3.9"</code>는 고정값이고, 
+                        <code>build: .</code>는 우리 앱용, 
+                        <code>image: 이름</code>는 외부 서비스용입니다!
+                    </p>
+                </div>
+            </div>
+
+            <!-- 실행 방법 (단계별 실습) -->
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mt-6">
+                <h2 class="text-2xl font-bold text-slate-800 mb-6">🚀 실행 방법 (단계별 실습)</h2>
+                
+                <!-- 1단계: Docker만 사용 -->
+                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mb-8">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">1️⃣ 단계: Docker만 사용 (개별 컨테이너)</h3>
+                    <p class="text-slate-600 text-sm mb-4">
+                        먼저 Dockerfile만으로 우리 앱을 개별 컨테이너로 실행해봅시다.
+                    </p>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <!-- 명령어 방식 -->
+                        <div class="bg-slate-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-slate-800 mb-3">💻 터미널 명령어 방식</h4>
+                            <div class="space-y-3">
+                                <div class="bg-slate-900 text-green-400 p-3 rounded font-mono text-sm">
+                                    <div class="text-yellow-300"># 1. JAR 파일 빌드 (소스코드 변경 시에만)</div>
+                                    <div>./gradlew build</div>
+                                    <div class="text-gray-400 mt-2"># 2. Docker 이미지 빌드</div>
+                                    <div>docker build -t jpa-app .</div>
+                                    <div class="text-gray-400 mt-2"># 3. 컨테이너 실행</div>
+                                    <div>docker run -p 8082:8082 jpa-app</div>
+                                </div>
+                                <div class="text-xs text-slate-600">
+                                    <strong>💡 설명:</strong> JAR 파일이 이미 있으면 1단계 생략 가능
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- IntelliJ 방식 -->
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-slate-800 mb-3">🔧 IntelliJ Docker 플러그인 방식</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex items-start">
+                                    <span class="w-2 h-2 bg-blue-400 rounded-full mr-2 mt-2"></span>
+                                    <span><strong>1. Docker 플러그인 설치:</strong> File → Settings → Plugins → "Docker" 검색 → 설치</span>
+                                </div>
+                                <div class="flex items-start">
+                                    <span class="w-2 h-2 bg-blue-400 rounded-full mr-2 mt-2"></span>
+                                    <span><strong>2. Services 탭 열기:</strong> View → Tool Windows → Services</span>
+                                </div>
+                                <div class="flex items-start">
+                                    <span class="w-2 h-2 bg-blue-400 rounded-full mr-2 mt-2"></span>
+                                    <span><strong>3. Dockerfile 연결:</strong> Docker 섹션에서 + 버튼 → Dockerfile 선택</span>
+                                </div>
+                                <div class="flex items-start">
+                                    <span class="w-2 h-2 bg-blue-400 rounded-full mr-2 mt-2"></span>
+                                    <span><strong>4. 실행:</strong> Dockerfile에서 우클릭 → "Run" 선택</span>
+                                </div>
+                            </div>
+                            <div class="mt-3 p-2 bg-blue-100 rounded text-xs">
+                                <strong>💡 장점:</strong> GUI로 쉽게 실행, 포트 매핑 자동 설정, 로그 확인 편함
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded">
+                        <p class="text-sm text-green-800">
+                            <strong>✅ 1단계 완료 후 확인:</strong> 
+                            <code>http://localhost:8082</code>에서 Spring Boot 앱이 실행되는지 확인하세요!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 2단계: Docker Compose 사용 -->
+                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mb-8">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">2️⃣ 단계: Docker Compose 사용 (다중 컨테이너)</h3>
+                    <p class="text-slate-600 text-sm mb-4">
+                        이제 Docker Compose로 우리 앱과 MinIO를 함께 실행해봅시다.
+                    </p>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <!-- 명령어 방식 -->
+                        <div class="bg-slate-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-slate-800 mb-3">💻 터미널 명령어 방식</h4>
+                            <div class="space-y-3">
+                                <div class="bg-slate-900 text-green-400 p-3 rounded font-mono text-sm">
+                                    <div class="text-yellow-300"># 1. 모든 서비스 실행 (앱 + MinIO)</div>
+                                    <div>docker-compose up --build</div>
+                                    <div class="text-gray-400 mt-2"># 또는 백그라운드 실행</div>
+                                    <div>docker-compose up -d --build</div>
+                                </div>
+                                <div class="text-xs text-slate-600">
+                                    <strong>💡 설명:</strong> --build 옵션으로 이미지 자동 재빌드, -d 옵션으로 백그라운드 실행
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- IntelliJ 방식 -->
+                        <div class="bg-purple-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-slate-800 mb-3">🔧 IntelliJ Docker Compose 방식</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex items-start">
+                                    <span class="w-2 h-2 bg-purple-400 rounded-full mr-2 mt-2"></span>
+                                    <span><strong>1. Run Configuration 생성:</strong> Run → Edit Configurations</span>
+                                </div>
+                                <div class="flex items-start">
+                                    <span class="w-2 h-2 bg-purple-400 rounded-full mr-2 mt-2"></span>
+                                    <span><strong>2. Docker Compose 선택:</strong> + 버튼 → Docker Compose</span>
+                                </div>
+                                <div class="flex items-start">
+                                    <span class="w-2 h-2 bg-purple-400 rounded-full mr-2 mt-2"></span>
+                                    <span><strong>3. 파일 경로 설정:</strong> Compose file: docker-compose.yml</span>
+                                </div>
+                                <div class="flex items-start">
+                                    <span class="w-2 h-2 bg-purple-400 rounded-full mr-2 mt-2"></span>
+                                    <span><strong>4. 실행:</strong> Run 버튼 클릭</span>
+                                </div>
+                            </div>
+                            <div class="mt-3 p-2 bg-purple-100 rounded text-xs">
+                                <strong>💡 장점:</strong> 여러 서비스 한 번에 관리, 의존성 자동 처리, 서비스별 로그 확인 가능
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded">
+                        <p class="text-sm text-green-800">
+                            <strong>✅ 2단계 완료 후 확인:</strong><br>
+                            • <code>http://localhost:8083</code> - Spring Boot 앱<br>
+                            • <code>http://localhost:9001</code> - MinIO 콘솔 (minioadmin/minioadmin123)
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 단계별 차이점 정리 -->
+                <div class="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-6 border border-orange-200 mb-8">
+                    <h3 class="text-lg font-semibold text-orange-800 mb-4">📊 단계별 차이점 정리</h3>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-lg p-4 border border-orange-200">
+                            <h4 class="font-semibold text-slate-800 mb-3">1️⃣ Docker만 사용</h4>
+                            <ul class="text-sm space-y-1 text-slate-600">
+                                <li>• <strong>개별 컨테이너</strong> 실행</li>
+                                <li>• <strong>수동으로</strong> 이미지 빌드 및 실행</li>
+                                <li>• <strong>우리 앱만</strong> 실행됨</li>
+                                <li>• <strong>학습 목적</strong>에 적합</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg p-4 border border-orange-200">
+                            <h4 class="font-semibold text-slate-800 mb-3">2️⃣ Docker Compose 사용</h4>
+                            <ul class="text-sm space-y-1 text-slate-600">
+                                <li>• <strong>다중 컨테이너</strong> 실행</li>
+                                <li>• <strong>자동으로</strong> 의존성 처리</li>
+                                <li>• <strong>앱 + MinIO</strong> 함께 실행</li>
+                                <li>• <strong>실무 환경</strong>에 적합</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 프로젝트 디렉토리 구조 -->
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mt-6">
+                <h3 class="text-xl font-semibold text-slate-800 mb-4">📁 프로젝트 디렉토리 구조</h3>
+                <p class="text-slate-600 text-sm mb-4">
+                    Docker 관련 파일들이 프로젝트 루트에 위치합니다:
+                </p>
+                
+                <div class="bg-slate-900 text-green-400 p-4 rounded-lg font-mono text-sm overflow-x-auto">
+                    <pre>jpa/
+├── Dockerfile              # 컨테이너 이미지 빌드 설정
+├── docker-compose.yml      # 다중 컨테이너 실행 설정
+├── .dockerignore           # Docker 빌드에서 제외할 파일들
+├── build.gradle            # Gradle 빌드 설정
+├── src/
+│   └── main/
+│       └── java/           # Spring Boot 소스코드
+└── build/
+    └── libs/
+        └── jpa-0.0.1-SNAPSHOT.jar  # 빌드된 JAR 파일</pre>
+                </div>
+            </div>
+            
+            <!-- 각 파일별 상세 설명 -->
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mt-6">
+                <h3 class="text-xl font-semibold text-slate-800 mb-4">📋 각 파일별 상세 설명</h3>
+                
+                <div class="space-y-6">
+                    <!-- Dockerfile -->
+                    <div class="border-l-4 border-green-400 pl-4">
+                        <h4 class="font-semibold text-slate-800 mb-2">📝 Dockerfile</h4>
+                        <p class="text-slate-600 text-sm mb-2">
+                            <strong>역할</strong>: Spring Boot 애플리케이션을 Docker 이미지로 변환하는 방법을 정의
+                        </p>
+                        <div class="bg-slate-50 p-3 rounded text-sm">
+                            <p class="text-slate-700"><strong>주요 명령어:</strong></p>
+                            <ul class="text-slate-600 space-y-1 mt-1">
+                                <li>• <code>FROM eclipse-temurin:21-jre</code> - Java 21 런타임 환경</li>
+                                <li>• <code>WORKDIR /app</code> - 컨테이너 내 작업 디렉토리</li>
+                                <li>• <code>COPY build/libs/jpa-0.0.1-SNAPSHOT.jar app.jar</code> - JAR 파일 복사</li>
+                                <li>• <code>ENTRYPOINT ["java","-jar","app.jar"]</code> - 애플리케이션 실행</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- docker-compose.yml -->
+                    <div class="border-l-4 border-purple-400 pl-4">
+                        <h4 class="font-semibold text-slate-800 mb-2">🎼 docker-compose.yml</h4>
+                        <p class="text-slate-600 text-sm mb-2">
+                            <strong>역할</strong>: 여러 컨테이너(앱, MinIO)를 한 번에 실행하고 관리
+                        </p>
+                        <div class="bg-slate-50 p-3 rounded text-sm">
+                            <p class="text-slate-700"><strong>주요 설정:</strong></p>
+                            <ul class="text-slate-600 space-y-1 mt-1">
+                                <li>• <code>app</code> - Spring Boot 애플리케이션 (포트 8082)</li>
+                                <li>• <code>minio</code> - S3 대용 파일 저장소 (포트 9000, 9001)</li>
+                                <li>• <code>networks: appnet</code> - 기존 네트워크 사용</li>
+                                <li>• <code>depends_on</code> - 서비스 간 의존관계 설정</li>
+                                <li>• <code>volumes</code> - 데이터 영구 저장</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- .dockerignore -->
+                    <div class="border-l-4 border-blue-400 pl-4">
+                        <h4 class="font-semibold text-slate-800 mb-2">🚫 .dockerignore</h4>
+                        <p class="text-slate-600 text-sm mb-2">
+                            <strong>역할</strong>: Docker 빌드 시 불필요한 파일들을 제외하여 빌드 속도 향상 및 이미지 크기 최적화
+                        </p>
+                        <div class="bg-slate-50 p-3 rounded text-sm">
+                            <p class="text-slate-700"><strong>제외되는 파일들:</strong></p>
+                            <ul class="text-slate-600 space-y-1 mt-1">
+                                <li>• <code>.gradle/</code>, <code>build/</code> - Gradle 빌드 파일 (JAR 제외)</li>
+                                <li>• <code>.idea/</code>, <code>.vscode/</code> - IDE 설정 파일</li>
+                                <li>• <code>*.log</code>, <code>logs/</code> - 로그 파일</li>
+                                <li>• <code>src/test/</code> - 테스트 코드</li>
+                                <li>• <code>README.md</code>, <code>docs/</code> - 문서 파일</li>
+                                <li>• <code>.git/</code> - Git 저장소 정보</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg mt-6">
+                <h4 class="text-lg font-semibold text-yellow-800 mb-2">💡 현재는 단순하지만...</h4>
+                <p class="text-yellow-700 text-sm">
+                    지금은 앱 하나만 있지만, 실무에서는 보통 <strong>데이터베이스(MariaDB)</strong>, 
+                    <strong>캐시(Redis)</strong>, <strong>웹서버(Nginx)</strong> 등도 함께 사용합니다. 
+                    그럴 때 docker-compose.yml에 더 많은 서비스들을 추가하게 됩니다!
+                </p>
+            </div>
+            
+            <!-- 실무 확장 예시 -->
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mt-6">
+                <h3 class="text-xl font-semibold text-slate-800 mb-4">🚀 실무 확장 예시 (우리 프로젝트 + 실무 서비스들)</h3>
+                <p class="text-slate-600 text-sm mb-4">
+                    실무에서 실제로 사용하는 유명한 서비스들을 추가한 확장 예시입니다:
+                </p>
+                
+                <div class="code-block">
+                    <pre><code class="language-yaml"># 실무 확장된 docker-compose.yml 예시
+version: "3.9"
+services:
+                  app:
+                    build: .
+                    ports:
+                      - "8083:8082"
+    container_name: jpa-app
+    restart: unless-stopped
+    networks:
+      - appnet
+    depends_on:
+      - redis
+      - minio
+      - mailhog
+      - jaeger
+    environment:
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_MAIL_HOST=mailhog
+      - SPRING_MAIL_PORT=1025
+      - MANAGEMENT_TRACING_ENABLED=true
+      - MANAGEMENT_TRACING_JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+
+  # Redis - 캐시 및 세션 저장소
+  redis:
+    image: redis:7-alpine
+    container_name: jpa-redis
+    restart: unless-stopped
+    networks:
+      - appnet
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # MinIO - S3 대용 파일 저장소
+  minio:
+    image: minio/minio:latest
+    container_name: jpa-minio
+    restart: unless-stopped
+    networks:
+      - appnet
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+  # MailHog - 이메일 테스트 서버
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: jpa-mailhog
+    restart: unless-stopped
+    networks:
+      - appnet
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+
+  # Jaeger - 분산 추적 시스템
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jpa-jaeger
+    restart: unless-stopped
+    networks:
+      - appnet
+    ports:
+      - "16686:16686"  # Web UI
+      - "14268:14268"  # HTTP Collector
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+
+  # Prometheus - 메트릭 수집
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: jpa-prometheus
+    restart: unless-stopped
+    networks:
+      - appnet
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+
+  # Grafana - 모니터링 대시보드
+  grafana:
+    image: grafana/grafana:latest
+    container_name: jpa-grafana
+    restart: unless-stopped
+    networks:
+      - appnet
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  redis_data:
+  minio_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  appnet:
+    external: true</code></pre>
+                </div>
+                
+                <div class="mt-4 grid md:grid-cols-2 gap-4">
+                    <div class="bg-green-50 p-3 rounded">
+                        <h4 class="font-semibold text-green-800 mb-2">➕ 추가된 실무 서비스들</h4>
+                        <ul class="text-green-700 text-sm space-y-1">
+                            <li>• <strong>Redis</strong>: 캐시 및 세션 저장소 (포트 6379)</li>
+                            <li>• <strong>MinIO</strong>: S3 대용 파일 저장소 (포트 9000, 9001)</li>
+                            <li>• <strong>MailHog</strong>: 이메일 테스트 서버 (포트 1025, 8025)</li>
+                            <li>• <strong>Jaeger</strong>: 분산 추적 시스템 (포트 16686, 14268)</li>
+                            <li>• <strong>Prometheus</strong>: 메트릭 수집 (포트 9090)</li>
+                            <li>• <strong>Grafana</strong>: 모니터링 대시보드 (포트 3000)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-3 rounded">
+                        <h4 class="font-semibold text-blue-800 mb-2">🔗 실무 서비스 연결</h4>
+                        <ul class="text-blue-700 text-sm space-y-1">
+                            <li>• <strong>네트워크</strong>: 기존 appnet 네트워크 사용</li>
+                            <li>• <strong>서비스명</strong>: redis, minio, mailhog, jaeger 등으로 접근</li>
+                            <li>• <strong>포트 매핑</strong>: 각 서비스별 고유 포트로 외부 접근</li>
+                            <li>• <strong>환경변수</strong>: Spring Boot에서 각 서비스 연결 정보 설정</li>
+                            <li>• <strong>데이터 영속성</strong>: Redis, MinIO, Prometheus, Grafana 데이터 유지</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 실무 서비스 용도 설명 -->
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mt-6">
+                <h3 class="text-xl font-semibold text-slate-800 mb-4">💼 실무 서비스 용도 설명</h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="bg-red-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-red-800 mb-2">🔴 Redis</h4>
+                            <p class="text-red-700 text-sm">• <strong>캐시</strong>: 자주 사용하는 데이터를 메모리에 저장</p>
+                            <p class="text-red-700 text-sm">• <strong>세션 저장</strong>: 로그인 상태, 장바구니 등</p>
+                            <p class="text-red-700 text-sm">• <strong>실시간 랭킹</strong>: 게임 점수, 조회수 등</p>
+                        </div>
+                        
+                        <div class="bg-yellow-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-yellow-800 mb-2">📧 MailHog</h4>
+                            <p class="text-yellow-700 text-sm">• <strong>이메일 테스트</strong>: 실제 이메일 발송 없이 테스트</p>
+                            <p class="text-yellow-700 text-sm">• <strong>개발 환경</strong>: 회원가입, 비밀번호 재설정 등</p>
+                            <p class="text-yellow-700 text-sm">• <strong>디버깅</strong>: 이메일 내용 확인 및 검증</p>
+                        </div>
+                        
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-blue-800 mb-2">📁 MinIO</h4>
+                            <p class="text-blue-700 text-sm">• <strong>파일 저장</strong>: 이미지, 문서, 동영상 등</p>
+                            <p class="text-blue-700 text-sm">• <strong>S3 호환</strong>: AWS S3와 동일한 API</p>
+                            <p class="text-blue-700 text-sm">• <strong>로컬 개발</strong>: 클라우드 없이 파일 저장소 사용</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-purple-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-purple-800 mb-2">🔍 Jaeger</h4>
+                            <p class="text-purple-700 text-sm">• <strong>분산 추적</strong>: 요청이 여러 서비스를 거치는 과정 추적</p>
+                            <p class="text-purple-700 text-sm">• <strong>성능 분석</strong>: 어느 서비스에서 병목이 발생하는지 확인</p>
+                            <p class="text-purple-700 text-sm">• <strong>디버깅</strong>: 복잡한 시스템에서 문제 원인 파악</p>
+                        </div>
+                        
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-green-800 mb-2">📊 Prometheus</h4>
+                            <p class="text-green-700 text-sm">• <strong>메트릭 수집</strong>: CPU, 메모리, 응답시간 등</p>
+                            <p class="text-green-700 text-sm">• <strong>모니터링</strong>: 시스템 상태 실시간 감시</p>
+                            <p class="text-green-700 text-sm">• <strong>알림</strong>: 문제 발생 시 자동 알림</p>
+                        </div>
+                        
+                        <div class="bg-indigo-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-indigo-800 mb-2">📈 Grafana</h4>
+                            <p class="text-indigo-700 text-sm">• <strong>대시보드</strong>: 모니터링 데이터를 시각화</p>
+                            <p class="text-indigo-700 text-sm">• <strong>차트</strong>: 성능 지표를 그래프로 표시</p>
+                            <p class="text-indigo-700 text-sm">• <strong>리포팅</strong>: 팀원들과 모니터링 정보 공유</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 실행 방법 -->
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mt-6">
+                <h3 class="text-xl font-semibold text-slate-800 mb-4">⚡ 실제 실행 방법</h3>
+                <p class="text-slate-600 text-sm mb-4">
+                    우리 프로젝트를 Docker로 실행하는 실제 명령어들입니다:
+                </p>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-semibold text-slate-700 mb-3">1️⃣ Dockerfile로 실행</h4>
+                        <div class="code-block">
+                            <pre><code class="language-bash"># 1. JAR 파일 빌드
+./gradlew build
+
+# 2. Docker 이미지 빌드
+docker build -t jpa-app .
+
+# 3. 컨테이너 실행
+docker run -p 8082:8082 jpa-app</code></pre>
+                        </div>
+                        <p class="text-slate-600 text-xs mt-2">
+                            👉 하나의 컨테이너만 실행하는 방법
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-slate-700 mb-3">2️⃣ Docker Compose로 실행</h4>
+                        <div class="code-block">
+                            <pre><code class="language-bash"># 1. JAR 파일 빌드
+./gradlew build
+
+# 2. 모든 서비스 실행
+docker compose up -d
+
+# 3. 서비스 상태 확인
+docker compose ps
+
+# 4. 서비스 중지
+docker compose down</code></pre>
+                        </div>
+                        <p class="text-slate-600 text-xs mt-2">
+                            👉 여러 서비스를 한 번에 관리하는 방법
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded-lg mt-4">
+                    <h4 class="text-lg font-semibold text-green-800 mb-2">🎯 실행 후 확인</h4>
+                    <div class="grid md:grid-cols-2 gap-4 text-green-700">
+                        <div>
+                            <p class="font-semibold mb-2">📱 애플리케이션</p>
+                            <p class="text-sm">• <strong>JPA 앱</strong>: http://localhost:8083</p>
+                        </div>
+                        <div>
+                            <p class="font-semibold mb-2">🛠️ 개발 도구</p>
+                            <p class="text-sm">• <strong>MinIO 콘솔</strong>: http://localhost:9001</p>
+                            <p class="text-sm">• <strong>MailHog</strong>: http://localhost:8025</p>
+                        </div>
+                        <div>
+                            <p class="font-semibold mb-2">📊 모니터링</p>
+                            <p class="text-sm">• <strong>Jaeger</strong>: http://localhost:16686</p>
+                            <p class="text-sm">• <strong>Prometheus</strong>: http://localhost:9090</p>
+                            <p class="text-sm">• <strong>Grafana</strong>: http://localhost:3000</p>
+                        </div>
+                        <div>
+                            <p class="font-semibold mb-2">🔧 서비스</p>
+                            <p class="text-sm">• <strong>Redis</strong>: localhost:6379</p>
+                            <p class="text-sm">• <strong>MinIO API</strong>: localhost:9000</p>
+                            <p class="text-sm">• <strong>MailHog SMTP</strong>: localhost:1025</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 학습 순서 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6">🧭 학습 순서</h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mb-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
+                        <span class="text-lg font-semibold text-slate-800">Dockerfile 먼저</span>
+                    </div>
+                    <div class="w-16 h-0.5 bg-slate-300"></div>
+                    <div class="flex items-center space-x-4">
+                        <div class="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">2</div>
+                        <span class="text-lg font-semibold text-slate-800">그다음 Compose</span>
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-green-800 mb-2">1단계: Dockerfile</h4>
+                        <p class="text-green-700 text-sm mb-2">단일 컨테이너 빌드 원리 이해 (이미지의 본질)</p>
+                        <p class="text-green-600 text-xs">학생들이 "이미지란 무엇인가"를 체감</p>
+                    </div>
+                    
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-purple-800 mb-2">2단계: Compose</h4>
+                        <p class="text-purple-700 text-sm mb-2">다중 컨테이너 네트워크 구성, DB 연결</p>
+                        <p class="text-purple-600 text-xs">"하나로 끝나지 않는다"는 실무 확장 경험</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p class="text-blue-800 font-semibold mb-2">💡 핵심 메시지</p>
+                <p class="text-blue-700 text-sm">
+                    "우리가 만든 Dockerfile로 애플리케이션 이미지를 만들었죠. 
+                    그런데 실무에서는 보통 DB, Redis 등도 같이 띄워야 하니까 — 그럴 때 쓰는 게 <strong>docker-compose</strong>입니다."
+                </p>
+            </div>
+        </section>
+
+        <!-- 실무 관점 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6">💼 실무 관점</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">언제 Dockerfile을 쓸까?</h3>
+                    <ul class="text-slate-600 space-y-2">
+                        <li>• <strong>개발 단계</strong>: 애플리케이션 컨테이너 이미지 만들기</li>
+                        <li>• <strong>단순 배포</strong>: 하나의 서비스만 배포할 때</li>
+                        <li>• <strong>CI/CD</strong>: 이미지 빌드 및 푸시</li>
+                        <li>• <strong>테스트</strong>: 단위 테스트용 컨테이너</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">언제 Compose를 쓸까?</h3>
+                    <ul class="text-slate-600 space-y-2">
+                        <li>• <strong>로컬 개발</strong>: DB + Redis + 앱을 한 번에 띄우기</li>
+                        <li>• <strong>통합 테스트</strong>: 전체 시스템 환경 구성</li>
+                        <li>• <strong>스테이징</strong>: 프로덕션과 유사한 환경</li>
+                        <li>• <strong>데모</strong>: 빠른 환경 구축 및 시연</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 더 알아보기 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6">📖 더 알아보기</h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800 mb-4">Dockerfile 고급 옵션</h3>
+                        <ul class="text-slate-600 space-y-2 text-sm">
+                            <li>• <strong>.dockerignore</strong>: 불필요한 파일 제외 (필수!)</li>
+                            <li>• <strong>Multi-stage build</strong>: 빌드 크기 최적화</li>
+                            <li>• <strong>ARG vs ENV</strong>: 빌드 시 vs 런타임 변수</li>
+                            <li>• <strong>HEALTHCHECK</strong>: 컨테이너 상태 모니터링</li>
+                            <li>• <strong>USER</strong>: 보안을 위한 사용자 설정</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800 mb-4">Compose 고급 옵션</h3>
+                        <ul class="text-slate-600 space-y-2 text-sm">
+                            <li>• <strong>Override files</strong>: 환경별 설정 분리</li>
+                            <li>• <strong>Secrets</strong>: 민감한 정보 관리</li>
+                            <li>• <strong>Profiles</strong>: 서비스 그룹 관리</li>
+                            <li>• <strong>External networks</strong>: 기존 네트워크 활용</li>
+                            <li>• <strong>Health checks</strong>: 서비스 의존성 관리</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-white py-6">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <p>&copy; 2025 JPA 학습 프로젝트 - Docker 배포 가이드</p>
+        </div>
+    </footer>
+
+</body>
+</html>

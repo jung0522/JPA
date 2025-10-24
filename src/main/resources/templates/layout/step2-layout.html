@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE">JPA Step 2: 양방향 관계와 고급 기능</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <a href="/project/step2/overview" class="text-2xl font-bold hover:text-blue-200 transition">
+                        <i class="fas fa-database mr-2"></i>
+                        JPA Step 2
+                    </a>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="/project/step2/overview" class="hover:text-blue-200 font-medium transition">개요</a>
+                    <a href="/project/step2/bidirectional" class="hover:text-blue-200 font-medium transition">양방향 관계</a>
+                    <a href="/project/step2/locking" class="hover:text-blue-200 font-medium transition">락킹 전략</a>
+                    <a href="/project/step2/querydsl" class="hover:text-blue-200 font-medium transition">QueryDSL</a>
+                    <a href="/project/step2/batch" class="hover:text-blue-200 font-medium transition">배치 처리</a>
+                    <a href="/project/step2/troubleshooting" class="hover:text-blue-200 font-medium transition">문제 해결</a>
+                    <a href="/project/step2/logging-strategy" class="hover:text-blue-200 font-medium transition">로깅 전략</a>
+                    <a href="/project/step2/assignments" class="hover:text-blue-200 font-medium transition">실습 과제</a>
+                </nav>
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-btn" class="md:hidden text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="hidden md:hidden mt-4 space-y-2">
+                <a href="/project/step2/overview" class="block text-white hover:text-blue-200 font-medium py-2">개요</a>
+                <a href="/project/step2/bidirectional" class="block text-white hover:text-blue-200 font-medium py-2">양방향 관계</a>
+                <a href="/project/step2/locking" class="block text-white hover:text-blue-200 font-medium py-2">락킹 전략</a>
+                <a href="/project/step2/querydsl" class="block text-white hover:text-blue-200 font-medium py-2">QueryDSL</a>
+                <a href="/project/step2/batch" class="block text-white hover:text-blue-200 font-medium py-2">배치 처리</a>
+                <a href="/project/step2/troubleshooting" class="block text-white hover:text-blue-200 font-medium py-2">문제 해결</a>
+                <a href="/project/step2/logging-strategy" class="block text-white hover:text-blue-200 font-medium py-2">로깅 전략</a>
+                <a href="/project/step2/assignments" class="block text-white hover:text-blue-200 font-medium py-2">실습 과제</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main layout:fragment="content" class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Content will be inserted here -->
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <div class="text-center text-gray-500 text-sm space-y-2">
+                <p class="font-semibold">JPA Step 2: 양방향 관계와 고급 기능</p>
+                <p>Spring Boot 3.5.6 | JPA + Hibernate 6 | QueryDSL + 비관적 락 + 배치 처리</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Menu Toggle Script -->
+    <script>
+        document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+            var menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>

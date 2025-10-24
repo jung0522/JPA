@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>편의 메서드 기본 개념</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <style>
+        .code-block {
+            background: #2d3748;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        .highlight {
+            background-color: #fef3c7;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-slate-800 text-white py-6">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl font-bold">편의 메서드 기본 개념</h1>
+            <p class="text-slate-300 mt-2">객체지향 프로그래밍에서의 편의 메서드 이해</p>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex space-x-6">
+                <a href="#what-is" class="text-blue-600 hover:text-blue-800 font-medium">편의 메서드란?</a>
+                <a href="#why-need" class="text-blue-600 hover:text-blue-800 font-medium">왜 필요한가?</a>
+                <a href="#basic-pattern" class="text-blue-600 hover:text-blue-800 font-medium">기본 패턴</a>
+                <a href="#examples" class="text-blue-600 hover:text-blue-800 font-medium">실제 예시</a>
+                <a href="#benefits" class="text-blue-600 hover:text-blue-800 font-medium">장점</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        
+        <!-- 편의 메서드란? -->
+        <section id="what-is" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">편의 메서드란?</h2>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg mb-6">
+                <h3 class="text-lg font-bold text-blue-800 mb-3">정의</h3>
+                <p class="text-blue-700 mb-4">
+                    편의 메서드(Convenience Method)는 복잡한 작업을 단순화하거나, 
+                    자주 사용되는 패턴을 메서드로 추상화하여 코드의 가독성과 재사용성을 높이는 메서드입니다.
+                </p>
+                <p class="text-blue-700">
+                    <strong>핵심:</strong> 복잡한 로직을 숨기고, 사용하기 쉬운 인터페이스를 제공하는 것
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">일반적인 예시</h3>
+                    <div class="code-block">
+                        <pre><code class="language-java">// 복잡한 작업을 단순화
+public class BankAccount {
+    private double balance;
+    private String accountNumber;
+    
+    // 편의 메서드: 복잡한 로직을 단순화
+    public void transfer(BankAccount to, double amount) {
+        if (this.balance >= amount) {
+            this.withdraw(amount);
+            to.deposit(amount);
+        } else {
+            throw new InsufficientFundsException();
+        }
+    }
+    
+    // 기본 메서드들
+    public void withdraw(double amount) { /* ... */ }
+    public void deposit(double amount) { /* ... */ }
+}</code></pre>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">사용 예시</h3>
+                    <div class="code-block">
+                        <pre><code class="language-java">// 편의 메서드 사용
+BankAccount account1 = new BankAccount();
+BankAccount account2 = new BankAccount();
+
+// 복잡한 로직을 한 번의 메서드 호출로
+account1.transfer(account2, 1000.0);
+
+// 편의 메서드 없이 한다면?
+if (account1.getBalance() >= 1000.0) {
+    account1.withdraw(1000.0);
+    account2.deposit(1000.0);
+} else {
+    throw new InsufficientFundsException();
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 왜 필요한가? -->
+        <section id="why-need" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">왜 편의 메서드가 필요한가?</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">문제 상황</h3>
+                    <div class="bg-red-50 border-l-4 border-red-400 p-6 rounded-lg">
+                        <h4 class="font-bold text-red-800 mb-3">복잡한 객체 관계</h4>
+                        <div class="code-block">
+                            <pre><code class="language-java">// 두 객체 간의 관계 설정
+public class Student {
+    private List&lt;Course&gt; courses = new ArrayList&lt;&gt;();
+}
+
+public class Course {
+    private List&lt;Student&gt; students = new ArrayList&lt;&gt;();
+}
+
+// 관계 설정 시 매번 해야 할 일
+Student student = new Student();
+Course course = new Course();
+
+// 1. student의 courses에 course 추가
+student.getCourses().add(course);
+
+// 2. course의 students에 student 추가  
+course.getStudents().add(student);
+
+// 실수하기 쉬운 부분들:
+// - 한쪽만 설정하는 경우
+// - 순서를 바꾸는 경우
+// - null 체크를 깜빡하는 경우</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">해결책</h3>
+                    <div class="bg-green-50 border-l-4 border-green-400 p-6 rounded-lg">
+                        <h4 class="font-bold text-green-800 mb-3">편의 메서드로 해결</h4>
+                        <div class="code-block">
+                            <pre><code class="language-java">// 편의 메서드 추가
+public class Student {
+    private List&lt;Course&gt; courses = new ArrayList&lt;&gt;();
+    
+    public void enrollIn(Course course) {
+        if (course != null) {
+            this.courses.add(course);
+            course.getStudents().add(this);
+        }
+    }
+}
+
+public class Course {
+    private List&lt;Student&gt; students = new ArrayList&lt;&gt;();
+    
+    public void addStudent(Student student) {
+        if (student != null) {
+            this.students.add(student);
+            student.getCourses().add(this);
+        }
+    }
+}
+
+// 사용법 - 간단하고 안전
+student.enrollIn(course);
+// 또는
+course.addStudent(student);</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 기본 패턴 -->
+        <section id="basic-pattern" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">편의 메서드 기본 패턴</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">1. 관계 설정 패턴</h3>
+                    <div class="code-block">
+                        <pre><code class="language-java">// 양방향 관계 설정
+public void addItem(Item item) {
+    if (item != null) {
+        this.items.add(item);
+        item.setParent(this);
+    }
+}
+
+public void removeItem(Item item) {
+    if (item != null) {
+        this.items.remove(item);
+        item.setParent(null);
+    }
+}</code></pre>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">2. 검증 포함 패턴</h3>
+                    <div class="code-block">
+                        <pre><code class="language-java">// 비즈니스 규칙 검증 포함
+public void addStudent(Student student) {
+    if (student == null) {
+        throw new IllegalArgumentException("Student cannot be null");
+    }
+    
+    if (this.students.size() >= this.maxStudents) {
+        throw new IllegalStateException("Course is full");
+    }
+    
+    this.students.add(student);
+    student.getCourses().add(this);
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <h3 class="text-lg font-bold text-gray-700 mb-4">3. 복합 작업 패턴</h3>
+                <div class="code-block">
+                    <pre><code class="language-java">// 여러 단계를 하나의 메서드로
+public void approveEnrollment(Enrollment enrollment) {
+    // 1. 상태 변경
+    enrollment.setStatus(EnrollmentStatus.APPROVED);
+    
+    // 2. 수강생 수 증가
+    this.currentStudents++;
+    
+    // 3. 알림 발송
+    notificationService.sendApprovalNotification(enrollment);
+    
+    // 4. 로그 기록
+    auditService.logEnrollmentApproval(enrollment);
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 실제 예시 -->
+        <section id="examples" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">실제 예시</h2>
+            
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">쇼핑몰 예시</h3>
+                    <div class="code-block">
+                        <pre><code class="language-java">public class ShoppingCart {
+    private List&lt;CartItem&gt; items = new ArrayList&lt;&gt;();
+    private Customer customer;
+    
+    // 편의 메서드: 상품 추가
+    public void addProduct(Product product, int quantity) {
+        if (product == null || quantity <= 0) {
+            throw new IllegalArgumentException("Invalid product or quantity");
+        }
+        
+        // 기존 상품이 있는지 확인
+        Optional&lt;CartItem&gt; existingItem = items.stream()
+                .filter(item -> item.getProduct().equals(product))
+                .findFirst();
+        
+        if (existingItem.isPresent()) {
+            existingItem.get().addQuantity(quantity);
+        } else {
+            CartItem newItem = new CartItem(product, quantity);
+            items.add(newItem);
+            newItem.setCart(this);
+        }
+    }
+    
+    // 편의 메서드: 상품 제거
+    public void removeProduct(Product product) {
+        items.removeIf(item -> item.getProduct().equals(product));
+    }
+    
+    // 편의 메서드: 장바구니 비우기
+    public void clear() {
+        items.clear();
+    }
+}</code></pre>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">사용법 비교</h3>
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-lg">
+                        <h4 class="font-bold text-yellow-800 mb-3">편의 메서드 사용</h4>
+                        <div class="code-block">
+                            <pre><code class="language-java">// 간단하고 직관적
+ShoppingCart cart = new ShoppingCart();
+cart.addProduct(product, 2);
+cart.removeProduct(product);
+cart.clear();</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="bg-red-50 border-l-4 border-red-400 p-6 rounded-lg mt-4">
+                        <h4 class="font-bold text-red-800 mb-3">편의 메서드 없이</h4>
+                        <div class="code-block">
+                            <pre><code class="language-java">// 복잡하고 실수하기 쉬움
+ShoppingCart cart = new ShoppingCart();
+Product product = new Product();
+
+// 상품 추가 로직을 매번 작성
+if (product != null && quantity > 0) {
+    Optional&lt;CartItem&gt; existingItem = cart.getItems().stream()
+            .filter(item -> item.getProduct().equals(product))
+            .findFirst();
+    
+    if (existingItem.isPresent()) {
+        existingItem.get().addQuantity(quantity);
+    } else {
+        CartItem newItem = new CartItem(product, quantity);
+        cart.getItems().add(newItem);
+        newItem.setCart(cart);
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 장점 -->
+        <section id="benefits" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">편의 메서드의 장점</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-green-50 border-l-4 border-green-400 p-6 rounded-lg">
+                    <h3 class="text-lg font-bold text-green-800 mb-3">코드 품질 향상</h3>
+                    <ul class="text-green-700 space-y-2">
+                        <li>• <strong>가독성:</strong> 코드의 의도가 명확하게 드러남</li>
+                        <li>• <strong>재사용성:</strong> 동일한 로직을 여러 곳에서 사용</li>
+                        <li>• <strong>유지보수성:</strong> 로직 변경 시 한 곳만 수정</li>
+                        <li>• <strong>테스트 용이성:</strong> 개별 메서드 단위로 테스트 가능</li>
+                    </ul>
+                </div>
+
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg">
+                    <h3 class="text-lg font-bold text-blue-800 mb-3">개발자 경험</h3>
+                    <ul class="text-blue-700 space-y-2">
+                        <li>• <strong>실수 방지:</strong> 복잡한 로직을 자동화</li>
+                        <li>• <strong>일관성:</strong> 동일한 패턴으로 처리</li>
+                        <li>• <strong>효율성:</strong> 반복 작업을 줄임</li>
+                        <li>• <strong>학습 용이성:</strong> 새로운 개발자도 쉽게 이해</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <h3 class="text-lg font-bold text-gray-700 mb-4">언제 편의 메서드를 만들까?</h3>
+                <div class="bg-gray-50 border-l-4 border-gray-400 p-6 rounded-lg">
+                    <ul class="text-gray-700 space-y-2">
+                        <li>• <strong>반복되는 패턴:</strong> 같은 로직을 여러 번 작성할 때</li>
+                        <li>• <strong>복잡한 작업:</strong> 여러 단계가 필요한 작업</li>
+                        <li>• <strong>비즈니스 규칙:</strong> 도메인 로직이 포함된 작업</li>
+                        <li>• <strong>에러 처리:</strong> 검증이나 예외 처리가 필요한 작업</li>
+                        <li>• <strong>관계 설정:</strong> 객체 간의 관계를 설정하는 작업</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 다음 단계 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">다음 단계</h2>
+            
+            <div class="bg-slate-50 border-l-4 border-slate-400 p-6 rounded-lg">
+                <h3 class="text-lg font-bold text-slate-800 mb-3">이제 JPA로 넘어가봅시다</h3>
+                <p class="text-slate-700 mb-4">
+                    편의 메서드의 기본 개념을 이해했으니, 이제 JPA에서 어떻게 적용되는지 살펴보겠습니다.
+                </p>
+                <ul class="text-slate-700 space-y-2">
+                    <li>• <strong>단방향 관계:</strong> 편의 메서드가 필요 없는 경우</li>
+                    <li>• <strong>양방향 관계:</strong> 편의 메서드가 필수인 경우</li>
+                    <li>• <strong>JPA 특화 패턴:</strong> 엔티티에서의 편의 메서드 구현</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-white py-6">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2025 JPA 학습 프로젝트</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+

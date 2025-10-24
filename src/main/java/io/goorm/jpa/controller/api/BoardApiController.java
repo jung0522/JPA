@@ -29,7 +29,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/boards")
 @RequiredArgsConstructor
-@Tag(name = "Board", description = "게시판 API")
+@Tag(name = "Board", description = "게시판 관리 API")
 public class BoardApiController {
 
     private final BoardService boardService;
@@ -58,7 +58,7 @@ public class BoardApiController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "게시글 검색")
+    @Operation(summary = "게시글 검색 (개선)", description = "제목, 내용, 작성자 통합 검색 - 정렬 옵션 지원")
     public ApiResponse<PageResponse<BoardResponse>> searchBoards(
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String content,
@@ -71,7 +71,7 @@ public class BoardApiController {
     }
 
     @GetMapping("/popular")
-    @Operation(summary = "인기 게시글 조회")
+    @Operation(summary = "인기 게시글 조회 (개선)", description = "조회수 기준 상위 게시글 - 페이징 지원")
     public ApiResponse<List<BoardResponse>> getPopularBoards() {
         List<BoardResponse> boards = boardService.getPopularBoards();
         return ApiResponse.success(boards);

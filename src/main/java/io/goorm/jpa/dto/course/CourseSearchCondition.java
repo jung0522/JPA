@@ -1,63 +1,184 @@
 package io.goorm.jpa.dto.course;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 /**
  * 강의 검색 조건 DTO
- * JPQL 동적 쿼리용
+ * - QueryDSL 동적 검색용
+ * - 공통 조건 모듈과 연동
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class CourseSearchCondition {
 
-    // 강의 기본 정보
-    @Schema(description = "강의명", example = "Spring Boot")
+    // ===== 기본 검색 조건 =====
     private String courseName;
-    
-    @Schema(description = "강의 설명", example = "웹 개발")
-    private String description;
-    
-    // 강사 정보
-    @Schema(description = "강사명", example = "김강사")
     private String instructorName;
-    
-    // 정원 관련
-    @Schema(description = "최소 정원", example = "10")
+    private String description;
+
+    // ===== 정원 조건 =====
     private Integer minCapacity;
-    
-    @Schema(description = "최대 정원", example = "50")
     private Integer maxCapacity;
-    
-    // 수강생 관련
-    @Schema(description = "최소 현재 수강생 수", example = "5")
+
+    // ===== 수강생 수 조건 =====
     private Integer minCurrentStudents;
-    
-    @Schema(description = "최대 현재 수강생 수", example = "30")
     private Integer maxCurrentStudents;
-    
-    // 수강 가능 여부
-    @Schema(description = "수강 가능 여부", example = "true")
-    private Boolean isAvailable;
-    
-    // 수강률 관련
-    @Schema(description = "최소 수강률", example = "0.5")
+
+    // ===== 수강률 조건 =====
     private Double minEnrollmentRatio;
-    
-    @Schema(description = "최대 수강률", example = "1.0")
     private Double maxEnrollmentRatio;
-    
-    // 날짜 관련
-    @Schema(description = "시작 날짜", example = "2024-01-01T00:00:00")
+
+    // ===== 날짜 조건 =====
     private LocalDateTime startDate;
-    
-    @Schema(description = "종료 날짜", example = "2024-12-31T23:59:59")
     private LocalDateTime endDate;
-    
-    // 정렬
-    @Schema(description = "정렬 기준", example = "created", allowableValues = {"name", "nameDesc", "capacity", "capacityDesc", "students", "studentsDesc", "created", "createdDesc"})
-    private String sortBy;
+
+    // ===== 상태 조건 =====
+    private Boolean isAvailable; // 수강 가능 여부
+
+    // ===== 정렬 조건 =====
+    private String sortBy; // name, nameDesc, capacity, capacityDesc, students, studentsDesc, enrollmentRatio, created, createdDesc
+
+    // ===== 페이지 조건 =====
+    private Integer page;
+    private Integer size;
+
+    // ===== 유틸리티 메서드 =====
+
+    /**
+     * 강의명 검색 여부
+     */
+    public boolean hasCourseName() {
+        return courseName != null && !courseName.trim().isEmpty();
+    }
+
+    /**
+     * 강사명 검색 여부
+     */
+    public boolean hasInstructorName() {
+        return instructorName != null && !instructorName.trim().isEmpty();
+    }
+
+    /**
+     * 설명 검색 여부
+     */
+    public boolean hasDescription() {
+        return description != null && !description.trim().isEmpty();
+    }
+
+    /**
+     * 정원 범위 검색 여부
+     */
+    public boolean hasCapacityRange() {
+        return minCapacity != null || maxCapacity != null;
+    }
+
+    /**
+     * 수강생 수 범위 검색 여부
+     */
+    public boolean hasCurrentStudentsRange() {
+        return minCurrentStudents != null || maxCurrentStudents != null;
+    }
+
+    /**
+     * 수강률 범위 검색 여부
+     */
+    public boolean hasEnrollmentRatioRange() {
+        return minEnrollmentRatio != null || maxEnrollmentRatio != null;
+    }
+
+    /**
+     * 날짜 범위 검색 여부
+     */
+    public boolean hasDateRange() {
+        return startDate != null || endDate != null;
+    }
+
+    /**
+     * 정렬 조건 여부
+     */
+    public boolean hasSortBy() {
+        return sortBy != null && !sortBy.trim().isEmpty();
+    }
+
+    /**
+     * 기본 정렬 조건 반환
+     */
+    public String getSortByOrDefault() {
+        return hasSortBy() ? sortBy : "createdDesc";
+    }
+
+    /**
+     * 검색 조건이 있는지 확인
+     */
+    public boolean hasAnyCondition() {
+        return hasCourseName() || hasInstructorName() || hasDescription() ||
+               hasCapacityRange() || hasCurrentStudentsRange() || hasEnrollmentRatioRange() ||
+               hasDateRange() || isAvailable != null;
+    }
+
+    /**
+     * 빌더 패턴을 위한 정적 팩토리 메서드
+     */
+    public static CourseSearchConditionBuilder builder() {
+        return new CourseSearchConditionBuilder();
+    }
+
+    /**
+     * 기본 검색 조건으로 생성
+     */
+    public static CourseSearchCondition of(String courseName, String instructorName) {
+        return CourseSearchCondition.builder()
+            .courseName(courseName)
+            .instructorName(instructorName)
+            .sortBy("createdDesc")
+            .build();
+    }
+
+    /**
+     * 정원 범위 검색 조건으로 생성
+     */
+    public static CourseSearchCondition byCapacity(Integer minCapacity, Integer maxCapacity) {
+        return CourseSearchCondition.builder()
+            .minCapacity(minCapacity)
+            .maxCapacity(maxCapacity)
+            .sortBy("capacityDesc")
+            .build();
+    }
+
+    /**
+     * 수강 가능한 강의만 검색
+     */
+    public static CourseSearchCondition availableOnly() {
+        return CourseSearchCondition.builder()
+            .isAvailable(true)
+            .sortBy("createdDesc")
+            .build();
+    }
+
+    /**
+     * 인기 강의 검색 (수강률 높은 순)
+     */
+    public static CourseSearchCondition popularCourses() {
+        return CourseSearchCondition.builder()
+            .minEnrollmentRatio(0.5) // 50% 이상
+            .sortBy("enrollmentRatio")
+            .build();
+    }
+
+    /**
+     * 최근 개설된 강의 검색
+     */
+    public static CourseSearchCondition recentCourses(int days) {
+        return CourseSearchCondition.builder()
+            .startDate(LocalDateTime.now().minusDays(days))
+            .sortBy("createdDesc")
+            .build();
+    }
 }

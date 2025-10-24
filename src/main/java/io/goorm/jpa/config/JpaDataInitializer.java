@@ -28,7 +28,7 @@ import java.util.List;
 
 @Slf4j
 @Component
-@Profile("jpa")
+@Profile({"jpa", "db"})
 @RequiredArgsConstructor
 public class JpaDataInitializer implements CommandLineRunner {
 
@@ -371,7 +371,100 @@ public class JpaDataInitializer implements CommandLineRunner {
                 .build();
         curriculumRepository.save(curriculum5);
 
-        log.info("Curriculum test data created: {} curriculums", 5);
+        // course3의 커리큘럼 (QueryDSL 마스터하기)
+        Curriculum curriculum6 = Curriculum.builder()
+                .weekNumber(1)
+                .title("QueryDSL 소개")
+                .description("QueryDSL의 기본 개념과 설정 방법을 학습합니다.")
+                .materials("노트북, QueryDSL 공식 문서")
+                .duration(90)
+                .course(course3)
+                .build();
+        curriculumRepository.save(curriculum6);
+
+        Curriculum curriculum7 = Curriculum.builder()
+                .weekNumber(2)
+                .title("동적 쿼리 작성")
+                .description("BooleanBuilder를 활용한 동적 쿼리 작성법을 학습합니다.")
+                .materials("노트북, 예제 코드")
+                .duration(120)
+                .course(course3)
+                .build();
+        curriculumRepository.save(curriculum7);
+
+        Curriculum curriculum8 = Curriculum.builder()
+                .weekNumber(3)
+                .title("서브쿼리와 조인")
+                .description("복잡한 서브쿼리와 조인 쿼리 작성법을 학습합니다.")
+                .materials("노트북, 실습 프로젝트")
+                .duration(150)
+                .course(course3)
+                .build();
+        curriculumRepository.save(curriculum8);
+
+        // course4의 커리큘럼 (데이터베이스 설계와 최적화)
+        Curriculum curriculum9 = Curriculum.builder()
+                .weekNumber(1)
+                .title("데이터베이스 설계 기초")
+                .description("정규화와 비정규화의 개념을 학습합니다.")
+                .materials("노트북, ERD 도구")
+                .duration(90)
+                .course(course4)
+                .build();
+        curriculumRepository.save(curriculum9);
+
+        Curriculum curriculum10 = Curriculum.builder()
+                .weekNumber(2)
+                .title("인덱스 설계")
+                .description("효율적인 인덱스 설계 방법을 학습합니다.")
+                .materials("노트북, 데이터베이스 관리 도구")
+                .duration(120)
+                .course(course4)
+                .build();
+        curriculumRepository.save(curriculum10);
+
+        Curriculum curriculum11 = Curriculum.builder()
+                .weekNumber(3)
+                .title("쿼리 최적화")
+                .description("SQL 쿼리 성능 최적화 기법을 학습합니다.")
+                .materials("노트북, 성능 분석 도구")
+                .duration(150)
+                .course(course4)
+                .build();
+        curriculumRepository.save(curriculum11);
+
+        // course5의 커리큘럼 (RESTful API 설계)
+        Curriculum curriculum12 = Curriculum.builder()
+                .weekNumber(1)
+                .title("REST API 기초")
+                .description("REST API의 기본 개념과 설계 원칙을 학습합니다.")
+                .materials("노트북, Postman")
+                .duration(90)
+                .course(course5)
+                .build();
+        curriculumRepository.save(curriculum12);
+
+        Curriculum curriculum13 = Curriculum.builder()
+                .weekNumber(2)
+                .title("HTTP 메서드와 상태 코드")
+                .description("적절한 HTTP 메서드와 상태 코드 사용법을 학습합니다.")
+                .materials("노트북, API 문서")
+                .duration(120)
+                .course(course5)
+                .build();
+        curriculumRepository.save(curriculum13);
+
+        Curriculum curriculum14 = Curriculum.builder()
+                .weekNumber(3)
+                .title("API 버전 관리")
+                .description("API 버전 관리 전략과 하위 호환성을 학습합니다.")
+                .materials("노트북, 버전 관리 도구")
+                .duration(150)
+                .course(course5)
+                .build();
+        curriculumRepository.save(curriculum14);
+
+        log.info("Curriculum test data created: {} curriculums", 14);
 
         log.info("=== JPA Data Initialization Completed ===");
         log.info("Login credentials:");

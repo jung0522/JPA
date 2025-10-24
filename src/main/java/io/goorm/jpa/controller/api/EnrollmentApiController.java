@@ -4,6 +4,8 @@ import io.goorm.jpa.dto.common.ApiResponse;
 import io.goorm.jpa.dto.common.PageResponse;
 import io.goorm.jpa.dto.enrollment.EnrollmentCreateRequest;
 import io.goorm.jpa.dto.enrollment.EnrollmentResponse;
+import io.goorm.jpa.dto.enrollment.BatchEnrollmentRequest;
+import io.goorm.jpa.dto.enrollment.BatchEnrollmentResponse;
 import io.goorm.jpa.enums.EnrollmentStatus;
 import io.goorm.jpa.service.EnrollmentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,7 +29,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/enrollments")
 @RequiredArgsConstructor
-@Tag(name = "Enrollment", description = "수강신청 API")
+@Tag(name = "Enrollment", description = "수강신청 관리 API")
 public class EnrollmentApiController {
 
     private final EnrollmentService enrollmentService;
@@ -70,7 +72,7 @@ public class EnrollmentApiController {
     }
 
     @GetMapping
-    @Operation(summary = "수강신청 관리 (관리자, 강사, 동적 검색)")
+    @Operation(summary = "수강신청 목록 조회 (개선)", description = "관리자용 동적 검색 - 상태별, 학생별 필터링 지원")
     public ApiResponse<PageResponse<EnrollmentResponse>> search(
             @RequestParam(required = false) String searchField,
             @RequestParam(required = false) String keyword,
@@ -80,5 +82,25 @@ public class EnrollmentApiController {
     ) {
         Page<EnrollmentResponse> page = enrollmentService.searchByAdminConditions(searchField, keyword, include, status, pageable);
         return ApiResponse.success(PageResponse.of(page));
+    }
+
+    // ===== Step 2-4: 배치 처리 API =====
+
+    @PostMapping("/batch")
+    @Operation(summary = "수강신청 일괄 처리 (신규)", description = "여러 수강신청을 한번에 승인/거절 - API only")
+    public ApiResponse<BatchEnrollmentResponse> batchProcess(@Valid @RequestBody BatchEnrollmentRequest request) {
+        BatchEnrollmentResponse response = enrollmentService.batchProcessEnrollments(request);
+        return ApiResponse.success(response);
+    }
+
+    @PostMapping("/batch/course/{courseNo}")
+    @Operation(summary = "강의별 수강신청 일괄 처리 (신규)", description = "특정 강의의 모든 수강신청 일괄 처리 - API only")
+    public ApiResponse<BatchEnrollmentResponse> batchProcessByCourse(
+            @PathVariable Long courseNo,
+            @RequestParam BatchEnrollmentRequest.BatchAction action,
+            @RequestParam(required = false) String reason
+    ) {
+        BatchEnrollmentResponse response = enrollmentService.batchProcessEnrollmentsByCourse(courseNo, action, reason);
+        return ApiResponse.success(response);
     }
 }

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/step2-layout}">
+<head>
+    <title>QueryDSL 고급 기능</title>
+    <style>
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .feature-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Header -->
+        <header class="gradient-bg text-white shadow-lg">
+            <div class="container mx-auto px-6 py-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-4xl font-bold mb-2">
+                            <i class="fas fa-chart-bar mr-3"></i>
+                            QueryDSL 고급 기능
+                    </h1>
+                    <p class="text-xl text-blue-100">
+                        통계 쿼리, 공통 조건 모듈, 동적 검색
+                    </p>
+                </div>
+                <a href="/project/step2/overview" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition">
+                    <i class="fas fa-arrow-left mr-2"></i>목록으로
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-12">
+        <!-- 개요 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-info-circle text-blue-600 mr-3"></i>
+                QueryDSL 고급 기능 개요
+            </h2>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="feature-card">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-chart-pie text-4xl text-green-600 mb-3"></i>
+                        <h3 class="text-xl font-bold text-gray-800">통계 쿼리</h3>
+                    </div>
+                    <ul class="text-gray-600 space-y-1">
+                        <li>• 강의별 상세 통계</li>
+                        <li>• 강사별 강의 통계</li>
+                        <li>• 월별 개설 통계</li>
+                        <li>• 커리큘럼 통계</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-puzzle-piece text-4xl text-purple-600 mb-3"></i>
+                        <h3 class="text-xl font-bold text-gray-800">공통 조건 모듈</h3>
+                    </div>
+                    <ul class="text-gray-600 space-y-1">
+                        <li>• 재사용 가능한 조건</li>
+                        <li>• 코드 중복 제거</li>
+                        <li>• 유지보수성 향상</li>
+                        <li>• 일관성 보장</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-search text-4xl text-orange-600 mb-3"></i>
+                        <h3 class="text-xl font-bold text-gray-800">동적 검색</h3>
+                    </div>
+                    <ul class="text-gray-600 space-y-1">
+                        <li>• 텍스트 검색</li>
+                        <li>• 고급 검색</li>
+                        <li>• 페이징 지원</li>
+                        <li>• 정렬 기능</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 공통 조건 모듈 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-puzzle-piece text-purple-600 mr-3"></i>
+                CommonQueryConditions 모듈
+            </h2>
+            
+            <div class="code-block">
+<span class="text-gray-400">// 공통 조건 모듈</span>
+<span class="text-blue-400">public class</span> <span class="text-green-400">CommonQueryConditions</span> <span class="text-white">{</span>
+
+    <span class="text-gray-400">// 삭제되지 않은 데이터</span>
+    <span class="text-blue-400">public static</span> <span class="text-white">BooleanExpression notDeleted</span><span class="text-white">(BooleanPath deletedPath) {</span>
+        <span class="text-blue-400">return</span> <span class="text-white">deletedPath.eq(</span><span class="text-orange-400">false</span><span class="text-white">);</span>
+    <span class="text-white">}</span>
+
+    <span class="text-gray-400">// 문자열 포함 검색</span>
+    <span class="text-blue-400">public static</span> <span class="text-white">BooleanExpression stringContains</span><span class="text-white">(StringExpression stringPath, String keyword) {</span>
+        <span class="text-blue-400">if</span> <span class="text-white">(keyword == </span><span class="text-orange-400">null</span> <span class="text-white">|| keyword.trim().isEmpty()) </span><span class="text-blue-400">return null</span><span class="text-white">;</span>
+        <span class="text-blue-400">return</span> <span class="text-white">stringPath.contains(keyword.trim());</span>
+    <span class="text-white">}</span>
+
+    <span class="text-gray-400">// Enum 값 비교</span>
+    <span class="text-blue-400">public static</span> <span class="text-white">&lt;T extends Enum&lt;T&gt;&gt; BooleanExpression enumEq</span><span class="text-white">(EnumPath&lt;T&gt; enumPath, T value) {</span>
+        <span class="text-blue-400">return</span> <span class="text-white">value != </span><span class="text-orange-400">null</span> <span class="text-white">? enumPath.eq(value) : </span><span class="text-orange-400">null</span><span class="text-white">;</span>
+    <span class="text-white">}</span>
+
+    <span class="text-gray-400">// 날짜 범위 검색</span>
+    <span class="text-blue-400">public static</span> <span class="text-white">BooleanExpression dateBetween</span><span class="text-white">(DateTimePath&lt;LocalDateTime&gt; dateTimePath, LocalDateTime start, LocalDateTime end) {</span>
+        <span class="text-blue-400">if</span> <span class="text-white">(start != </span><span class="text-orange-400">null</span> <span class="text-white">&& end != </span><span class="text-orange-400">null</span><span class="text-white">) {</span>
+            <span class="text-blue-400">return</span> <span class="text-white">dateTimePath.between(start, end);</span>
+        <span class="text-white">} else if</span> <span class="text-white">(start != </span><span class="text-orange-400">null</span><span class="text-white">) {</span>
+            <span class="text-blue-400">return</span> <span class="text-white">dateTimePath.goe(start);</span>
+        <span class="text-white">} else if</span> <span class="text-white">(end != </span><span class="text-orange-400">null</span><span class="text-white">) {</span>
+            <span class="text-blue-400">return</span> <span class="text-white">dateTimePath.loe(end);</span>
+        <span class="text-white">}</span>
+        <span class="text-blue-400">return null</span><span class="text-white">;</span>
+    <span class="text-white">}</span>
+
+    <span class="text-gray-400">// 숫자 범위 검색</span>
+    <span class="text-blue-400">public static</span> <span class="text-white">&lt;T extends Number &amp; Comparable&lt;?&gt;&gt; BooleanExpression numberBetween</span><span class="text-white">(NumberPath&lt;T&gt; numberPath, T min, T max) {</span>
+        <span class="text-blue-400">if</span> <span class="text-white">(min != </span><span class="text-orange-400">null</span> <span class="text-white">&& max != </span><span class="text-orange-400">null</span><span class="text-white">) {</span>
+            <span class="text-blue-400">return</span> <span class="text-white">numberPath.between(min, max);</span>
+        <span class="text-white">} else if</span> <span class="text-white">(min != </span><span class="text-orange-400">null</span><span class="text-white">) {</span>
+            <span class="text-blue-400">return</span> <span class="text-white">numberPath.goe(min);</span>
+        <span class="text-white">} else if</span> <span class="text-white">(max != </span><span class="text-orange-400">null</span><span class="text-white">) {</span>
+            <span class="text-blue-400">return</span> <span class="text-white">numberPath.loe(max);</span>
+        <span class="text-white">}</span>
+        <span class="text-blue-400">return null</span><span class="text-white">;</span>
+    <span class="text-white">}</span>
+
+    <span class="text-gray-400">// 비율 계산 (수강률 등)</span>
+    <span class="text-blue-400">public static</span> <span class="text-white">BooleanExpression ratioBetween</span><span class="text-white">(NumberPath&lt;Integer&gt; numerator, NumberPath&lt;Integer&gt; denominator, Double minRatio, Double maxRatio) {</span>
+        <span class="text-blue-400">if</span> <span class="text-white">(numerator == </span><span class="text-orange-400">null</span> <span class="text-white">|| denominator == </span><span class="text-orange-400">null</span> <span class="text-white">|| denominator.eq(0).equals(</span><span class="text-orange-400">true</span><span class="text-white">)) {</span>
+            <span class="text-blue-400">return null</span><span class="text-white">;</span>
+        <span class="text-white">}</span>
+        
+        <span class="text-white">BooleanExpression condition = denominator.gt(0);</span>
+        
+        <span class="text-blue-400">if</span> <span class="text-white">(minRatio != </span><span class="text-orange-400">null</span> <span class="text-white">&& maxRatio != </span><span class="text-orange-400">null</span><span class="text-white">) {</span>
+            <span class="text-white">condition = condition.and(numerator.divide(denominator).between(minRatio, maxRatio));</span>
+        <span class="text-white">} else if</span> <span class="text-white">(minRatio != </span><span class="text-orange-400">null</span><span class="text-white">) {</span>
+            <span class="text-white">condition = condition.and(numerator.divide(denominator).goe(minRatio));</span>
+        <span class="text-white">} else if</span> <span class="text-white">(maxRatio != </span><span class="text-orange-400">null</span><span class="text-white">) {</span>
+            <span class="text-white">condition = condition.and(numerator.divide(denominator).loe(maxRatio));</span>
+        <span class="text-white">}</span>
+        <span class="text-blue-400">return</span> <span class="text-white">condition;</span>
+    <span class="text-white">}</span>
+<span class="text-white">}</span>
+            </div>
+        </section>
+
+        <!-- CourseQueryRepository 통계 쿼리 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-chart-pie text-green-600 mr-3"></i>
+                CourseQueryRepository 통계 쿼리
+            </h2>
+            
+            <div class="space-y-8">
+                <!-- 전체 통계 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">1. 강의 전체 통계</h3>
+                    <div class="code-block">
+<span class="text-gray-400">// 강의 전체 통계</span>
+<span class="text-blue-400">public</span> <span class="text-white">CourseStatistics getCourseStatistics() {</span>
+    <span class="text-blue-400">return</span> <span class="text-white">queryFactory</span>
+        <span class="text-white">.select(Projections.constructor(CourseStatistics.class,</span>
+                <span class="text-white">course.countDistinct(),</span>
+                <span class="text-white">course.currentStudents.sum(),</span>
+                <span class="text-white">course.maxStudents.sum(),</span>
+                <span class="text-white">course.currentStudents.avg(),</span>
+                <span class="text-white">course.maxStudents.avg()</span>
+        <span class="text-white">))</span>
+        <span class="text-white">.from(course)</span>
+        <span class="text-white">.where(CommonQueryConditions.notDeleted(course.deleted))</span>
+        <span class="text-white">.fetchOne();</span>
+<span class="text-white">}</span>
+                    </div>
+                </div>
+
+                <!-- 강의별 상세 통계 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">2. 강의별 상세 통계</h3>
+                    <div class="code-block">
+<span class="text-gray-400">// 강의별 상세 통계 (수강률 포함)</span>
+<span class="text-blue-400">public</span> <span class="text-white">List&lt;CourseStatistics&gt; getCourseDetailedStatistics() {</span>
+    <span class="text-blue-400">return</span> <span class="text-white">queryFactory</span>
+        <span class="text-white">.select(Projections.constructor(CourseStatistics.class,</span>
+                <span class="text-white">course.courseNo,</span>
+                <span class="text-white">course.name,</span>
+                <span class="text-white">course.instructor.fullName,</span>
+                <span class="text-white">course.maxStudents,</span>
+                <span class="text-white">course.currentStudents,</span>
+                <span class="text-white">Expressions.stringTemplate(</span><span class="text-orange-400">"CASE WHEN {0} > 0 THEN CAST({1} AS double) / {0} ELSE 0 END"</span><span class="text-white">,</span>
+                        <span class="text-white">course.maxStudents, course.currentStudents).as(</span><span class="text-orange-400">"enrollmentRatio"</span><span class="text-white">)</span>
+        <span class="text-white">))</span>
+        <span class="text-white">.from(course)</span>
+        <span class="text-white">.join(course.instructor, user)</span>
+        <span class="text-white">.where(CommonQueryConditions.notDeleted(course.deleted))</span>
+        <span class="text-white">.orderBy(course.name.asc())</span>
+        <span class="text-white">.fetch();</span>
+<span class="text-white">}</span>
+                    </div>
+                </div>
+
+                <!-- 강사별 통계 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">3. 강사별 강의 통계</h3>
+                    <div class="code-block">
+<span class="text-gray-400">// 강사별 강의 통계</span>
+<span class="text-blue-400">public</span> <span class="text-white">List&lt;CourseStatistics&gt; getInstructorStatistics() {</span>
+    <span class="text-blue-400">return</span> <span class="text-white">queryFactory</span>
+        <span class="text-white">.select(Projections.constructor(CourseStatistics.class,</span>
+                <span class="text-white">course.instructor.fullName,</span>
+                <span class="text-white">course.countDistinct(),</span>
+                <span class="text-white">course.currentStudents.sum(),</span>
+                <span class="text-white">course.maxStudents.sum()</span>
+        <span class="text-white">))</span>
+        <span class="text-white">.from(course)</span>
+        <span class="text-white">.join(course.instructor, user)</span>
+        <span class="text-white">.where(CommonQueryConditions.notDeleted(course.deleted))</span>
+        <span class="text-white">.groupBy(course.instructor.fullName)</span>
+        <span class="text-white">.orderBy(course.instructor.fullName.asc())</span>
+        <span class="text-white">.fetch();</span>
+<span class="text-white">}</span>
+                    </div>
+                </div>
+
+                <!-- 월별 통계 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">4. 월별 강의 개설 통계</h3>
+                    <div class="code-block">
+<span class="text-gray-400">// 월별 강의 개설 통계</span>
+<span class="text-blue-400">public</span> <span class="text-white">List&lt;CourseStatistics&gt; getMonthlyCourseStatistics() {</span>
+    <span class="text-blue-400">return</span> <span class="text-white">queryFactory</span>
+        <span class="text-white">.select(Projections.constructor(CourseStatistics.class,</span>
+                <span class="text-white">Expressions.stringTemplate(</span><span class="text-orange-400">"DATE_FORMAT({0}, '%Y-%m')"</span><span class="text-white">, course.createdAt).as(</span><span class="text-orange-400">"month"</span><span class="text-white">),</span>
+                <span class="text-white">course.count()</span>
+        <span class="text-white">))</span>
+        <span class="text-white">.from(course)</span>
+        <span class="text-white">.where(CommonQueryConditions.notDeleted(course.deleted))</span>
+        <span class="text-white">.groupBy(Expressions.stringTemplate(</span><span class="text-orange-400">"DATE_FORMAT({0}, '%Y-%m')"</span><span class="text-white">, course.createdAt))</span>
+        <span class="text-white">.orderBy(Expressions.stringTemplate(</span><span class="text-orange-400">"DATE_FORMAT({0}, '%Y-%m')"</span><span class="text-white">, course.createdAt).asc())</span>
+        <span class="text-white">.fetch();</span>
+<span class="text-white">}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 동적 검색 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-search text-orange-600 mr-3"></i>
+                동적 검색 기능
+            </h2>
+            
+            <div class="space-y-8">
+                <!-- 텍스트 검색 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">1. 강의 텍스트 검색</h3>
+                    <div class="code-block">
+<span class="text-gray-400">// 강의 텍스트 검색 (강의명, 설명, 강사명)</span>
+<span class="text-blue-400">public</span> <span class="text-white">Page&lt;Course&gt; searchCoursesByText</span><span class="text-white">(String searchText, Pageable pageable) {</span>
+    <span class="text-white">BooleanExpression predicate = CommonQueryConditions.notDeleted(course.deleted);</span>
+
+    <span class="text-blue-400">if</span> <span class="text-white">(searchText != </span><span class="text-orange-400">null</span> <span class="text-white">&& !searchText.trim().isEmpty()) {</span>
+        <span class="text-white">String trimmedText = searchText.trim();</span>
+        <span class="text-white">predicate = predicate.and(</span>
+                <span class="text-white">course.name.contains(trimmedText)</span>
+                        <span class="text-white">.or(course.description.contains(trimmedText))</span>
+                        <span class="text-white">.or(course.instructor.fullName.contains(trimmedText))</span>
+        <span class="text-white">);</span>
+    <span class="text-white">}</span>
+
+    <span class="text-white">List&lt;Course&gt; content = queryFactory</span>
+        <span class="text-white">.selectFrom(course)</span>
+        <span class="text-white">.join(course.instructor, user).fetchJoin()</span>
+        <span class="text-white">.where(predicate)</span>
+        <span class="text-white">.offset(pageable.getOffset())</span>
+        <span class="text-white">.limit(pageable.getPageSize())</span>
+        <span class="text-white">.orderBy(createOrderSpecifier(pageable.getSort()))</span>
+        <span class="text-white">.fetch();</span>
+
+    <span class="text-white">Long total = queryFactory</span>
+        <span class="text-white">.select(course.count())</span>
+        <span class="text-white">.from(course)</span>
+        <span class="text-white">.where(predicate)</span>
+        <span class="text-white">.fetchOne();</span>
+
+    <span class="text-blue-400">return new</span> <span class="text-white">PageImpl&lt;&gt;(content, pageable, total != </span><span class="text-orange-400">null</span> <span class="text-white">? total : 0);</span>
+<span class="text-white">}</span>
+                    </div>
+                </div>
+
+                <!-- 고급 검색 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">2. 강의 고급 검색</h3>
+                    <div class="code-block">
+<span class="text-gray-400">// 강의 고급 검색 (CourseSearchCondition DTO 사용)</span>
+<span class="text-blue-400">public</span> <span class="text-white">Page&lt;Course&gt; searchCourses</span><span class="text-white">(CourseSearchCondition condition, Pageable pageable) {</span>
+    <span class="text-white">List&lt;Course&gt; content = queryFactory</span>
+        <span class="text-white">.selectFrom(course)</span>
+        <span class="text-white">.join(course.instructor, user).fetchJoin()</span>
+        <span class="text-white">.where(</span>
+                <span class="text-white">CommonQueryConditions.notDeleted(course.deleted),</span>
+                <span class="text-white">CommonQueryConditions.stringContains(course.name, condition.getCourseName()),</span>
+                <span class="text-white">CommonQueryConditions.stringContains(course.instructor.fullName, condition.getInstructorName()),</span>
+                <span class="text-white">CommonQueryConditions.stringContains(course.description, condition.getDescription()),</span>
+                <span class="text-white">CommonQueryConditions.numberBetween(course.maxStudents, condition.getMinCapacity(), condition.getMaxCapacity()),</span>
+                <span class="text-white">CommonQueryConditions.numberBetween(course.currentStudents, condition.getMinCurrentStudents(), condition.getMaxCurrentStudents()),</span>
+                <span class="text-white">isAvailable(condition.getIsAvailable()),</span>
+                <span class="text-white">CommonQueryConditions.ratioBetween(course.currentStudents, course.maxStudents, condition.getMinEnrollmentRatio(), </span><span class="text-orange-400">null</span><span class="text-white">),</span>
+                <span class="text-white">CommonQueryConditions.dateBetween(course.createdAt, condition.getStartDate(), condition.getEndDate())</span>
+        <span class="text-white">)</span>
+        <span class="text-white">.offset(pageable.getOffset())</span>
+        <span class="text-white">.limit(pageable.getPageSize())</span>
+        <span class="text-white">.orderBy(createOrderSpecifier(pageable.getSort()))</span>
+        <span class="text-white">.fetch();</span>
+
+    <span class="text-white">Long total = queryFactory</span>
+        <span class="text-white">.select(course.count())</span>
+        <span class="text-white">.from(course)</span>
+        <span class="text-white">.where(</span>
+                <span class="text-white">CommonQueryConditions.notDeleted(course.deleted),</span>
+                <span class="text-white">CommonQueryConditions.stringContains(course.name, condition.getCourseName()),</span>
+                <span class="text-white">CommonQueryConditions.stringContains(course.instructor.fullName, condition.getInstructorName()),</span>
+                <span class="text-white">CommonQueryConditions.stringContains(course.description, condition.getDescription()),</span>
+                <span class="text-white">CommonQueryConditions.numberBetween(course.maxStudents, condition.getMinCapacity(), condition.getMaxCapacity()),</span>
+                <span class="text-white">CommonQueryConditions.numberBetween(course.currentStudents, condition.getMinCurrentStudents(), condition.getMaxCurrentStudents()),</span>
+                <span class="text-white">isAvailable(condition.getIsAvailable()),</span>
+                <span class="text-white">CommonQueryConditions.ratioBetween(course.currentStudents, course.maxStudents, condition.getMinEnrollmentRatio(), </span><span class="text-orange-400">null</span><span class="text-white">),</span>
+                <span class="text-white">CommonQueryConditions.dateBetween(course.createdAt, condition.getStartDate(), condition.getEndDate())</span>
+        <span class="text-white">)</span>
+        <span class="text-white">.fetchOne();</span>
+
+    <span class="text-blue-400">return new</span> <span class="text-white">PageImpl&lt;&gt;(content, pageable, total != </span><span class="text-orange-400">null</span> <span class="text-white">? total : 0);</span>
+<span class="text-white">}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- API 사용 예시 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-code text-indigo-600 mr-3"></i>
+                API 사용 예시
+            </h2>
+            
+            <div class="bg-gray-900 rounded-lg p-6 text-green-400 font-mono text-sm">
+                <div class="mb-4">
+                    <span class="text-yellow-400"># 강의 전체 통계</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-blue-400">GET</span> <span class="text-white">/api/courses/statistics</span>
+                </div>
+                
+                <div class="mb-4">
+                    <span class="text-yellow-400"># 강의별 상세 통계</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-blue-400">GET</span> <span class="text-white">/api/courses/statistics/detailed</span>
+                </div>
+                
+                <div class="mb-4">
+                    <span class="text-yellow-400"># 강사별 통계</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-blue-400">GET</span> <span class="text-white">/api/courses/statistics/instructor</span>
+                </div>
+                
+                <div class="mb-4">
+                    <span class="text-yellow-400"># 강의 텍스트 검색</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-blue-400">GET</span> <span class="text-white">/api/courses/search?text=JPA&page=0&size=10</span>
+                </div>
+                
+                <div class="mb-4">
+                    <span class="text-yellow-400"># 강의 고급 검색</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-blue-400">POST</span> <span class="text-white">/api/courses/search/advanced</span>
+                </div>
+                <div class="ml-4 mb-4">
+                    <div>{</div>
+                    <div class="ml-4">"courseName": "JPA",</div>
+                    <div class="ml-4">"instructorName": "김강사",</div>
+                    <div class="ml-4">"minCapacity": 10,</div>
+                    <div class="ml-4">"maxCapacity": 50,</div>
+                    <div class="ml-4">"isAvailable": true,</div>
+                    <div class="ml-4">"minEnrollmentRatio": 0.5</div>
+                    <div>}</div>
+                </div>
+            </div>
+        </section>
+        </main>
+    </div>
+</body>
+</html>

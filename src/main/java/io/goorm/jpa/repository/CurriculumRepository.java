@@ -19,6 +19,9 @@ public interface CurriculumRepository extends JpaRepository<Curriculum, Long> {
      */
     @Query("SELECT c FROM Curriculum c WHERE c.course.courseNo = :courseNo ORDER BY c.weekNumber ASC")
     List<Curriculum> findByCourseNoOrderByWeekNumber(@Param("courseNo") Long courseNo);
+    
+    // Query Method로도 추가 (JPQL 문제 시 대안)
+    List<Curriculum> findByCourseCourseNoOrderByWeekNumber(Long courseNo);
 
     /**
      * 강의별 커리큘럼 개수

@@ -5,8 +5,12 @@ import io.goorm.jpa.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.repository.query.Param;
+
+import jakarta.persistence.LockModeType;
 
 /**
  * Course Repository
@@ -42,11 +46,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Page<Course> findAllWithInstructor(Pageable pageable);
 
     /**
-     * 강의 상세 조회 (Fetch Join)
+     * 강의 상세 조회 (Step 2-4: @EntityGraph로 간소화)
      */
+    @EntityGraph(attributePaths = {"instructor"})
     @Query("""
         SELECT c FROM Course c
-        JOIN FETCH c.instructor
         WHERE c.courseNo = :courseNo
         AND c.deleted = false
         """)
@@ -304,4 +308,67 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Page<Course> searchCoursesByText(@Param("searchText") String searchText,
                                     @Param("sortBy") String sortBy,
                                     Pageable pageable);
+
+    // ===== Step 2: 비관적 락(Pessimistic Lock) 메서드들 =====
+
+    /**
+     * 강의 조회 (비관적 락 - 수강신청 시 동시성 제어)
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT c FROM Course c
+        WHERE c.courseNo = :courseNo
+        AND c.deleted = false
+        """)
+    Course findByIdForEnrollment(@Param("courseNo") Long courseNo);
+
+    /**
+     * 강의 조회 (비관적 락 - Step 2-4: @EntityGraph로 간소화)
+     */
+    @EntityGraph(attributePaths = {"instructor"})
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT c FROM Course c
+        WHERE c.courseNo = :courseNo
+        AND c.deleted = false
+        """)
+    Course findByIdForUpdate(@Param("courseNo") Long courseNo);
+
+    /**
+     * 수강 가능한 강의 조회 (비관적 락 - 정원 확인 및 수강신청)
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT c FROM Course c
+        WHERE c.courseNo = :courseNo
+        AND c.deleted = false
+        AND c.currentStudents < c.maxStudents
+        """)
+    Course findAvailableByIdForEnrollment(@Param("courseNo") Long courseNo);
+
+    /**
+     * 강의 수정 (비관적 락 - 강의 정보 변경 시 동시성 제어)
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT c FROM Course c
+        WHERE c.courseNo = :courseNo
+        AND c.instructor = :instructor
+        AND c.deleted = false
+        """)
+    Course findByIdAndInstructorForUpdate(@Param("courseNo") Long courseNo, 
+                                         @Param("instructor") User instructor);
+
+    /**
+     * 강의 삭제 (비관적 락 - 삭제 시 동시성 제어)
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT c FROM Course c
+        WHERE c.courseNo = :courseNo
+        AND c.instructor = :instructor
+        AND c.deleted = false
+        """)
+    Course findByIdAndInstructorForDelete(@Param("courseNo") Long courseNo, 
+                                         @Param("instructor") User instructor);
 }

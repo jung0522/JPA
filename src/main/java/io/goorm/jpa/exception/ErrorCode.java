@@ -33,6 +33,8 @@ public enum ErrorCode {
     ENROLLMENT_ALREADY_EXISTS("ENROLLMENT002", "error.enrollment.already.exists", HttpStatus.CONFLICT),
     ENROLLMENT_CANNOT_CANCEL("ENROLLMENT003", "error.enrollment.cannot.cancel", HttpStatus.BAD_REQUEST),
     ENROLLMENT_RETRY_EXCEEDED("ENROLLMENT004", "error.enrollment.retry.exceeded", HttpStatus.CONFLICT),
+    ENROLLMENT_ALREADY_PROCESSED("ENROLLMENT005", "error.enrollment.already.processed", HttpStatus.BAD_REQUEST),
+    ENROLLMENT_BATCH_NO_ITEMS("ENROLLMENT006", "error.enrollment.batch.no.items", HttpStatus.BAD_REQUEST),
 
     // Concurrency (CONCURRENCY)
     OPTIMISTIC_LOCK_FAILED("CONCURRENCY001", "error.concurrency.optimistic", HttpStatus.CONFLICT),

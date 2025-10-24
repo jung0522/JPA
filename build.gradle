@@ -29,6 +29,9 @@ dependencies {
 	// Database
 	runtimeOnly 'com.h2database:h2'
 
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+	
+
 	// P6Spy - SQL 로깅 (실제 파라미터 포함)
 	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.0'
 

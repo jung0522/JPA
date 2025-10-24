@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/step2-layout}">
+<head>
+    <title>LazyInitializationException</title>
+    <style>
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        .success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        .warning {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-6 py-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold mb-2">
+                        <i class="fas fa-bug mr-3"></i>
+                        LazyInitializationException
+                    </h1>
+                    <p class="text-xl text-blue-100">
+                        엔티티 반환 오류, 해결 방법, DTO 변환
+                    </p>
+                </div>
+                <a href="/project/step2/overview" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition">
+                    <i class="fas fa-arrow-left mr-2"></i>목록으로
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-12">
+        <!-- 문제 개요 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-exclamation-triangle text-red-600 mr-3"></i>
+                LazyInitializationException이란?
+            </h2>
+            
+            <div class="error">
+                <h3 class="text-lg font-bold mb-3">
+                    <i class="fas fa-times-circle mr-2"></i>
+                    발생 원인
+                </h3>
+                <p>JPA에서 <span class="highlight">@OneToMany</span> 또는 <span class="highlight">@ManyToMany</span> 관계의 연관 엔티티에 <span class="highlight">LAZY</span> 로딩으로 설정되어 있을 때, <strong>영속성 컨텍스트가 종료된 후</strong> 해당 연관 엔티티에 접근하려고 할 때 발생하는 예외입니다.</p>
+            </div>
+
+            <div class="warning">
+                <h3 class="text-lg font-bold mb-3">
+                    <i class="fas fa-lightbulb mr-2"></i>
+                    핵심 원리
+                </h3>
+                <p><strong>엔티티가 Service를 넘어 Controller까지 넘어갔다면 이미 영속성 컨텍스트를 벗어난 상태입니다. 이는 SELECT 쿼리로 데이터를 가져오는 개념이므로, 애초에 Record나 DTO로 변환해서 반환하는 것이 올바른 접근입니다!</strong></p>
+            </div>
+        </section>
+
+        <!-- 발생 시점 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-clock text-blue-600 mr-3"></i>
+                발생 시점
+            </h2>
+            
+            <div class="space-y-6">
+                <!-- 1 vs N 관계 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">1 vs N 관계에서의 발생</h3>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-green-50 border-l-4 border-green-400 p-6 rounded-lg">
+                            <h4 class="text-lg font-bold text-green-800 mb-3">✅ 오류 없음</h4>
+                            <p class="text-green-700 mb-2"><strong>1 → N 접근:</strong> Course에서 Curriculum 목록 접근</p>
+                            <div class="code-block text-sm">
+<span class="text-white">Course course = courseRepository.findById(1L);</span>
+<span class="text-white">List&lt;Curriculum&gt; curriculums = course.getCurriculums();</span>
+<span class="text-gray-400">// ✅ 정상 동작</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-red-50 border-l-4 border-red-400 p-6 rounded-lg">
+                            <h4 class="text-lg font-bold text-red-800 mb-3">❌ 오류 발생</h4>
+                            <p class="text-red-700 mb-2"><strong>N → 1 접근:</strong> Curriculum에서 Course 접근</p>
+                            <div class="code-block text-sm">
+<span class="text-white">Curriculum curriculum = curriculumRepository.findById(1L);</span>
+<span class="text-white">Course course = curriculum.getCourse();</span>
+<span class="text-gray-400">// ❌ LazyInitializationException</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 정확한 발생 지점 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">정확한 발생 지점</h3>
+                    <div class="code-block">
+<span class="text-gray-400">// Service 메서드</span>
+<span class="text-blue-400">public</span> <span class="text-white">Course getCourse</span><span class="text-white">(Long courseNo) {</span>
+    <span class="text-white">Course course = courseRepository.findById(courseNo).orElseThrow();</span>
+    <span class="text-blue-400">return</span> <span class="text-white">course;</span> <span class="text-gray-400">// 영속성 컨텍스트 종료</span>
+<span class="text-white">}</span>
+
+<span class="text-gray-400">// Controller 메서드</span>
+<span class="text-blue-400">@GetMapping</span><span class="text-white">(</span><span class="text-orange-400">"/courses/{courseNo}"</span><span class="text-white">)</span>
+<span class="text-blue-400">public</span> <span class="text-white">Course getCourse</span><span class="text-white">(@PathVariable Long courseNo) {</span>
+    <span class="text-white">Course course = courseService.getCourse(courseNo);</span>
+    <span class="text-white">List&lt;Curriculum&gt; curriculums = course.getCurriculums();</span> <span class="text-gray-400">// ❌ 여기서 오류 발생!</span>
+    <span class="text-blue-400">return</span> <span class="text-white">course;</span>
+<span class="text-white">}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- @Transactional의 역할 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-shield-alt text-purple-600 mr-3"></i>
+                @Transactional의 역할
+            </h2>
+            
+            <div class="space-y-6">
+                <!-- 클래스 단위 vs 메서드 단위 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">클래스 단위 vs 메서드 단위</h3>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg">
+                            <h4 class="text-lg font-bold text-blue-800 mb-3">클래스 단위 @Transactional</h4>
+                            <div class="code-block text-sm">
+<span class="text-yellow-400">@Transactional</span>
+<span class="text-blue-400">@Service</span>
+<span class="text-blue-400">public class</span> <span class="text-green-400">CourseService</span> <span class="text-white">{</span>
+    <span class="text-blue-400">public</span> <span class="text-white">Course getCourse</span><span class="text-white">(Long courseNo) {</span>
+        <span class="text-white">Course course = courseRepository.findById(courseNo);</span>
+        <span class="text-white">List&lt;Curriculum&gt; curriculums = course.getCurriculums();</span> <span class="text-gray-400">// ✅ 안전</span>
+        <span class="text-blue-400">return</span> <span class="text-white">course;</span>
+    <span class="text-white">}</span>
+<span class="text-white">}</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-green-50 border-l-4 border-green-400 p-6 rounded-lg">
+                            <h4 class="text-lg font-bold text-green-800 mb-3">메서드 단위 @Transactional</h4>
+                            <div class="code-block text-sm">
+<span class="text-blue-400">@Service</span>
+<span class="text-blue-400">public class</span> <span class="text-green-400">CourseService</span> <span class="text-white">{</span>
+    <span class="text-yellow-400">@Transactional</span>
+    <span class="text-blue-400">public</span> <span class="text-white">Course getCourse</span><span class="text-white">(Long courseNo) {</span>
+        <span class="text-white">Course course = courseRepository.findById(courseNo);</span>
+        <span class="text-white">List&lt;Curriculum&gt; curriculums = course.getCurriculums();</span> <span class="text-gray-400">// ✅ 안전</span>
+        <span class="text-blue-400">return</span> <span class="text-white">course;</span>
+    <span class="text-white">}</span>
+<span class="text-white">}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- @Transactional 없을 때 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">@Transactional 없을 때</h3>
+                    <div class="error">
+                        <h4 class="text-lg font-bold mb-3">❌ 오류 발생</h4>
+                        <div class="code-block text-sm">
+<span class="text-blue-400">@Service</span>
+<span class="text-blue-400">public class</span> <span class="text-green-400">CourseService</span> <span class="text-white">{</span>
+    <span class="text-gray-400">// @Transactional 없음</span>
+    <span class="text-blue-400">public</span> <span class="text-white">Course getCourse</span><span class="text-white">(Long courseNo) {</span>
+        <span class="text-white">Course course = courseRepository.findById(courseNo);</span>
+        <span class="text-white">List&lt;Curriculum&gt; curriculums = course.getCurriculums();</span> <span class="text-gray-400">// ❌ 오류 발생!</span>
+        <span class="text-blue-400">return</span> <span class="text-white">course;</span>
+    <span class="text-white">}</span>
+<span class="text-white">}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 예외 메시지 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-exclamation-circle text-orange-600 mr-3"></i>
+                예외 메시지
+            </h2>
+            
+            <div class="error">
+                <h3 class="text-lg font-bold mb-3">LazyInitializationException 메시지</h3>
+                <div class="code-block text-sm">
+<span class="text-red-400">org.hibernate.LazyInitializationException: could not initialize proxy [io.goorm.jpa.entity.Course#1] - no Session</span>
+    <span class="text-gray-400">at org.hibernate.proxy.AbstractLazyInitializer.initialize(AbstractLazyInitializer.java:165)</span>
+    <span class="text-gray-400">at org.hibernate.proxy.AbstractLazyInitializer.getImplementation(AbstractLazyInitializer.java:286)</span>
+    <span class="text-gray-400">at org.hibernate.proxy.pojo.bytebuddy.ByteBuddyInterceptor.intercept(ByteBuddyInterceptor.java:45)</span>
+    <span class="text-gray-400">at org.hibernate.proxy.ProxyConfiguration$InterceptorDispatcher.intercept(ProxyConfiguration.java:95)</span>
+    <span class="text-gray-400">at io.goorm.jpa.entity.Course$HibernateProxy$1234567890.getCurriculums(Course.java)</span>
+    <span class="text-gray-400">at io.goorm.jpa.controller.CourseController.getCourse(CourseController.java:25)</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 해결 방법 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-wrench text-green-600 mr-3"></i>
+                해결 방법
+            </h2>
+            
+            <div class="space-y-8">
+                <!-- 방법 1: @Transactional 추가 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">방법 1: @Transactional 추가</h3>
+                    <div class="success">
+                        <h4 class="text-lg font-bold mb-3">✅ Service에 @Transactional 추가</h4>
+                        <div class="code-block text-sm">
+<span class="text-yellow-400">@Transactional</span>
+<span class="text-blue-400">@Service</span>
+<span class="text-blue-400">public class</span> <span class="text-green-400">CourseService</span> <span class="text-white">{</span>
+    <span class="text-blue-400">public</span> <span class="text-white">Course getCourse</span><span class="text-white">(Long courseNo) {</span>
+        <span class="text-white">Course course = courseRepository.findById(courseNo).orElseThrow();</span>
+        <span class="text-white">List&lt;Curriculum&gt; curriculums = course.getCurriculums();</span> <span class="text-gray-400">// ✅ 안전</span>
+        <span class="text-blue-400">return</span> <span class="text-white">course;</span>
+    <span class="text-white">}</span>
+<span class="text-white">}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 방법 2: Fetch Join 사용 -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">방법 2: Fetch Join 사용</h3>
+                    <div class="success">
+                        <h4 class="text-lg font-bold mb-3">✅ Repository에서 Fetch Join</h4>
+                        <div class="code-block text-sm">
+<span class="text-gray-400">// Repository</span>
+<span class="text-white">@Query(</span><span class="text-orange-400">"SELECT c FROM Course c JOIN FETCH c.curriculums WHERE c.courseNo = :courseNo"</span><span class="text-white">)</span>
+<span class="text-blue-400">Optional&lt;Course&gt;</span> <span class="text-green-400">findByIdWithCurriculums</span><span class="text-white">(Long courseNo);</span>
+
+<span class="text-gray-400">// Service</span>
+<span class="text-blue-400">public</span> <span class="text-white">Course getCourse</span><span class="text-white">(Long courseNo) {</span>
+    <span class="text-white">Course course = courseRepository.findByIdWithCurriculums(courseNo).orElseThrow();</span>
+    <span class="text-white">List&lt;Curriculum&gt; curriculums = course.getCurriculums();</span> <span class="text-gray-400">// ✅ 안전</span>
+    <span class="text-blue-400">return</span> <span class="text-white">course;</span>
+<span class="text-white">}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 방법 3: DTO 변환 (권장) -->
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">방법 3: DTO 변환 (권장)</h3>
+                    <div class="success">
+                        <h4 class="text-lg font-bold mb-3">✅ Service에서 DTO로 변환</h4>
+                        <div class="code-block text-sm">
+<span class="text-gray-400">// DTO 생성</span>
+<span class="text-blue-400">public record</span> <span class="text-green-400">CourseResponse</span><span class="text-white">(</span>
+    <span class="text-white">Long courseNo,</span>
+    <span class="text-white">String name,</span>
+    <span class="text-white">String description,</span>
+    <span class="text-white">List&lt;CurriculumResponse&gt; curriculums</span>
+<span class="text-white">) {}</span>
+
+<span class="text-gray-400">// Service</span>
+<span class="text-blue-400">public</span> <span class="text-white">CourseResponse getCourse</span><span class="text-white">(Long courseNo) {</span>
+    <span class="text-white">Course course = courseRepository.findByIdWithCurriculums(courseNo).orElseThrow();</span>
+    <span class="text-white">List&lt;CurriculumResponse&gt; curriculums = course.getCurriculums().stream()</span>
+        <span class="text-white">.map(CurriculumResponse::from)</span>
+        <span class="text-white">.toList();</span>
+    <span class="text-blue-400">return new</span> <span class="text-white">CourseResponse(</span>
+        <span class="text-white">course.getCourseNo(),</span>
+        <span class="text-white">course.getName(),</span>
+        <span class="text-white">course.getDescription(),</span>
+        <span class="text-white">curriculums</span>
+    <span class="text-white">);</span>
+<span class="text-white">}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 권장 사항 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-star text-yellow-600 mr-3"></i>
+                권장 사항
+            </h2>
+            
+            <div class="space-y-6">
+                <!-- DTO 사용 권장 -->
+                <div class="success">
+                    <h3 class="text-lg font-bold mb-3">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        DTO 사용 권장
+                    </h3>
+                    <ul class="space-y-2">
+                        <li><strong>엔티티 노출 방지:</strong> 내부 구조를 외부에 노출하지 않음</li>
+                        <li><strong>API 안정성:</strong> 엔티티 변경이 API에 영향을 주지 않음</li>
+                        <li><strong>성능 최적화:</strong> 필요한 데이터만 전송</li>
+                        <li><strong>보안:</strong> 민감한 정보 노출 방지</li>
+                    </ul>
+                </div>
+
+                <!-- @Transactional 사용 시 주의사항 -->
+                <div class="warning">
+                    <h3 class="text-lg font-bold mb-3">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        @Transactional 사용 시 주의사항
+                    </h3>
+                    <ul class="space-y-2">
+                        <li><strong>트랜잭션 범위:</strong> 필요한 범위에만 적용</li>
+                        <li><strong>성능 고려:</strong> 불필요한 트랜잭션은 성능 저하</li>
+                        <li><strong>읽기 전용:</strong> 조회만 하는 경우 @Transactional(readOnly = true) 사용</li>
+                        <li><strong>예외 처리:</strong> 트랜잭션 롤백 조건 고려</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 요약 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-list-check text-indigo-600 mr-3"></i>
+                요약
+            </h2>
+            
+            <div class="bg-indigo-50 border-l-4 border-indigo-400 p-6 rounded-lg">
+                <h3 class="text-xl font-bold text-indigo-800 mb-4">핵심 포인트</h3>
+                <ol class="text-indigo-700 space-y-2">
+                    <li><strong>발생 원인:</strong> 영속성 컨텍스트 종료 후 LAZY 로딩된 연관 엔티티 접근</li>
+                    <li><strong>발생 시점:</strong> N → 1 관계에서 N 엔티티의 1 엔티티 접근 시</li>
+                    <li><strong>해결 방법:</strong> @Transactional 추가, Fetch Join 사용, DTO 변환</li>
+                    <li><strong>권장 사항:</strong> Service에서 DTO로 변환하여 반환</li>
+                    <li><strong>핵심 원리:</strong> 엔티티가 Service를 넘어 Controller까지 넘어갔다면 이미 영속성 컨텍스트를 벗어난 상태</li>
+                </ol>
+            </div>
+        </section>
+        </main>
+    </div>
+</body>
+</html>

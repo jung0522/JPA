@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>네트워크 개론</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <style>
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        .step-number {
+            background: #334155;
+            color: white;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+        .highlight {
+            background-color: #fef3c7;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+        }
+        .network-diagram {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+        .server-box {
+            background: #3b82f6;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            display: inline-block;
+            margin: 0.25rem;
+            font-weight: bold;
+        }
+        .db-box {
+            background: #10b981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            display: inline-block;
+            margin: 0.25rem;
+            font-weight: bold;
+        }
+        .storage-box {
+            background: #f59e0b;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            display: inline-block;
+            margin: 0.25rem;
+            font-weight: bold;
+        }
+        .arrow {
+            color: #64748b;
+            font-size: 1.5rem;
+            margin: 0 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <!-- Header -->
+    <header class="bg-slate-800 text-white py-8">
+        <div class="max-w-6xl mx-auto px-6">
+            <h1 class="text-4xl font-bold mb-4">네트워크 개론</h1>
+            <p class="text-slate-300 text-lg">서버 아키텍처부터 클라우드 스케일링까지</p>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-slate-200">
+        <div class="max-w-6xl mx-auto px-6 py-4">
+            <div class="flex space-x-8">
+                <a href="index.html" class="text-slate-600 hover:text-slate-800 font-medium">개요</a>
+                <a href="network-basics.html" class="text-slate-700 hover:text-slate-900 font-medium border-b-2 border-slate-800">네트워크 개론</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        
+        <!-- 학습 목표 -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6">학습 목표</h2>
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg">
+                <p class="text-blue-800 text-lg">
+                    <strong>단일 서버부터 멀티 서버, 클라우드까지</strong> 네트워크 아키텍처의 진화 과정을 이해하고, 
+                    각 구성 요소의 역할과 실제 사용되는 기술들을 파악합니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- 1단계: 기본 서버 구성 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">1단계: 기본 서버 구성</h2>
+            
+             <div class="network-diagram">
+                 <div class="mb-4">
+                     <span class="server-box">WEB (정적파일, 리버스 프록시)</span>
+                 </div>
+                 <div class="mb-2">
+                     <span class="arrow">↓</span>
+                 </div>
+                 <div class="mb-4 flex items-center justify-center space-x-8">
+                     <div class="text-center">
+                         <span class="storage-box">파일 저장소</span>
+                     </div>
+                     <div class="text-center">
+                         <span class="arrow">↔</span>
+                     </div>
+                     <div class="text-center">
+                         <span class="server-box">WAS</span>
+                     </div>
+                     <div class="text-center">
+                         <span class="arrow">↔</span>
+                     </div>
+                     <div class="text-center">
+                         <span class="db-box">데이터베이스</span>
+                     </div>
+                 </div>
+             </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                <h3 class="text-xl font-semibold text-slate-800 mb-4">구성 요소 역할</h3>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-3">WEB</h4>
+                        <ul class="text-slate-600 space-y-2">
+                            <li>• <strong>역할</strong>: 정적 파일 서빙, 리버스 프록시</li>
+                            <li>• <strong>기능</strong>: SSL 종료, 로드 밸런싱</li>
+                            <li>• <strong>포트</strong>: 80 (HTTP), 443 (HTTPS)</li>
+                            <li>• <strong>실제 사용</strong>: Apache, Nginx, IIS</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-3">WAS (Web Application Server)</h4>
+                        <ul class="text-slate-600 space-y-2">
+                            <li>• <strong>역할</strong>: 비즈니스 로직 처리, API 제공</li>
+                            <li>• <strong>기능</strong>: 세션 관리, 트랜잭션 처리</li>
+                            <li>• <strong>포트</strong>: 8080</li>
+                            <li>• <strong>실제 사용</strong>: Tomcat, Spring Boot, Node.js</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-3">데이터베이스</h4>
+                        <ul class="text-slate-600 space-y-2">
+                            <li>• <strong>역할</strong>: 데이터 영속성, ACID 보장</li>
+                            <li>• <strong>기능</strong>: 쿼리 처리, 인덱싱, 백업</li>
+                            <li>• <strong>포트</strong>: 3306 (MySQL/MariaDB)</li>
+                            <li>• <strong>실제 사용</strong>: MySQL, PostgreSQL, Oracle</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-3">파일 저장소</h4>
+                        <ul class="text-slate-600 space-y-2">
+                            <li>• <strong>역할</strong>: 파일 업로드/다운로드</li>
+                            <li>• <strong>기능</strong>: 객체 저장, CDN 연동</li>
+                            <li>• <strong>포트</strong>: 9000 (MinIO), 443 (S3)</li>
+                            <li>• <strong>실제 사용</strong>: 파일시스템, MinIO, AWS S3, Google Cloud Storage</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 리버스 프록시 설명 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">리버스 프록시 (Reverse Proxy)</h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                <h3 class="text-xl font-semibold text-slate-800 mb-4">리버스 프록시란?</h3>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-3">역할</h4>
+                        <ul class="text-slate-600 space-y-2">
+                            <li>• <strong>클라이언트 대신</strong> 서버에 요청 전달</li>
+                            <li>• <strong>응답을 받아서</strong> 클라이언트에게 전달</li>
+                            <li>• <strong>중간자 역할</strong>로 보안과 성능 향상</li>
+                            <li>• <strong>로드 밸런싱</strong>으로 여러 서버에 분산(멀티 WAS 구조)</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-3">장점</h4>
+                        <ul class="text-slate-600 space-y-2">
+                            <li>• <strong>보안</strong>: 내부 서버 구조 숨김</li>
+                            <li>• <strong>성능</strong>: 정적 파일 캐싱, 압축</li>
+                            <li>• <strong>확장성</strong>: 서버 추가/제거 용이</li>
+                            <li>• <strong>SSL 종료</strong>: 인증서 관리 중앙화</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2단계: 멀티 서버 구성 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">2단계: 멀티 서버 구성</h2>
+            
+             <div class="network-diagram">
+                 <div class="mb-4">
+                     <div class="border-2 border-dashed border-slate-400 rounded-lg p-4 bg-slate-50">
+                         <div class="text-center">
+                             <span class="text-slate-600 font-semibold">하드웨어 로드 밸런서 (리버스 프록시)</span>
+                         </div>
+                     </div>
+                 </div>
+                 <div class="mb-2">
+                     <span class="arrow">↓</span>
+                 </div>
+                 <div class="mb-4">
+                     <span class="server-box">WEB (정적파일, 리버스 프록시)</span>
+                 </div>
+                 <div class="mb-2">
+                     <span class="arrow">↓</span>
+                 </div>
+                 <div class="mb-4 flex items-center justify-center space-x-8">
+                     <div class="bg-orange-100 border-2 border-orange-300 rounded-lg p-4">
+                         <div class="text-center">
+                             <span class="storage-box">세션 저장소</span>
+                         </div>
+                     </div>
+                     <div class="text-center">
+                         <span class="arrow">↔</span>
+                     </div>
+                     <div class="bg-blue-100 border-2 border-blue-300 rounded-lg p-4">
+                         <div class="text-center mb-3">
+                             <span class="text-sm font-semibold text-blue-800">WAS 클러스터</span>
+                         </div>
+                         <div class="flex space-x-4">
+                             <div class="text-center">
+                                 <span class="server-box text-sm">WAS 1</span>
+                             </div>
+                             <div class="text-center">
+                                 <span class="server-box text-sm">WAS 2</span>
+                             </div>
+                             <div class="text-center">
+                                 <span class="server-box text-sm">WAS 3</span>
+                             </div>
+                         </div>
+                     </div>
+                     <div class="text-center">
+                         <span class="arrow">↔</span>
+                     </div>
+                     <div class="bg-yellow-100 border-2 border-yellow-300 rounded-lg p-4">
+                         <div class="text-center">
+                             <span class="storage-box">파일 저장소</span>
+                         </div>
+                     </div>
+                 </div>
+                 <div class="mb-2">
+                     <span class="arrow">↓</span>
+                 </div>
+                 <div class="mb-4 flex justify-center">
+                     <div class="bg-green-100 border-2 border-green-300 rounded-lg p-4">
+                         <div class="text-center mb-3">
+                             <span class="text-sm font-semibold text-green-800">데이터베이스 클러스터</span>
+                         </div>
+                         <div class="flex space-x-4">
+                             <div class="text-center">
+                                 <span class="db-box text-sm">Master</span>
+                             </div>
+                             <div class="text-center">
+                                 <span class="db-box text-sm">Slave</span>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+
+             <!-- 하드웨어 로드 밸런서 설명 -->
+             <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg mb-6">
+                 <h3 class="text-lg font-semibold text-blue-800 mb-3">하드웨어 로드 밸런서 도입 시</h3>
+                 <p class="text-blue-700">
+                     <strong>하드웨어 로드밸런서를 도입하면,</strong><br>
+                     클라이언트 요청은 로드밸런서가 직접 WAS 클러스터에 접근하여 리버스 프록시 및 트래픽 분산 역할을 수행하고,<br>
+                     웹서버는 정적 파일 제공 역할만 담당한다.<br>
+                     또한 정적 파일 요청 역시 로드밸런서가 웹서버에 직접 전달한다.
+                 </p>
+             </div>
+
+             <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                 <h3 class="text-xl font-semibold text-slate-800 mb-4">확장된 구성 요소</h3>
+                 
+                 <div class="grid md:grid-cols-3 gap-6">
+                     <div>
+                         <h4 class="text-lg font-semibold text-slate-700 mb-3">로드 밸런서 (Load Balancer)</h4>
+                         <ul class="text-slate-600 space-y-2">
+                             <li>• <strong>역할</strong>: 트래픽 분산, 서버 상태 모니터링</li>
+                             <li>• <strong>실제 사용</strong>: HAProxy, F5, AWS ALB</li>
+                             <li>• <strong>장점</strong>: 가용성 향상, 성능 향상</li>
+                         </ul>
+                     </div>
+                     
+                     <div>
+                         <h4 class="text-lg font-semibold text-slate-700 mb-3">세션 저장소 (Redis)</h4>
+                         <ul class="text-slate-600 space-y-2">
+                             <li>• <strong>역할</strong>: 세션 데이터 중앙 저장</li>
+                             <li>• <strong>문제해결</strong>: 멀티 서버 간 세션 동기화</li>
+                             <li>• <strong>실제 사용</strong>: Redis, Memcached, Hazelcast</li>
+                             <li>• <strong>장점</strong>: 서버 무상태(Stateless) 구현</li>
+                         </ul>
+                     </div>
+                     
+                     <div>
+                         <h4 class="text-lg font-semibold text-slate-700 mb-3">데이터베이스 클러스터</h4>
+                         <ul class="text-slate-600 space-y-2">
+                             <li>• <strong>Master-Slave</strong>: 읽기/쓰기 분리</li>
+                             <li>• <strong>Master-Master</strong>: 양방향 복제</li>
+                             <li>• <strong>실제 사용</strong>: MySQL Cluster, MongoDB Replica Set</li>
+                             <li>• <strong>장점</strong>: 데이터 안정성, 읽기 성능 향상</li>
+                         </ul>
+                     </div>
+                 </div>
+             </div>
+
+             <!-- 로드 밸런서 구현 방식 -->
+             <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mt-6">
+                 <h3 class="text-xl font-semibold text-slate-800 mb-4">로드 밸런서 구현 방식</h3>
+                 
+                 <div class="grid md:grid-cols-3 gap-6">
+                     <div>
+                         <h4 class="text-lg font-semibold text-slate-700 mb-3">소프트웨어 (Nginx)</h4>
+                         <ul class="text-slate-600 space-y-2">
+                             <li>• <strong>구현</strong>: nginx.conf 설정 파일</li>
+                             <li>• <strong>비용</strong>: 무료 (오픈소스)</li>
+                             <li>• <strong>성능</strong>: 중간 (CPU 사용)</li>
+                             <li>• <strong>사용처</strong>: 스타트업, 중소기업</li>
+                             <li>• <strong>설정</strong>: upstream 블록으로 서버 목록 정의</li>
+                         </ul>
+                     </div>
+                     
+                     <div>
+                         <h4 class="text-lg font-semibold text-slate-700 mb-3">하드웨어 (F5, A10)</h4>
+                         <ul class="text-slate-600 space-y-2">
+                             <li>• <strong>구현</strong>: 전용 네트워크 장비</li>
+                             <li>• <strong>비용</strong>: 높음 (수천만원)</li>
+                             <li>• <strong>성능</strong>: 매우 높음 (ASIC 칩)</li>
+                             <li>• <strong>사용처</strong>: 대기업, 금융권</li>
+                             <li>• <strong>특징</strong>: SSL 가속, DDoS 방어</li>
+                         </ul>
+                     </div>
+                     
+                     <div>
+                         <h4 class="text-lg font-semibold text-slate-700 mb-3">클라우드 (AWS ALB)</h4>
+                         <ul class="text-slate-600 space-y-2">
+                             <li>• <strong>구현</strong>: AWS 관리형 서비스</li>
+                             <li>• <strong>비용</strong>: 사용량 기반 (시간당)</li>
+                             <li>• <strong>성능</strong>: 높음 (AWS 인프라)</li>
+                             <li>• <strong>사용처</strong>: 클라우드 기반 서비스</li>
+                             <li>• <strong>특징</strong>: 자동 스케일링, SSL 인증서 관리</li>
+                         </ul>
+                     </div>
+                 </div>
+             </div>
+
+             <!-- 로드 밸런서 알고리즘 -->
+             <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mt-6">
+                 <h3 class="text-xl font-semibold text-slate-800 mb-4">로드 밸런서 알고리즘</h3>
+                 
+                 <div class="grid md:grid-cols-2 gap-6">
+                     <div>
+                         <h4 class="text-lg font-semibold text-slate-700 mb-3">Round Robin (라운드 로빈)</h4>
+                         <ul class="text-slate-600 space-y-2">
+                             <li>• <strong>방식</strong>: 서버를 순서대로 번갈아가며 선택</li>
+                             <li>• <strong>예시</strong>: 서버1 → 서버2 → 서버3 → 서버1...</li>
+                             <li>• <strong>장점</strong>: 구현이 간단하고 공정한 분산</li>
+                             <li>• <strong>단점</strong>: 서버 성능 차이를 고려하지 않음</li>
+                         </ul>
+                     </div>
+                     
+                     <div>
+                         <h4 class="text-lg font-semibold text-slate-700 mb-3">Least Connections (최소 연결)</h4>
+                         <ul class="text-slate-600 space-y-2">
+                             <li>• <strong>방식</strong>: 현재 연결 수가 가장 적은 서버 선택</li>
+                             <li>• <strong>예시</strong>: 연결수 3개, 1개, 5개 → 1개인 서버 선택</li>
+                             <li>• <strong>장점</strong>: 서버 부하를 고려한 분산</li>
+                             <li>• <strong>단점</strong>: 연결 상태를 지속적으로 모니터링 필요</li>
+                         </ul>
+                     </div>
+                 </div>
+             </div>
+
+             <!-- 데이터베이스 클러스터 개발 관점 -->
+             <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mt-6">
+                 <h3 class="text-xl font-semibold text-slate-800 mb-4">데이터베이스 클러스터 - 개발자 관점</h3>
+                 
+                 <div class="grid md:grid-cols-2 gap-6">
+                     <div>
+                         <h4 class="text-lg font-semibold text-slate-700 mb-3">Master-Slave (읽기/쓰기 분리)</h4>
+                         <ul class="text-slate-600 space-y-2">
+                             <li>• <strong>연결</strong>: Master(쓰기), Slave(읽기) 2개 커넥션</li>
+                             <li>• <strong>로직</strong>: SELECT는 Slave, INSERT/UPDATE는 Master</li>
+                             <li>• <strong>지연시간</strong>: Slave는 Master보다 약간 늦음</li>
+                             <li>• <strong>장애처리</strong>: Slave 장애 시 Master로 읽기 전환</li>
+                             <li>• <strong>실제 사용</strong>: MySQL Replication, PostgreSQL Streaming</li>
+                         </ul>
+                     </div>
+                     
+                     <div>
+                         <h4 class="text-lg font-semibold text-slate-700 mb-3">Master-Master (양방향 복제)</h4>
+                         <ul class="text-slate-600 space-y-2">
+                             <li>• <strong>연결</strong>: 하나의 Master만 바라보기</li>
+                             <li>• <strong>로직</strong>: DB가 자동으로 복제 처리</li>
+                             <li>• <strong>설정</strong>: DB 레벨에서 복제 설정</li>
+                             <li>• <strong>장애처리</strong>: Master 장애 시 다른 Master로 전환</li>
+                             <li>• <strong>주의사항</strong>: 동시 쓰기 시 충돌 가능성</li>
+                         </ul>
+                     </div>
+                 </div>
+                 
+                 <div class="mt-6 p-4 bg-slate-50 rounded-lg">
+                     <h4 class="text-lg font-semibold text-slate-700 mb-3">💡 개발자 체크리스트</h4>
+                     <ul class="text-slate-600 space-y-1">
+                         <li>• <strong>연결 풀</strong>: Master/Slave 각각 별도 커넥션 풀 구성</li>
+                         <li>• <strong>트랜잭션</strong>: 읽기 전용 트랜잭션은 Slave 사용</li>
+                         <li>• <strong>모니터링</strong>: 각 DB 서버 상태 및 지연시간 확인</li>
+                         <li>• <strong>설정</strong>: application.properties에서 데이터소스 분리 설정</li>
+                     </ul>
+                 </div>
+             </div>
+
+             <!-- 세션 동기화 - 개발자 관점 -->
+             <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mt-6">
+                 <h3 class="text-xl font-semibold text-slate-800 mb-4">세션 동기화 - 개발자 관점</h3>
+                 
+                 <div class="grid md:grid-cols-2 gap-6">
+                     <div>
+                         <h4 class="text-lg font-semibold text-slate-700 mb-3">문제 상황</h4>
+                         <ul class="text-slate-600 space-y-2">
+                             <li>• <strong>세션 분실</strong>: 서버1에서 로그인 → 서버2로 요청 시 로그아웃</li>
+                             <li>• <strong>데이터 불일치</strong>: 각 서버마다 다른 세션 데이터</li>
+                             <li>• <strong>확장성 제한</strong>: 서버별 세션 저장으로 인한 메모리 부족</li>
+                             <li>• <strong>장애 전파</strong>: 서버 장애 시 해당 서버 세션 모두 손실</li>
+                         </ul>
+                     </div>
+                     
+                     <div>
+                         <h4 class="text-lg font-semibold text-slate-700 mb-3">해결 방안</h4>
+                         <ul class="text-slate-600 space-y-2">
+                             <li>• <strong>Redis 세션</strong>: 중앙 집중식 세션 저장소</li>
+                             <li>• <strong>JWT 토큰</strong>: 서버 무상태(Stateless) 인증</li>
+                             <li>• <strong>Sticky Session</strong>: 특정 사용자를 특정 서버로 고정</li>
+                             <li>• <strong>DB 세션</strong>: 데이터베이스에 세션 저장</li>
+                         </ul>
+                     </div>
+                 </div>
+                 
+                 <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                     <h4 class="text-lg font-semibold text-slate-700 mb-3">🔧 Redis 세션 설정 (Spring Boot)</h4>
+                     <ul class="text-slate-600 space-y-1">
+                         <li>• <strong>의존성</strong>: spring-session-data-redis 추가</li>
+                         <li>• <strong>설정</strong>: spring.session.store-type=redis</li>
+                         <li>• <strong>연결</strong>: spring.redis.host, port 설정</li>
+                         <li>• <strong>만료시간</strong>: spring.session.timeout 설정</li>
+                     </ul>
+                 </div>
+             </div>
+        </section>
+
+        <!-- 3단계: AWS 클라우드 구성 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">3단계: AWS 클라우드 구성</h2>
+            
+            <div class="network-diagram">
+                <div class="mb-4">
+                    <span class="server-box">Route 53 (DNS)</span>
+                    <span class="arrow">→</span>
+                    <span class="server-box">CloudFront (CDN)</span>
+                </div>
+                <div class="mb-2">
+                    <span class="arrow">↓</span>
+                </div>
+                <div class="mb-4">
+                    <span class="server-box">ALB (로드 밸런서)</span>
+                </div>
+                <div class="mb-2">
+                    <span class="arrow">↓</span>
+                </div>
+                <div class="mb-4 flex items-center justify-center space-x-8">
+                    <div class="text-center">
+                        <span class="storage-box">ElastiCache (Redis)</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="arrow">↔</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="server-box">EC2 (WAS)</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="arrow">↔</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="storage-box">S3 (파일 저장소)</span>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <span class="arrow">↓</span>
+                </div>
+                <div class="mb-4 flex justify-center">
+                    <span class="db-box">RDS (데이터베이스)</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                <h3 class="text-xl font-semibold text-slate-800 mb-4">AWS 서비스 매핑</h3>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-3">네트워킹</h4>
+                        <ul class="text-slate-600 space-y-2">
+                            <li>• <strong>Route 53</strong>: DNS 서비스 (도메인 관리)</li>
+                            <li>• <strong>CloudFront</strong>: CDN (전 세계 캐싱)</li>
+                            <li>• <strong>VPC</strong>: 가상 네트워크 (로컬 네트워크 대응)</li>
+                            <li>• <strong>ALB/NLB</strong>: 로드 밸런서</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-3">컴퓨팅 & 저장소</h4>
+                        <ul class="text-slate-600 space-y-2">
+                            <li>• <strong>EC2</strong>: 가상 서버 (로컬 서버 대응)</li>
+                            <li>• <strong>RDS</strong>: 관리형 데이터베이스</li>
+                            <li>• <strong>S3</strong>: 객체 저장소 (MinIO 대응)</li>
+                            <li>• <strong>EBS</strong>: 블록 저장소 (하드디스크 대응)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4단계: AWS 멀티 EC2 구성 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">4단계: AWS 멀티 EC2 구성</h2>
+            
+            <div class="network-diagram">
+                <div class="mb-4">
+                    <span class="server-box">Route 53 (DNS)</span>
+                    <span class="arrow">→</span>
+                    <span class="server-box">CloudFront (CDN)</span>
+                </div>
+                <div class="mb-2">
+                    <span class="arrow">↓</span>
+                </div>
+                <div class="mb-4">
+                    <span class="server-box">ALB (Multi-AZ)</span>
+                </div>
+                <div class="mb-2">
+                    <span class="arrow">↓</span>
+                </div>
+                <div class="mb-4 flex items-center justify-center space-x-8">
+                    <div class="text-center">
+                        <span class="storage-box">ElastiCache (Redis)</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="arrow">↔</span>
+                    </div>
+                    <div class="bg-blue-100 border-2 border-blue-300 rounded-lg p-4">
+                        <div class="text-center mb-3">
+                            <span class="text-sm font-semibold text-blue-800">EC2 클러스터</span>
+                        </div>
+                        <div class="flex space-x-4">
+                            <div class="text-center">
+                                <span class="server-box text-sm">EC2 (AZ-1a)</span>
+                            </div>
+                            <div class="text-center">
+                                <span class="server-box text-sm">EC2 (AZ-1b)</span>
+                            </div>
+                            <div class="text-center">
+                                <span class="server-box text-sm">EC2 (AZ-1c)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <span class="arrow">↔</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="storage-box">S3 (파일 저장소)</span>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <span class="arrow">↓</span>
+                </div>
+                <div class="mb-4 flex justify-center">
+                    <div class="bg-green-100 border-2 border-green-300 rounded-lg p-4">
+                        <div class="text-center">
+                            <span class="db-box">RDS (Multi-AZ)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                <h3 class="text-xl font-semibold text-slate-800 mb-4">고가용성 & 스케일링</h3>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-3">가용 영역 (AZ)</h4>
+                        <ul class="text-slate-600 space-y-2">
+                            <li>• <strong>Multi-AZ</strong>: 여러 데이터센터에 분산</li>
+                            <li>• <strong>장애 격리</strong>: 한 AZ 장애 시 다른 AZ 사용</li>
+                            <li>• <strong>실제 사용</strong>: us-east-1a, us-east-1b, us-east-1c</li>
+                            <li>• <strong>장점</strong>: 99.99% 가용성 보장</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-3">Auto Scaling</h4>
+                        <ul class="text-slate-600 space-y-2">
+                            <li>• <strong>Scale Out</strong>: 서버 수 증가 (수평 확장)</li>
+                            <li>• <strong>Scale Up</strong>: 서버 성능 증가 (수직 확장)</li>
+                            <li>• <strong>트리거</strong>: CPU, 메모리, 네트워크 사용률</li>
+                            <li>• <strong>실제 사용</strong>: AWS Auto Scaling Groups</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Route 53 & CloudFront 설명 -->
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200 mt-6">
+                <h3 class="text-xl font-semibold text-slate-800 mb-4">Route 53 & CloudFront</h3>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-3">Route 53 (DNS)</h4>
+                        <ul class="text-slate-600 space-y-2">
+                            <li>• <strong>역할</strong>: 도메인을 IP 주소로 변환</li>
+                            <li>• <strong>예시</strong>: example.com → 1.2.3.4</li>
+                            <li>• <strong>기능</strong>: 도메인 등록, DNS 라우팅</li>
+                            <li>• <strong>장점</strong>: AWS 서비스들과 완벽하게 연동되는 DNS 서비스</li>
+                            <li>• <strong>비용</strong>: 호스팅 존당 월 $0.50</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-3">CloudFront (CDN)</h4>
+                        <ul class="text-slate-600 space-y-2">
+                            <li>• <strong>역할</strong>: 전 세계 캐시 서버로 콘텐츠 배포</li>
+                            <li>• <strong>기능</strong>: 정적 파일 캐싱, DDoS 방어</li>
+                            <li>• <strong>장점</strong>: 빠른 로딩 속도, 전 세계 사용자 지원</li>
+                            <li>• <strong>사용처</strong>: 이미지, CSS, JS 파일</li>
+                            <li>• <strong>비용</strong>: 데이터 전송량 기반 과금</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="mt-6 p-4 bg-slate-50 rounded-lg">
+                    <h4 class="text-lg font-semibold text-slate-700 mb-3">💡 실제 사용 시나리오</h4>
+                    <ol class="text-slate-600 space-y-2">
+                        <li><strong>1단계</strong>: Route 53에서 도메인 등록 (example.com)</li>
+                        <li><strong>2단계</strong>: CloudFront 배포 생성 (ALB를 Origin으로 설정)</li>
+                        <li><strong>3단계</strong>: Route 53에서 CloudFront URL로 DNS 레코드 설정</li>
+                        <li><strong>4단계</strong>: 사용자가 example.com 접속 → CloudFront → ALB → EC2</li>
+                    </ol>
+                </div>
+
+                <!-- 개발자 관점에서의 CloudFront -->
+                <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <h4 class="text-lg font-semibold text-blue-800 mb-3">🔧 개발자 관점에서의 CloudFront</h4>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h5 class="text-md font-semibold text-blue-700 mb-2">기존 방식 (온프레미스)</h5>
+                            <ul class="text-blue-600 space-y-1 text-sm">
+                                <li>• 파일을 서버 디렉토리에 저장</li>
+                                <li>• 웹서버에서 정적 파일 서빙</li>
+                                <li>• <code class="bg-blue-100 px-1 rounded">/uploads/images/photo.jpg</code></li>
+                                <li>• Base URL 프로그래밍 필요</li>
+                                <li>• 서버 부하 증가</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h5 class="text-md font-semibold text-blue-700 mb-2">CloudFront 방식 (AWS)</h5>
+                            <ul class="text-blue-600 space-y-1 text-sm">
+                                <li>• 파일을 S3에 저장</li>
+                                <li>• CloudFront가 자동 캐싱</li>
+                                <li>• <code class="bg-blue-100 px-1 rounded">https://d1234.cloudfront.net/images/photo.jpg</code></li>
+                                <li>• Base URL 설정만 하면 끝</li>
+                                <li>• 서버 부하 없음</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-white rounded border-l-4 border-blue-400">
+                        <h5 class="text-md font-semibold text-blue-800 mb-2">💡 개발자 체크리스트</h5>
+                        <ul class="text-blue-600 space-y-1 text-sm">
+                            <li>• <strong>파일 업로드</strong>: S3에 직접 업로드 (AWS SDK 사용)</li>
+                            <li>• <strong>URL 생성</strong>: CloudFront URL로 변환하여 DB에 저장</li>
+                            <li>• <strong>설정</strong>: application.properties에 CloudFront 도메인 설정</li>
+                            <li>• <strong>장점</strong>: 서버 리소스 절약, 전 세계 빠른 접근</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 핵심 용어 정리 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">핵심 용어 정리</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">네트워크 용어</h3>
+                    <ul class="text-slate-600 space-y-2">
+                        <li>• <strong>DNS</strong>: 도메인을 IP로 변환</li>
+                        <li>• <strong>CDN</strong>: 전 세계 캐시 서버</li>
+                        <li>• <strong>VPC</strong>: 가상 사설 네트워크</li>
+                        <li>• <strong>Subnet</strong>: VPC 내 세부 네트워크</li>
+                        <li>• <strong>Security Group</strong>: 방화벽 규칙</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">스케일링 용어</h3>
+                    <ul class="text-slate-600 space-y-2">
+                        <li>• <strong>Scale Out</strong>: 서버 수 증가</li>
+                        <li>• <strong>Scale Up</strong>: 서버 성능 증가</li>
+                        <li>• <strong>Load Balancing</strong>: 트래픽 분산</li>
+                        <li>• <strong>High Availability</strong>: 고가용성</li>
+                        <li>• <strong>Disaster Recovery</strong>: 재해 복구</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 우리 실습구조 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">우리 실습구조</h2>
+            
+            <div class="network-diagram">
+                <div class="mb-4">
+                    <span class="text-slate-600 font-semibold">사용자 (브라우저)</span>
+                </div>
+                <div class="mb-2">
+                    <span class="arrow">↓</span>
+                </div>
+                <div class="mb-4 flex items-center justify-center space-x-8">
+                    <div class="text-center">
+                        <span class="server-box">EC2 (WAS)</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="arrow">↔</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="storage-box">S3 (파일 저장소)</span>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <span class="arrow">↓</span>
+                </div>
+                <div class="mb-4 flex justify-center">
+                    <span class="db-box">RDS (데이터베이스)</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                <h3 class="text-xl font-semibold text-slate-800 mb-4">실습에서 사용할 AWS 서비스</h3>
+                
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-3">EC2 (Elastic Compute Cloud)</h4>
+                        <ul class="text-slate-600 space-y-2">
+                            <li>• <strong>역할</strong>: Spring Boot 애플리케이션 실행</li>
+                            <li>• <strong>기능</strong>: 웹 서버, API 서버</li>
+                            <li>• <strong>실습</strong>: t2.micro 인스턴스 사용</li>
+                            <li>• <strong>포트</strong>: 8080 (Spring Boot)</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-3">S3 (Simple Storage Service)</h4>
+                        <ul class="text-slate-600 space-y-2">
+                            <li>• <strong>역할</strong>: 정적 파일 저장 (이미지, 첨부파일)</li>
+                            <li>• <strong>기능</strong>: 객체 저장, CDN 연동</li>
+                            <li>• <strong>실습</strong>: 버킷 생성 및 파일 업로드</li>
+                            <li>• <strong>장점</strong>: 무제한 저장, 고가용성</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-3">RDS (Relational Database Service)</h4>
+                        <ul class="text-slate-600 space-y-2">
+                            <li>• <strong>역할</strong>: MySQL 데이터베이스 관리</li>
+                            <li>• <strong>기능</strong>: 자동 백업, 모니터링</li>
+                            <li>• <strong>실습</strong>: db.t2.micro 인스턴스</li>
+                            <li>• <strong>장점</strong>: 관리형 서비스, 보안 강화</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg mt-6">
+                <h3 class="text-lg font-semibold text-blue-800 mb-3">💡 실습 구조의 특징</h3>
+                <ul class="text-blue-700 space-y-2">
+                    <li>• <strong>단순함</strong>: 복잡한 네트워킹 없이 핵심 서비스만 사용</li>
+                    <li>• <strong>비용 효율</strong>: 프리티어 범위 내에서 실습 가능</li>
+                    <li>• <strong>학습 효과</strong>: EC2, S3, RDS 핵심 서비스 이해에 집중</li>
+                    <li>• <strong>접근성</strong>: EC2 퍼블릭 IP로 직접 접근 가능</li>
+                    <li>• <strong>확장성</strong>: 필요시 ALB, CloudFront, Route 53 추가 가능</li>
+                </ul>
+            </div>
+
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-lg mt-6">
+                <h3 class="text-lg font-semibold text-yellow-800 mb-3">📝 실습 접근 방법</h3>
+                <ul class="text-yellow-700 space-y-2">
+                    <li>• <strong>EC2 퍼블릭 IP</strong>: http://[EC2-퍼블릭-IP]:8080 으로 직접 접근</li>
+                    <li>• <strong>보안 그룹</strong>: 8080 포트를 열어서 외부 접근 허용</li>
+                    <li>• <strong>도메인 없음</strong>: Route 53, CloudFront 없이도 실습 가능</li>
+                    <li>• <strong>로드밸런서 없음</strong>: 단일 EC2 인스턴스로 시작</li>
+                </ul>
+            </div>
+        </section>
+
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-white py-6">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <p>&copy; 2025 JPA 학습 프로젝트 - 네트워크 개론</p>
+        </div>
+    </footer>
+
+</body>
+</html>

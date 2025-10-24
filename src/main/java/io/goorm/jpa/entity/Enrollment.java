@@ -7,7 +7,7 @@ import lombok.*;
 
 /**
  * 수강신청 엔티티
- * - ManyToOne 단방향 (Enrollment → User, Course)
+ * - ManyToOne 양방향 (Enrollment ↔ User, Course)
  * - QueryDSL 사용
  * - Optimistic Lock (@Version)
  */
@@ -49,10 +49,11 @@ public class Enrollment extends BaseEntity {
 
     /**
      * 승인
+     * - Step 2: Course의 편의 메서드 사용으로 변경
      */
     public void approve() {
         this.status = EnrollmentStatus.APPROVED;
-        this.course.increaseCurrentStudents();
+        // currentStudents는 Course.addEnrollment()에서 자동으로 증가됨
     }
 
     /**
@@ -84,5 +85,23 @@ public class Enrollment extends BaseEntity {
      */
     public boolean isApproved() {
         return this.status == EnrollmentStatus.APPROVED;
+    }
+
+    // ===== Step 2: 양방향 관계를 위한 setter 추가 =====
+    
+    /**
+     * Course 설정 (양방향 관계용)
+     * - Course.addEnrollment()에서 호출됨
+     */
+    public void setCourse(Course course) {
+        this.course = course;
+    }
+    
+    /**
+     * Student 설정 (양방향 관계용)
+     * - User.addEnrollment()에서 호출됨
+     */
+    public void setStudent(User student) {
+        this.student = student;
     }
 }
